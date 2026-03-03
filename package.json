@@ -1,0 +1,20 @@
+{
+  "name": "jack-bot",
+  "version": "1.0.0",
+  "description": "Jack Discord Bot",
+  "main": "bot/index.js",
+  "scripts": {
+    "start": "node bot/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^4.4.3",
+    "discord-html-transcripts": "^2.6.1",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1",
+    "mongoose": "^9.2.1",
+    "shoukaku": "^4.2.0"
+  }
+}
