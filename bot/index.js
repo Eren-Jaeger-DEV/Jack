@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
 
@@ -17,7 +19,7 @@ require("./handlers/eventHandler")(client);
 
 /* ---------------- Mongo ---------------- */
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch(err => console.error("❌ MongoDB Connection Failed:", err));
 
