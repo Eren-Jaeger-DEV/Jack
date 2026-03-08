@@ -1,17 +1,26 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
 const GuildConfig = require('../../database/models/GuildConfig');
 
 module.exports = {
+
+  name: "setlog",
+  category: "admin",
+  description: "Set the moderation log channel",
+
   data: new SlashCommandBuilder()
     .setName('setlog')
     .setDescription('Set the moderation log channel')
     .addChannelOption(option =>
-      option.setName('channel')
+      option
+        .setName('channel')
         .setDescription('Select log channel')
-        .setRequired(true))
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(true)
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
+
     const channel = interaction.options.getChannel('channel');
 
     await GuildConfig.findOneAndUpdate(
@@ -20,6 +29,11 @@ module.exports = {
       { upsert: true }
     );
 
-    interaction.reply(`✅ Log channel set to ${channel}`);
+    await interaction.reply({
+      content: `✅ Log channel set to ${channel}`,
+      ephemeral: true
+    });
+
   }
+
 };

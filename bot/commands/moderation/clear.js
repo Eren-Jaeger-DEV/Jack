@@ -1,5 +1,6 @@
 const logger = require('../../utils/logger');
 const { checkUser, checkBot } = require('../../utils/checkPermission');
+
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
@@ -7,6 +8,10 @@ const {
 } = require('discord.js');
 
 module.exports = {
+
+  name: "clear",
+  category: "moderation",
+
   data: new SlashCommandBuilder()
     .setName('clear')
     .setDescription('Delete multiple messages from a channel')
@@ -16,73 +21,57 @@ module.exports = {
         .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
-  // SLASH COMMAND
-  async execute(interaction) {
-    const amount = interaction.options.getInteger('amount');
+  async run(ctx) {
 
-    if (amount < 1 || amount > 100) {
-      return interaction.reply({
-        content: 'Amount must be between 1 and 100.',
-        ephemeral: true
-      });
+    let amount;
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      if (!checkUser(ctx.member, PermissionFlagsBits.ManageMessages))
+        return ctx.reply('❌ No permission.');
+
+      if (!checkBot(ctx.guild, PermissionFlagsBits.ManageMessages))
+        return ctx.reply('❌ I lack permission.');
+
+      amount = parseInt(ctx.args[0]);
+
+      if (!amount || amount < 1 || amount > 100)
+        return ctx.reply('Usage: jack clear 10');
+
     }
 
-    if (!checkBot(interaction.guild, PermissionFlagsBits.ManageMessages)) {
-      return interaction.reply({
-        content: '❌ I lack Manage Messages permission.',
-        ephemeral: true
-      });
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      amount = ctx.interaction.options.getInteger('amount');
+
+      if (amount < 1 || amount > 100)
+        return ctx.reply('Amount must be between 1 and 100.');
+
+      if (!checkBot(ctx.guild, PermissionFlagsBits.ManageMessages))
+        return ctx.reply('❌ I lack Manage Messages permission.');
+
     }
 
-    await interaction.channel.bulkDelete(amount, true);
+    await ctx.channel.bulkDelete(amount, true);
 
-    await interaction.reply({
-      content: `🧹 Deleted ${amount} messages.`,
-      ephemeral: true
-    });
+    ctx.reply(`🧹 Deleted ${amount} messages.`);
 
-    // LOGGING
     const embed = new EmbedBuilder()
       .setTitle('🧹 Messages Cleared')
       .addFields(
-        { name: 'Moderator', value: interaction.user.tag },
-        { name: 'Channel', value: interaction.channel.toString() },
+        { name: 'Moderator', value: ctx.user.tag },
+        { name: 'Channel', value: ctx.channel.toString() },
         { name: 'Amount', value: `${amount}` }
       )
       .setColor('Blue')
       .setTimestamp();
 
-    await logger(interaction.guild, embed);
-  },
+    await logger(ctx.guild, embed);
 
-  // PREFIX COMMAND
-  async prefixExecute(message, args) {
-    if (!checkUser(message.member, PermissionFlagsBits.ManageMessages))
-      return message.channel.send('❌ No permission.');
-
-    if (!checkBot(message.guild, PermissionFlagsBits.ManageMessages))
-      return message.channel.send('❌ I lack permission.');
-
-    const amount = parseInt(args[0]);
-
-    if (!amount || amount < 1 || amount > 100)
-      return message.channel.send('Usage: jack clear 10');
-
-    await message.channel.bulkDelete(amount, true);
-
-    // IMPORTANT: send new message (not reply)
-    await message.channel.send(`🧹 Deleted ${amount} messages.`);
-
-    const embed = new EmbedBuilder()
-      .setTitle('🧹 Messages Cleared')
-      .addFields(
-        { name: 'Moderator', value: message.author.tag },
-        { name: 'Channel', value: message.channel.toString() },
-        { name: 'Amount', value: `${amount}` }
-      )
-      .setColor('Blue')
-      .setTimestamp();
-
-    await logger(message.guild, embed);
   }
+
 };

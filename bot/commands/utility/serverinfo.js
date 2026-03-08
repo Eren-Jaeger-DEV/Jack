@@ -1,39 +1,36 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder
+} = require('discord.js');
 
 module.exports = {
+
+  name: "serverinfo",
+  category: "utility",
+
   data: new SlashCommandBuilder()
     .setName('serverinfo')
-    .setDescription('Server information'),
+    .setDescription('Show information about the server'),
 
-  async execute(interaction) {
-    const guild = interaction.guild;
+  async run(ctx) {
+
+    const guild = ctx.guild;
 
     const embed = new EmbedBuilder()
-      .setTitle('🌍 Server Info')
-      .setThumbnail(guild.iconURL())
+      .setTitle('🌍 Server Information')
+      .setThumbnail(guild.iconURL({ size: 512 }))
       .addFields(
-        { name: 'Server Name', value: guild.name },
-        { name: 'Members', value: `${guild.memberCount}` },
-        { name: 'Created', value: `<t:${parseInt(guild.createdTimestamp/1000)}:R>` }
+        { name: 'Server Name', value: guild.name, inline: true },
+        { name: 'Server ID', value: guild.id, inline: true },
+        { name: 'Members', value: `${guild.memberCount}`, inline: true },
+        { name: 'Boost Level', value: `${guild.premiumTier}`, inline: true },
+        { name: 'Boosts', value: `${guild.premiumSubscriptionCount || 0}`, inline: true },
+        { name: 'Created', value: `<t:${parseInt(guild.createdTimestamp / 1000)}:R>` }
       )
       .setColor('Green');
 
-    interaction.reply({ embeds: [embed] });
-  },
+    ctx.reply({ embeds: [embed] });
 
-  async prefixExecute(message) {
-    const guild = message.guild;
-
-    const embed = new EmbedBuilder()
-      .setTitle('🌍 Server Info')
-      .setThumbnail(guild.iconURL())
-      .addFields(
-        { name: 'Server Name', value: guild.name },
-        { name: 'Members', value: `${guild.memberCount}` },
-        { name: 'Created', value: `<t:${parseInt(guild.createdTimestamp/1000)}:R>` }
-      )
-      .setColor('Green');
-
-    message.channel.send({ embeds: [embed] });
   }
+
 };

@@ -1,34 +1,20 @@
+const afkHandler = require("../handlers/afkHandler");
+const screenshotHandler = require("../handlers/screenshotHandler");
+const levelHandler = require("../handlers/levelHandler");
+const prefixHandler = require("../handlers/prefixHandler");
+
 module.exports = {
   name: "messageCreate",
 
   async execute(message, client) {
+
     if (message.author.bot) return;
+    if (!message.guild) return;
 
-    const prefixes = ["j", "jack"];
-    const content = message.content.toLowerCase();
+    await afkHandler(message);
+    await screenshotHandler(message);
+    await levelHandler(message);
+    await prefixHandler(message, client);
 
-    const usedPrefix = prefixes.find(prefix =>
-      content.startsWith(prefix)
-    );
-
-    if (!usedPrefix) return;
-
-    const args = message.content
-      .slice(usedPrefix.length)
-      .trim()
-      .split(/ +/);
-
-    const cmdName = args.shift()?.toLowerCase();
-    if (!cmdName) return;
-
-    const command = client.commands.get(cmdName);
-    if (!command || typeof command.prefixExecute !== "function") return;
-
-    try {
-      await command.prefixExecute(message, args, client);
-    } catch (err) {
-      console.error("Prefix Command Error:", err);
-      message.reply("Error running command.").catch(() => {});
-    }
   }
 };

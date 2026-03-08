@@ -7,28 +7,33 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates
   ]
 });
 
 client.commands = new Collection();
 
-/* ---------------- Load Handlers ---------------- */
+/* Load Handlers */
+
 require("./handlers/commandHandler")(client);
 require("./handlers/eventHandler")(client);
 
-/* ---------------- Mongo ---------------- */
+/* Mongo */
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch(err => console.error("❌ MongoDB Connection Failed:", err));
 
-/* ---------------- Ready ---------------- */
+/* Ready */
+
 client.once("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-/* ---------------- Login ---------------- */
+/* Login */
+
 client.login(process.env.BOT_TOKEN);
 
 module.exports = client;

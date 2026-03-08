@@ -1,0 +1,76 @@
+const logger = require('../../utils/logger');
+const { checkUser, checkBot } = require('../../utils/checkPermission');
+
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  EmbedBuilder
+} = require('discord.js');
+
+module.exports = {
+
+  name: "unban",
+  category: "moderation",
+
+  data: new SlashCommandBuilder()
+    .setName('unban')
+    .setDescription('Unban a user from the server')
+    .addStringOption(option =>
+      option.setName('userid')
+        .setDescription('User ID to unban')
+        .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+
+  async run(ctx) {
+
+    let userId;
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      if (!checkUser(ctx.member, PermissionFlagsBits.BanMembers))
+        return ctx.reply('❌ No permission.');
+
+      userId = ctx.args[0];
+
+      if (!userId)
+        return ctx.reply('Usage: jack unban USER_ID');
+
+    }
+
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      userId = ctx.interaction.options.getString('userid');
+
+    }
+
+    if (!checkBot(ctx.guild, PermissionFlagsBits.BanMembers))
+      return ctx.reply('❌ I lack permission.');
+
+    const bans = await ctx.guild.bans.fetch();
+    const bannedUser = bans.get(userId);
+
+    if (!bannedUser)
+      return ctx.reply('User is not banned.');
+
+    await ctx.guild.members.unban(userId);
+
+    ctx.reply(`🔓 ${bannedUser.user.tag} has been unbanned.`);
+
+    const embed = new EmbedBuilder()
+      .setTitle('🔓 User Unbanned')
+      .addFields(
+        { name: 'User', value: `${bannedUser.user.tag} (${userId})` },
+        { name: 'Moderator', value: ctx.user.tag }
+      )
+      .setColor('Green')
+      .setTimestamp();
+
+    await logger(ctx.guild, embed);
+
+  }
+
+};

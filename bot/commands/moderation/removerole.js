@@ -1,0 +1,83 @@
+const logger = require('../../utils/logger');
+const { checkUser, checkBot } = require('../../utils/checkPermission');
+
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  EmbedBuilder
+} = require('discord.js');
+
+module.exports = {
+
+  name: "removerole",
+  category: "moderation",
+
+  data: new SlashCommandBuilder()
+    .setName('removerole')
+    .setDescription('Remove a role from a user')
+    .addUserOption(option =>
+      option.setName('user')
+        .setDescription('User')
+        .setRequired(true))
+    .addRoleOption(option =>
+      option.setName('role')
+        .setDescription('Role to remove')
+        .setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
+
+  async run(ctx) {
+
+    let user;
+    let role;
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      if (!checkUser(ctx.member, PermissionFlagsBits.ManageRoles))
+        return ctx.reply('❌ No permission.');
+
+      user = ctx.message.mentions.users.first();
+      role = ctx.message.mentions.roles.first();
+
+      if (!user || !role)
+        return ctx.reply('Usage: jack removerole @user @role');
+
+    }
+
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      user = ctx.interaction.options.getUser('user');
+      role = ctx.interaction.options.getRole('role');
+
+    }
+
+    const member = await ctx.guild.members.fetch(user.id).catch(() => null);
+
+    if (!member)
+      return ctx.reply('User not found.');
+
+    if (!checkBot(ctx.guild, PermissionFlagsBits.ManageRoles))
+      return ctx.reply('❌ I lack permission.');
+
+    await member.roles.remove(role);
+
+    ctx.reply(`➖ Removed **${role.name}** from ${user.tag}`);
+
+    const embed = new EmbedBuilder()
+      .setTitle('➖ Role Removed')
+      .addFields(
+        { name: 'User', value: `${user.tag} (${user.id})` },
+        { name: 'Role', value: role.name },
+        { name: 'Moderator', value: ctx.user.tag }
+      )
+      .setColor('Orange')
+      .setTimestamp();
+
+    await logger(ctx.guild, embed);
+
+  }
+
+};

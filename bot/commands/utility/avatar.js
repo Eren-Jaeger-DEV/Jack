@@ -1,32 +1,48 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder
+} = require('discord.js');
 
 module.exports = {
+
+  name: "avatar",
+  category: "utility",
+
   data: new SlashCommandBuilder()
     .setName('avatar')
     .setDescription('Show user avatar')
     .addUserOption(option =>
       option.setName('user')
-        .setDescription('User')),
+        .setDescription('User whose avatar you want')
+        .setRequired(false)),
 
-  async execute(interaction) {
-    const user = interaction.options.getUser('user') || interaction.user;
+  async run(ctx) {
+
+    let user;
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      user = ctx.message.mentions.users.first() || ctx.user;
+
+    }
+
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      user = ctx.interaction.options.getUser('user') || ctx.user;
+
+    }
 
     const embed = new EmbedBuilder()
       .setTitle(`${user.tag}'s Avatar`)
       .setImage(user.displayAvatarURL({ size: 512 }))
       .setColor('Purple');
 
-    interaction.reply({ embeds: [embed] });
-  },
+    ctx.reply({ embeds: [embed] });
 
-  async prefixExecute(message) {
-    const user = message.mentions.users.first() || message.author;
-
-    const embed = new EmbedBuilder()
-      .setTitle(`${user.tag}'s Avatar`)
-      .setImage(user.displayAvatarURL({ size: 512 }))
-      .setColor('Purple');
-
-    message.channel.send({ embeds: [embed] });
   }
+
 };

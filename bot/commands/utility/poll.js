@@ -1,6 +1,13 @@
-const { SlashCommandBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder
+} = require('discord.js');
 
 module.exports = {
+
+  name: "poll",
+  category: "utility",
+
   data: new SlashCommandBuilder()
     .setName('poll')
     .setDescription('Create a poll')
@@ -9,25 +16,48 @@ module.exports = {
         .setDescription('Poll question')
         .setRequired(true)),
 
-  async execute(interaction) {
-    const question = interaction.options.getString('question');
+  async run(ctx) {
 
-    const msg = await interaction.reply({
-      content: `📊 **Poll:** ${question}`,
+    let question;
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      question = ctx.args.join(" ");
+
+      if (!question)
+        return ctx.reply("Usage: jack poll Your question here");
+
+    }
+
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      question = ctx.interaction.options.getString('question');
+
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle("📊 New Poll")
+      .setDescription(`**${question}**`)
+      .addFields(
+        { name: "👍 Yes", value: "Vote with 👍", inline: true },
+        { name: "👎 No", value: "Vote with 👎", inline: true }
+      )
+      .setFooter({ text: `Poll by ${ctx.user.tag}` })
+      .setTimestamp()
+      .setColor("Purple");
+
+    const msg = await ctx.reply({
+      embeds: [embed],
       fetchReply: true
     });
 
-    await msg.react('👍');
-    await msg.react('👎');
-  },
+    await msg.react("👍");
+    await msg.react("👎");
 
-  async prefixExecute(message, args) {
-    const question = args.join(' ');
-    if (!question) return message.channel.send('Ask a question.');
-
-    const msg = await message.channel.send(`📊 **Poll:** ${question}`);
-
-    await msg.react('👍');
-    await msg.react('👎');
   }
+
 };

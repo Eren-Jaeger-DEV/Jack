@@ -1,48 +1,72 @@
 const Warn = require('../../database/models/Warn');
 const { checkUser } = require('../../utils/checkPermission');
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  EmbedBuilder
+} = require('discord.js');
 
 module.exports = {
+
+  name: "warnings",
+  category: "moderation",
+
   data: new SlashCommandBuilder()
     .setName('warnings')
-    .setDescription('View warnings')
-    .addUserOption(o =>
-      o.setName('user').setDescription('User').setRequired(true))
+    .setDescription('View warnings for a user')
+    .addUserOption(option =>
+      option.setName('user')
+        .setDescription('User')
+        .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
-  async execute(interaction) {
-    const user = interaction.options.getUser('user');
+  async run(ctx) {
+
+    let user;
+
+    /* ---------- PREFIX ---------- */
+
+    if (ctx.type === "prefix") {
+
+      if (!checkUser(ctx.member, PermissionFlagsBits.ModerateMembers))
+        return ctx.reply('❌ No permission.');
+
+      user = ctx.message.mentions.users.first();
+
+      if (!user)
+        return ctx.reply('Usage: jack warnings @user');
+
+    }
+
+    /* ---------- SLASH ---------- */
+
+    if (ctx.type === "slash") {
+
+      user = ctx.interaction.options.getUser('user');
+
+    }
 
     const warns = await Warn.find({
       userId: user.id,
-      guildId: interaction.guild.id
+      guildId: ctx.guild.id
     });
 
     if (!warns.length)
-      return interaction.reply(`${user.tag} has no warnings.`);
+      return ctx.reply(`${user.tag} has no warnings.`);
 
-    const list = warns.map((w, i) => `${i+1}. ${w.reason}`).join('\n');
+    const list = warns
+      .map((w, i) => `${i + 1}. ${w.reason}`)
+      .join('\n');
 
-    interaction.reply(`⚠️ Warnings for ${user.tag}:\n${list}`);
-  },
+    const embed = new EmbedBuilder()
+      .setTitle(`⚠️ Warnings for ${user.tag}`)
+      .setDescription(list)
+      .setColor('Orange')
+      .setTimestamp();
 
-  async prefixExecute(message) {
-    if (!checkUser(message.member, PermissionFlagsBits.ModerateMembers))
-      return message.reply('❌ No permission.');
+    ctx.reply({ embeds: [embed] });
 
-    const user = message.mentions.users.first();
-    if (!user) return message.reply('Mention user.');
-
-    const warns = await Warn.find({
-      userId: user.id,
-      guildId: message.guild.id
-    });
-
-    if (!warns.length)
-      return message.reply(`${user.tag} has no warnings.`);
-
-    const list = warns.map((w,i)=>`${i+1}. ${w.reason}`).join('\n');
-
-    message.reply(`⚠️ Warnings for ${user.tag}:\n${list}`);
   }
+
 };

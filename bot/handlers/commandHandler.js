@@ -1,20 +1,31 @@
 const fs = require("fs");
-const path = require("path");
 
 module.exports = (client) => {
-  const commandsPath = path.join(__dirname, "..", "commands");
-  const folders = fs.readdirSync(commandsPath);
+
+  const folders = fs.readdirSync("./bot/commands");
 
   for (const folder of folders) {
-    const folderPath = path.join(commandsPath, folder);
-    const commandFiles = fs
-      .readdirSync(folderPath)
-      .filter(file => file.endsWith(".js"));
 
-    for (const file of commandFiles) {
-      const command = require(path.join(folderPath, file));
+    const files = fs
+      .readdirSync(`./bot/commands/${folder}`)
+      .filter(f => f.endsWith(".js"));
 
-      client.commands.set(command.data.name, command);
+    for (const file of files) {
+
+      const command = require(`../commands/${folder}/${file}`);
+
+      if (command.data) {
+        client.commands.set(command.data.name, command);
+      }
+
+      if (command.name) {
+        client.commands.set(command.name, command);
+      }
+
     }
+
   }
+
+  console.log("✅ Commands Loaded");
+
 };

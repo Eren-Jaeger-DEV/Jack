@@ -1,38 +1,71 @@
 const Warn = require('../../database/models/Warn');
 const { checkUser } = require('../../utils/checkPermission');
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  EmbedBuilder
+} = require('discord.js');
 
 module.exports = {
+
+  name: "clearwarns",
+  category: "moderation",
+
   data: new SlashCommandBuilder()
     .setName('clearwarns')
-    .setDescription('Clear all warnings')
-    .addUserOption(o =>
-      o.setName('user').setDescription('User').setRequired(true))
+    .setDescription('Clear all warnings from a user')
+    .addUserOption(option =>
+      option.setName('user')
+        .setDescription('User')
+        .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-  async execute(interaction) {
-    const user = interaction.options.getUser('user');
+  async run(ctx) {
+
+    let user;
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      if (!checkUser(ctx.member, PermissionFlagsBits.Administrator))
+        return ctx.reply('❌ No permission.');
+
+      user = ctx.message.mentions.users.first();
+
+      if (!user)
+        return ctx.reply('Usage: jack clearwarns @user');
+
+    }
+
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      user = ctx.interaction.options.getUser('user');
+
+    }
 
     await Warn.deleteMany({
       userId: user.id,
-      guildId: interaction.guild.id
+      guildId: ctx.guild.id
     });
 
-    interaction.reply(`✅ Cleared warnings for ${user.tag}`);
-  },
+    const embed = new EmbedBuilder()
+      .setTitle('🧹 Warnings Cleared')
+      .addFields(
+        { name: 'User', value: `${user.tag} (${user.id})` },
+        { name: 'Moderator', value: ctx.user.tag }
+      )
+      .setColor('Green')
+      .setTimestamp();
 
-  async prefixExecute(message) {
-    if (!checkUser(message.member, PermissionFlagsBits.Administrator))
-      return message.reply('❌ No permission.');
-
-    const user = message.mentions.users.first();
-    if (!user) return message.reply('Mention user.');
-
-    await Warn.deleteMany({
-      userId: user.id,
-      guildId: message.guild.id
+    ctx.reply({
+      content: `✅ Cleared warnings for ${user.tag}`,
+      embeds: [embed]
     });
 
-    message.reply(`✅ Cleared warnings for ${user.tag}`);
   }
+
 };
