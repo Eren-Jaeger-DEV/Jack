@@ -3,19 +3,21 @@ const path = require("path");
 
 module.exports = (client) => {
 
-  const commandsPath = path.join(__dirname, "..", "commands");
+  client.commands = new Map();
 
-  const folders = fs.readdirSync(commandsPath);
+  const commandPath = path.join(__dirname, "..", "commands");
+
+  const folders = fs.readdirSync(commandPath);
 
   for (const folder of folders) {
 
     const files = fs
-      .readdirSync(`${commandsPath}/${folder}`)
+      .readdirSync(`${commandPath}/${folder}`)
       .filter(file => file.endsWith(".js"));
 
     for (const file of files) {
 
-      const command = require(`${commandsPath}/${folder}/${file}`);
+      const command = require(`${commandPath}/${folder}/${file}`);
 
       if (!command.name) {
         console.log(`⚠ Command missing name: ${file}`);
