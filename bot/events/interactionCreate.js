@@ -1,23 +1,35 @@
-const slashHandler = require("../handlers/slashCommandHandler");
-const modalHandler = require("../handlers/modalHandler");
-const buttonHandler = require("../handlers/buttonHandler");
+const Context = require("../structures/Context");
 
-module.exports = {
+module.exports = async (client, interaction) => {
 
-  name: "interactionCreate",
+  if (!interaction.isChatInputCommand()) return;
 
-  async execute(interaction, client) {
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
 
-    if (interaction.isChatInputCommand()) {
-      return slashHandler(interaction, client);
+  const ctx = new Context(client, interaction);
+
+  try {
+
+    // JACK 3.0 FORMAT
+    if (command.run) {
+      return command.run(ctx);
     }
 
-    if (interaction.isModalSubmit()) {
-      return modalHandler(interaction, client);
+    // JACK 2.0 FORMAT
+    if (command.execute) {
+      return command.execute(client, interaction);
     }
 
-    if (interaction.isButton()) {
-      return buttonHandler(interaction, client);
+  } catch (error) {
+
+    console.error("Slash command error:", error);
+
+    if (!interaction.replied) {
+      interaction.reply({
+        content: "An error occurred while executing this command.",
+        ephemeral: true
+      });
     }
 
   }
