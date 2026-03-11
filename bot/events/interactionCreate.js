@@ -2,6 +2,7 @@ const Context = require("../structures/Context");
 const buttonHandler = require("../handlers/buttonHandler");
 const modalHandler = require("../handlers/modalHandler");
 const popButtons = require("../interactions/popButtons");
+const reactionRoleButtons = require("../interactions/reactionRoleButtons");
 
 /* Server Overview button embeds */
 const overview = require("../systems/panels/serverOverview");
@@ -80,6 +81,11 @@ module.exports = {
         interaction.customId.startsWith("deal_cancel_")
       ) {
         return popButtons(interaction);
+      }
+
+      /* Reaction Role Buttons */
+      if (interaction.customId.startsWith("rr_assign_")) {
+        return reactionRoleButtons(interaction);
       }
 
       /* Ticket & other buttons */

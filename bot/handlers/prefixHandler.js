@@ -30,6 +30,24 @@ module.exports = async (message, client) => {
      args.shift(); // remove 'market' from args
   }
 
+  // Handle multi-word aliases for Reaction Roles (j rr create, j rr add, etc.)
+  if (commandName === "rr") {
+     const subCommand = args[0]?.toLowerCase();
+     if (subCommand === "create") {
+         commandName = "rrcreate";
+         args.shift();
+     } else if (subCommand === "add") {
+         commandName = "rradd";
+         args.shift();
+     } else if (subCommand === "remove") {
+         commandName = "rrremove";
+         args.shift();
+     } else if (subCommand === "delete" || subCommand === "del") {
+         commandName = "rrdelete";
+         args.shift();
+     }
+  }
+
   const command = client.commands.get(commandName);
 
   if (!command) return;

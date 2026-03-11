@@ -39,78 +39,81 @@ module.exports = async function popButtons(interaction) {
 
     await interaction.deferReply({ ephemeral: true });
 
-    // Create the deal channel
-    const guild = interaction.guild;
-    const dealChannel = await guild.channels.create({
-      name: `pop-deal-${listingID}`,
-      type: ChannelType.GuildText,
-      parent: DEAL_CATEGORY_ID,
-      permissionOverwrites: [
-        {
-          id: guild.roles.everyone.id,
-          deny: [PermissionFlagsBits.ViewChannel]
-        },
-        // Seller
-        {
-          id: listing.sellerID,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-        },
-        // Buyer
-        {
-          id: interaction.user.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-        },
-        // Moderators (assuming manageable via general admin, but explicitly add role if needed)
-        // You mentioned "Moderators -> view", assuming server admins automatically have access.
-      ]
-    });
+    try {
+      // Create the deal channel
+      const guild = interaction.guild;
+      const dealChannel = await guild.channels.create({
+        name: `pop-deal-${listingID}`,
+        type: ChannelType.GuildText,
+        parent: DEAL_CATEGORY_ID,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id,
+            deny: [PermissionFlagsBits.ViewChannel]
+          },
+          // Seller
+          {
+            id: listing.sellerID,
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+          },
+          // Buyer
+          {
+            id: interaction.user.id,
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+          }
+        ]
+      });
 
-    // Update Listing status to "pending"
-    listing.status = "pending";
-    await listing.save();
+      // Update Listing status to "pending"
+      listing.status = "pending";
+      await listing.save();
 
-    // Create Deal Record
-    await PopDeal.create({
-      listingID,
-      sellerID: listing.sellerID,
-      buyerID: interaction.user.id,
-      channelID: dealChannel.id,
-      status: "ongoing"
-    });
+      // Create Deal Record
+      await PopDeal.create({
+        listingID,
+        sellerID: listing.sellerID,
+        buyerID: interaction.user.id,
+        channelID: dealChannel.id,
+        status: "ongoing"
+      });
 
-    // Setup Deal Channel UI
-    const embed = new EmbedBuilder()
-      .setTitle("🤝 POP Trading Deal")
-      .addFields(
-        { name: "Seller", value: `<@${listing.sellerID}>`, inline: true },
-        { name: "Buyer", value: `<@${interaction.user.id}>`, inline: true },
-        { name: "Listing ID", value: `\`${listingID}\``, inline: true },
-        { name: "POP Amount", value: `${listing.popAmount.toLocaleString()}`, inline: true },
-        { name: "Price", value: `₹${listing.price.toLocaleString()}`, inline: true }
-      )
-      .setColor("Blue")
-      .setDescription("Please coordinate your trade here.\nOnce completed, click **Deal Final** or **Cancel Deal**.");
+      // Setup Deal Channel UI
+      const embed = new EmbedBuilder()
+        .setTitle("🤝 POP Trading Deal")
+        .addFields(
+          { name: "Seller", value: `<@${listing.sellerID}>`, inline: true },
+          { name: "Buyer", value: `<@${interaction.user.id}>`, inline: true },
+          { name: "Listing ID", value: `\`${listingID}\``, inline: true },
+          { name: "POP Amount", value: `${listing.popAmount.toLocaleString()}`, inline: true },
+          { name: "Price", value: `₹${listing.price.toLocaleString()}`, inline: true }
+        )
+        .setColor("Blue")
+        .setDescription("Please coordinate your trade here.\nOnce completed, click **Deal Final** or **Cancel Deal**.");
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-         .setCustomId(`deal_final_${listingID}`)
-         .setLabel("Deal Final")
-         .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-         .setCustomId(`deal_cancel_${listingID}`)
-         .setLabel("Cancel Deal")
-         .setStyle(ButtonStyle.Danger)
-    );
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+           .setCustomId(`deal_final_${listingID}`)
+           .setLabel("Deal Final")
+           .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+           .setCustomId(`deal_cancel_${listingID}`)
+           .setLabel("Cancel Deal")
+           .setStyle(ButtonStyle.Danger)
+      );
 
-    await dealChannel.send({
-      content: `<@${listing.sellerID}> <@${interaction.user.id}>`,
-      embeds: [embed],
-      components: [row]
-    });
+      await dealChannel.send({
+        content: `<@${listing.sellerID}> <@${interaction.user.id}>`,
+        embeds: [embed],
+        components: [row]
+      });
 
-    refreshMarketPanel(interaction.client);
+      refreshMarketPanel(interaction.client);
 
-    return interaction.editReply({ content: `✅ Deal channel created: ${dealChannel}` });
+      return interaction.editReply({ content: `✅ Deal channel created: ${dealChannel}` });
+    } catch (err) {
+      console.error("BUY_POP_ERROR:", err);
+      return interaction.editReply({ content: `❌ An error occurred while creating the deal channel:\n\`\`\`js\n${err.message}\n\`\`\`` });
+    }
   }
 
 
