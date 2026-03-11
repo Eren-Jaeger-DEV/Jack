@@ -16,9 +16,10 @@ module.exports = async function emojiBrowserButtons(interaction) {
 
   await interaction.deferReply({ ephemeral: true });
 
-  const parts = interaction.customId.split("_");
-  const type = parts[2]; // 'emoji' or 'sticker'
-  const idValue = parts[3];
+  const isEmoji = interaction.customId.startsWith("browser_add_emoji_");
+  const prefixLength = isEmoji ? "browser_add_emoji_".length : "browser_add_sticker_".length;
+  const type = isEmoji ? "emoji" : "sticker";
+  const idValue = interaction.customId.substring(prefixLength);
 
   try {
     if (type === "emoji") {
