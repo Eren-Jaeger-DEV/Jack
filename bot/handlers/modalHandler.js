@@ -2,49 +2,85 @@ const Player = require("../database/models/Player");
 
 module.exports = async function modalHandler(interaction) {
 
-  if (interaction.customId !== "player_register_modal") return;
+  if (interaction.customId === "player_register_modal") {
 
-  const ign = interaction.fields.getTextInputValue("ign");
-  const uid = interaction.fields.getTextInputValue("uid");
-  const level = interaction.fields.getTextInputValue("level");
-  const modes = interaction.fields.getTextInputValue("modes");
+    const ign = interaction.fields.getTextInputValue("ign");
+    const uid = interaction.fields.getTextInputValue("uid");
+    const level = interaction.fields.getTextInputValue("level");
+    const modes = interaction.fields.getTextInputValue("modes");
 
-  const preferredModes = modes.split(",").map(m => m.trim());
+    const preferredModes = modes.split(",").map(m => m.trim());
 
-  const existing = await Player.findOne({
-    discordId: interaction.user.id
-  });
+    const existing = await Player.findOne({
+      discordId: interaction.user.id
+    });
 
-  if (existing) {
+    if (existing) {
+
+      return interaction.reply({
+        content: "You already registered. Use /editprofile.",
+        ephemeral: true
+      });
+
+    }
+
+    const member = await interaction.guild.members.fetch(interaction.user.id);
+
+    await Player.create({
+
+      discordId: interaction.user.id,
+      discordName: interaction.user.username,
+
+      ign,
+      uid,
+
+      accountLevel: level,
+
+      preferredModes,
+
+      clanJoinDate: member.joinedAt
+
+    });
 
     return interaction.reply({
-      content: "You already registered. Use /editprofile.",
+      content: "✅ Profile saved.\n\nUpload your **BGMI Basic Info** now.",
       ephemeral: true
     });
 
   }
 
-  const member = await interaction.guild.members.fetch(interaction.user.id);
+  if (interaction.customId === "edit_profile_modal") {
 
-  await Player.create({
+    const ign = interaction.fields.getTextInputValue("ign");
+    const uid = interaction.fields.getTextInputValue("uid");
+    const level = interaction.fields.getTextInputValue("level");
+    const modes = interaction.fields.getTextInputValue("modes");
 
-    discordId: interaction.user.id,
-    discordName: interaction.user.username,
+    const preferredModes = modes.split(",").map(m => m.trim());
 
-    ign,
-    uid,
+    const player = await Player.findOneAndUpdate(
+      { discordId: interaction.user.id },
+      {
+        ign,
+        uid,
+        accountLevel: level,
+        preferredModes
+      },
+      { new: true }
+    );
 
-    accountLevel: level,
+    if (!player) {
+      return interaction.reply({
+        content: "❌ You are not registered yet. Use `/register` first.",
+        ephemeral: true
+      });
+    }
 
-    preferredModes,
+    return interaction.reply({
+      content: "✅ Profile beautifully updated!",
+      ephemeral: true
+    });
 
-    clanJoinDate: member.joinedAt
-
-  });
-
-  return interaction.reply({
-    content: "✅ Profile saved.\n\nUpload your **BGMI Basic Info** now.",
-    ephemeral: true
-  });
+  }
 
 };
