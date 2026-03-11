@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const PopDealSchema = new mongoose.Schema({
   listingID: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   sellerID: {
     type: String,
