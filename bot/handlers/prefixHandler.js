@@ -48,6 +48,28 @@ module.exports = async (message, client) => {
      }
   }
 
+  // Handle multi-word aliases for Emoji, Sticker, and Pack commands
+  if (commandName === "emoji") {
+     const subCommand = args[0]?.toLowerCase();
+     if (subCommand === "bank") { commandName = "emojibank"; args.shift(); }
+     else if (subCommand === "browse") { commandName = "emojibrowse"; args.shift(); }
+     else if (subCommand === "add") { commandName = "emojiadd"; args.shift(); }
+     else if (subCommand === "remove") { commandName = "emojiremove"; args.shift(); }
+     // Else it defaults to calling "emoji" search CDN internally
+  } else if (commandName === "sticker") {
+     const subCommand = args[0]?.toLowerCase();
+     if (subCommand === "bank") { commandName = "stickerbank"; args.shift(); }
+     else if (subCommand === "browse") { commandName = "stickerbrowse"; args.shift(); }
+     else if (subCommand === "add") { commandName = "stickeradd"; args.shift(); }
+     else if (subCommand === "remove") { commandName = "stickerremove"; args.shift(); }
+  } else if (commandName === "pack") {
+     const subCommand = args[0]?.toLowerCase();
+     if (subCommand === "create") { commandName = "packcreate"; args.shift(); }
+     else if (subCommand === "add") { commandName = "packadd"; args.shift(); }
+     else if (subCommand === "remove") { commandName = "packremove"; args.shift(); }
+     else if (subCommand === "import") { commandName = "packimport"; args.shift(); }
+  }
+
   const command = client.commands.get(commandName);
 
   if (!command) return;

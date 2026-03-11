@@ -3,6 +3,7 @@ const buttonHandler = require("../handlers/buttonHandler");
 const modalHandler = require("../handlers/modalHandler");
 const popButtons = require("../interactions/popButtons");
 const reactionRoleButtons = require("../interactions/reactionRoleButtons");
+const emojiBrowserButtons = require("../interactions/emojiBrowserButtons");
 
 /* Server Overview button embeds */
 const overview = require("../systems/panels/serverOverview");
@@ -86,6 +87,11 @@ module.exports = {
       /* Reaction Role Buttons */
       if (interaction.customId.startsWith("rr_assign_")) {
         return reactionRoleButtons(interaction);
+      }
+
+      /* Emoji Vault Buttons */
+      if (interaction.customId.startsWith("browser_add_")) {
+        return emojiBrowserButtons(interaction);
       }
 
       /* Ticket & other buttons */

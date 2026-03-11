@@ -1,0 +1,19 @@
+const { SlashCommandBuilder } = require("discord.js");
+const StickerBank = require("../../database/models/StickerBank");
+const { spawnBrowserUI } = require("../../utils/browserUI");
+
+module.exports = {
+
+  name: "stickerbrowse",
+  category: "sticker",
+  description: "Browse the visual interface of the Global Sticker Vault.",
+
+  data: new SlashCommandBuilder()
+    .setName("stickerbrowse")
+    .setDescription("Open the visual interactive sticker browser."),
+
+  async run(ctx) {
+    const stickers = await StickerBank.find().sort({ createdAt: -1 });
+    await spawnBrowserUI(ctx, stickers, "Sticker");
+  }
+};
