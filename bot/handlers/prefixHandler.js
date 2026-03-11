@@ -17,7 +17,18 @@ module.exports = async (message, client) => {
     .trim()
     .split(/ +/);
 
-  const commandName = args.shift()?.toLowerCase();
+  let commandName = args.shift()?.toLowerCase();
+
+  // Handle multi-word aliases for POP Market
+  if (commandName === "sell" && args[0]?.toLowerCase() === "pop") {
+     commandName = "sell"; // 'sellpop' command name is actually 'sell' internally checking for 'pop' arg
+  } else if (commandName === "pop" && args[0]?.toLowerCase() === "cancel") {
+     commandName = "cancelpop";
+     args.shift(); // remove 'cancel' from args
+  } else if (commandName === "pop" && args[0]?.toLowerCase() === "market") {
+     commandName = "popmarket";
+     args.shift(); // remove 'market' from args
+  }
 
   const command = client.commands.get(commandName);
 

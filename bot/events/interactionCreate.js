@@ -1,6 +1,7 @@
 const Context = require("../structures/Context");
 const buttonHandler = require("../handlers/buttonHandler");
 const modalHandler = require("../handlers/modalHandler");
+const popButtons = require("../interactions/popButtons");
 
 /* Server Overview button embeds */
 const overview = require("../systems/panels/serverOverview");
@@ -72,8 +73,16 @@ module.exports = {
 
       }
 
-      /* Ticket & other buttons */
+      /* POP Marketplace buttons */
+      if (
+        interaction.customId.startsWith("buy_pop_") ||
+        interaction.customId.startsWith("deal_final_") ||
+        interaction.customId.startsWith("deal_cancel_")
+      ) {
+        return popButtons(interaction);
+      }
 
+      /* Ticket & other buttons */
       return buttonHandler(interaction);
 
     }
