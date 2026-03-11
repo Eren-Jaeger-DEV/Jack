@@ -13,20 +13,29 @@ class Context {
     this.guild = source.guild;
     this.channel = source.channel;
 
+    this.options = this.isInteraction ? source.options : null;
+
   }
 
   async reply(data) {
 
-    if (this.isInteraction) {
+    try {
 
-      if (this.source.deferred || this.source.replied) {
-        return this.source.followUp(data);
+      if (this.isInteraction) {
+
+        if (this.source.deferred || this.source.replied) {
+          return await this.source.followUp(data);
+        }
+
+        return await this.source.reply(data);
       }
 
-      return this.source.reply(data);
+      return await this.channel.send(data);
+
+    } catch (err) {
+      console.error("Reply error:", err);
     }
 
-    return this.channel.send(data);
   }
 
   async defer() {
@@ -34,14 +43,6 @@ class Context {
     if (this.isInteraction) {
       return this.source.deferReply();
     }
-
-  }
-
-  get options() {
-
-    if (!this.isInteraction) return {};
-
-    return this.source.options;
 
   }
 

@@ -5,6 +5,7 @@ module.exports = {
 
   name: "minussyn",
   category: "clan",
+  description: "Remove synergy points from a player",
 
   data: new SlashCommandBuilder()
     .setName("minussyn")
@@ -27,35 +28,36 @@ module.exports = {
       ctx.member.permissions.has(PermissionFlagsBits.ModerateMembers) ||
       ctx.member.permissions.has(PermissionFlagsBits.Administrator);
 
-    if (!hasPerm && !isServerOwner)
+    if (!hasPerm && !isServerOwner) {
       return ctx.reply("❌ Only Moderators, Admins, or the Server Owner can modify synergy.");
+    }
 
     let user;
     let points;
 
     /* SLASH */
-    if (ctx.type === "slash") {
 
-      user = ctx.interaction.options.getUser("user");
-      points = ctx.interaction.options.getInteger("points");
-
+    if (ctx.options?.getUser) {
+      user = ctx.options.getUser("user");
+      points = ctx.options.getInteger("points");
     }
 
     /* PREFIX */
-    if (ctx.type === "prefix") {
 
-      user = ctx.message.mentions.users.first();
-      points = parseInt(ctx.args[1]);
+    if (!user) {
+      user = ctx.message?.mentions?.users?.first();
+      points = parseInt(ctx.args?.[1]);
+    }
 
-      if (!user || !points)
-        return ctx.reply("Usage: jack minussyn @user 200");
-
+    if (!user || !points) {
+      return ctx.reply("Usage: `jack minussyn @user 200`");
     }
 
     const player = await Player.findOne({ discordId: user.id });
 
-    if (!player)
+    if (!player) {
       return ctx.reply("❌ Player not registered.");
+    }
 
     player.seasonSynergy -= points;
     player.weeklySynergy -= points;
@@ -65,7 +67,7 @@ module.exports = {
 
     await player.save();
 
-    ctx.reply(`⚠️ Removed **${points} synergy** from **${user.tag}**`);
+    await ctx.reply(`⚠️ Removed **${points} synergy** from **${user.tag}**`);
 
   }
 

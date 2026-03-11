@@ -10,6 +10,7 @@ module.exports = {
 
   name: "register",
   category: "clan",
+  description: "Register your BGMI player profile",
 
   data: new SlashCommandBuilder()
     .setName("register")
@@ -19,11 +20,11 @@ module.exports = {
 
     /* PREFIX COMMAND */
 
-    if (ctx.type === "prefix") {
+    if (!ctx.isInteraction) {
       return ctx.reply("Use `/register` to open the registration form.");
     }
 
-    /* SLASH COMMAND */
+    /* SLASH COMMAND → OPEN MODAL */
 
     const modal = new ModalBuilder()
       .setCustomId("player_register_modal")
@@ -60,7 +61,7 @@ module.exports = {
       new ActionRowBuilder().addComponents(modes)
     );
 
-    await ctx.interaction.showModal(modal);
+    await ctx.source.showModal(modal);
 
   }
 

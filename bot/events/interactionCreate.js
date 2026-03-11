@@ -1,35 +1,35 @@
 const Context = require("../structures/Context");
 
-module.exports = async (client, interaction) => {
+module.exports = {
 
-  if (!interaction.isChatInputCommand()) return;
+  name: "interactionCreate",
 
-  const command = client.commands.get(interaction.commandName);
-  if (!command) return;
+  async execute(interaction, client) {
 
-  const ctx = new Context(client, interaction);
+    if (!interaction.isChatInputCommand()) return;
 
-  try {
+    const command = client.commands.get(interaction.commandName);
+    if (!command) return;
 
-    // JACK 3.0 FORMAT
-    if (command.run) {
-      return command.run(ctx);
-    }
+    const ctx = new Context(client, interaction);
 
-    // JACK 2.0 FORMAT
-    if (command.execute) {
-      return command.execute(client, interaction);
-    }
+    try {
 
-  } catch (error) {
+      if (command.run) {
+        await command.run(ctx);
+      }
 
-    console.error("Slash command error:", error);
+    } catch (err) {
 
-    if (!interaction.replied) {
-      interaction.reply({
-        content: "An error occurred while executing this command.",
-        ephemeral: true
-      });
+      console.error(`Command error (${interaction.commandName})`, err);
+
+      if (!interaction.replied) {
+        await interaction.reply({
+          content: "⚠️ Something went wrong executing this command.",
+          ephemeral: true
+        });
+      }
+
     }
 
   }

@@ -5,6 +5,7 @@ module.exports = {
 
   name: "deleteplayer",
   category: "clan",
+  description: "Delete a player's clan profile",
 
   data: new SlashCommandBuilder()
     .setName("deleteplayer")
@@ -20,38 +21,41 @@ module.exports = {
 
     let user;
 
-    /* PREFIX COMMAND */
+    /* SLASH */
 
-    if (ctx.type === "prefix") {
-
-      if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator))
-        return ctx.reply("❌ You do not have permission.");
-
-      user = ctx.message.mentions.users.first();
-
-      if (!user)
-        return ctx.reply("Usage: jack deleteplayer @user");
-
+    if (ctx.options?.getUser) {
+      user = ctx.options.getUser("user");
     }
 
-    /* SLASH COMMAND */
+    /* PREFIX */
 
-    if (ctx.type === "slash") {
-      user = ctx.interaction.options.getUser("user");
+    if (!user) {
+
+      if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return ctx.reply("❌ You do not have permission.");
+      }
+
+      user = ctx.message?.mentions?.users?.first();
+
+      if (!user) {
+        return ctx.reply("Usage: `jack deleteplayer @user`");
+      }
+
     }
 
     const player = await Player.findOne({
       discordId: user.id
     });
 
-    if (!player)
+    if (!player) {
       return ctx.reply("❌ Player profile not found.");
+    }
 
     await Player.deleteOne({
       discordId: user.id
     });
 
-    ctx.reply(`🗑️ Player profile for **${user.tag}** has been deleted.`);
+    await ctx.reply(`🗑️ Player profile for **${user.tag}** has been deleted.`);
 
   }
 

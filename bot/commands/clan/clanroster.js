@@ -5,6 +5,7 @@ module.exports = {
 
   name: "clanroster",
   category: "clan",
+  description: "View the full clan player roster",
 
   data: new SlashCommandBuilder()
     .setName("clanroster")
@@ -15,14 +16,13 @@ module.exports = {
     const players = await Player.find({})
       .sort({ seasonSynergy: -1 });
 
-    if (!players.length)
+    if (!players.length) {
       return ctx.reply("❌ No players registered yet.");
+    }
 
-    const list = players.map((p, i) => {
-
-      return `${i + 1}. **${p.ign}** — UID: ${p.uid}`;
-
-    }).join("\n");
+    const list = players
+      .map((p, i) => `${i + 1}. **${p.ign}** — UID: ${p.uid}`)
+      .join("\n");
 
     const embed = new EmbedBuilder()
       .setTitle("🎮 Clan Player Roster")
@@ -31,7 +31,7 @@ module.exports = {
       .setFooter({ text: `Total Players: ${players.length}` })
       .setTimestamp();
 
-    ctx.reply({ embeds: [embed] });
+    await ctx.reply({ embeds: [embed] });
 
   }
 

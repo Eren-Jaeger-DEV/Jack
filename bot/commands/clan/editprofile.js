@@ -12,6 +12,7 @@ module.exports = {
 
   name: "editprofile",
   category: "clan",
+  description: "Edit your BGMI player profile",
 
   data: new SlashCommandBuilder()
     .setName("editprofile")
@@ -21,7 +22,7 @@ module.exports = {
 
     /* PREFIX COMMAND */
 
-    if (ctx.type === "prefix") {
+    if (!ctx.isInteraction) {
       return ctx.reply("Use `/editprofile` to edit your profile.");
     }
 
@@ -72,7 +73,7 @@ module.exports = {
       new ActionRowBuilder().addComponents(modes)
     );
 
-    await ctx.interaction.showModal(modal);
+    await ctx.source.showModal(modal);
 
   }
 

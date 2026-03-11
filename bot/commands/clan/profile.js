@@ -5,6 +5,7 @@ module.exports = {
 
   name: "profile",
   category: "clan",
+  description: "Show BGMI player profile",
 
   data: new SlashCommandBuilder()
     .setName("profile")
@@ -17,17 +18,12 @@ module.exports = {
 
   async run(ctx) {
 
-    let user;
+    /* GET TARGET USER */
 
-    /* SLASH */
-    if (ctx.type === "slash") {
-      user = ctx.interaction.options.getUser("user") || ctx.user;
-    }
-
-    /* PREFIX */
-    if (ctx.type === "prefix") {
-      user = ctx.message.mentions.users.first() || ctx.user;
-    }
+    let user =
+      ctx.options?.getUser?.("user") ||
+      ctx.message?.mentions?.users?.first() ||
+      ctx.user;
 
     const player = await Player.findOne({ discordId: user.id });
 
@@ -66,7 +62,6 @@ module.exports = {
       .setTitle(`🎮 ${name}'s BGMI Profile`)
       .setColor("Blue")
       .addFields(
-
         { name: "IGN", value: player.ign || "N/A", inline: true },
         { name: "UID", value: player.uid || "N/A", inline: true },
         { name: "Account Level", value: `${player.accountLevel || "N/A"}`, inline: true },
@@ -78,14 +73,13 @@ module.exports = {
 
         { name: "Weekly Synergy", value: `${player.weeklySynergy || 0}`, inline: true },
         { name: "Weekly Rank", value: rankDisplay(weeklyRank), inline: true }
-
       )
       .setFooter({ text: "Jack Clan System" });
 
     if (player.screenshot)
       embed.setImage(player.screenshot);
 
-    ctx.reply({ embeds: [embed] });
+    await ctx.reply({ embeds: [embed] });
 
   }
 

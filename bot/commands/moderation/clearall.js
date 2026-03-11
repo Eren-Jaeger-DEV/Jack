@@ -11,6 +11,7 @@ module.exports = {
 
   name: "clearall",
   category: "moderation",
+  description: "Delete all messages in the channel",
 
   data: new SlashCommandBuilder()
     .setName('clearall')
@@ -19,34 +20,40 @@ module.exports = {
 
   async run(ctx) {
 
-    /* PREFIX PERMISSION CHECK */
+    /* USER PERMISSION CHECK */
 
-    if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.ManageMessages))
-        return ctx.reply('❌ No permission.');
-
+    if (!checkUser(ctx.member, PermissionFlagsBits.ManageMessages)) {
+      return ctx.reply("❌ You don't have permission to manage messages.");
     }
 
-    if (!checkBot(ctx.guild, PermissionFlagsBits.ManageMessages))
-      return ctx.reply('❌ I lack permission.');
+    /* BOT PERMISSION CHECK */
 
-    ctx.reply("🧹 Clearing channel...");
+    if (!checkBot(ctx.guild, PermissionFlagsBits.ManageMessages)) {
+      return ctx.reply("❌ I don't have permission to manage messages.");
+    }
 
-    const fetched = await ctx.channel.messages.fetch();
+    await ctx.reply("🧹 Clearing channel...");
 
-    await ctx.channel.bulkDelete(fetched, true).catch(() => {});
+    try {
 
-    const embed = new EmbedBuilder()
-      .setTitle('🧹 Channel Cleared')
-      .addFields(
-        { name: 'Moderator', value: ctx.user.tag },
-        { name: 'Channel', value: ctx.channel.toString() }
-      )
-      .setColor('Blue')
-      .setTimestamp();
+      const fetched = await ctx.channel.messages.fetch();
 
-    await logger(ctx.guild, embed);
+      await ctx.channel.bulkDelete(fetched, true).catch(() => {});
+
+      const embed = new EmbedBuilder()
+        .setTitle("🧹 Channel Cleared")
+        .addFields(
+          { name: "Moderator", value: ctx.user.tag },
+          { name: "Channel", value: ctx.channel.toString() }
+        )
+        .setColor("Blue")
+        .setTimestamp();
+
+      await logger(ctx.guild, embed);
+
+    } catch (err) {
+      console.error("clearall error:", err);
+    }
 
   }
 

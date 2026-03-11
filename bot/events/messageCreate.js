@@ -8,13 +8,21 @@ module.exports = {
 
   async execute(message, client) {
 
-    if (message.author.bot) return;
+    if (!message) return;
+    if (message.author?.bot) return;
     if (!message.guild) return;
 
-    await afkHandler(message);
-    await screenshotHandler(message);
-    await levelHandler(message);
-    await prefixHandler(message, client);
+    try {
+
+      await afkHandler(message);
+      await screenshotHandler(message);
+      await levelHandler(message);
+
+      await prefixHandler(message, client);
+
+    } catch (err) {
+      console.error("messageCreate error:", err);
+    }
 
   }
 };
