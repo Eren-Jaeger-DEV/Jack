@@ -100,13 +100,28 @@ module.exports = {
 
     }
 
+    /* ---------- SELECT MENU INTERACTIONS ---------- */
+    if (interaction.isStringSelectMenu()) {
+      try {
+        if (interaction.customId === "admin_select_action") {
+          return await emojiBrowserButtons(interaction);
+        }
+      } catch (err) {
+        console.error("Select Menu interaction error:", err);
+      }
+    }
+
     /* ---------- MODAL SUBMISSIONS ---------- */
 
     if (interaction.isModalSubmit()) {
-      if (interaction.customId.startsWith("modal_rename_") || interaction.customId.startsWith("modal_pack_")) {
-        return browserModalHandler(interaction);
+      try {
+        if (interaction.customId.startsWith("modal_rename_") || interaction.customId.startsWith("modal_pack_")) {
+          return await browserModalHandler(interaction);
+        }
+        return await modalHandler(interaction);
+      } catch (err) {
+        console.error("Modal submission error:", err);
       }
-      return modalHandler(interaction);
     }
 
   }
