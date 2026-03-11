@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
 const { searchEmojiCDN, buildEmojiEmbed } = require("../../utils/emojiCDN");
+const EmojiBank = require("../../database/models/EmojiBank");
+const { trackUsage } = require("../../utils/usageTracker");
 
 module.exports = {
 
@@ -23,9 +25,15 @@ module.exports = {
     }
 
     if (matches.length === 1) {
-      // Direct hit
-      const embed = buildEmojiEmbed(matches[0]);
-      return ctx.reply({ embeds: [embed] });
+      const doc = matches[0];
+      // Track Usage
+      await trackUsage(doc.name, ctx.user?.id || ctx.author.id);
+
+      // Provide the image raw
+      const isAnimated = doc.format === "gif";
+      const emojiFormat = isAnimated ? "a" : "";
+      
+      return ctx.reply({ content: `<${emojiFormat}:${doc.name}:${doc.emojiID}>` });
     }
 
     // Menu logic if multiple partial matches
@@ -58,6 +66,7 @@ module.exports = {
        const selectedID = i.values[0].split("_")[0];
        const targetEmoji = matches.find(m => m.emojiID === selectedID);
        if (targetEmoji) {
+           await trackUsage(targetEmoji.name, i.user.id);
            await i.update({ content: null, embeds: [buildEmojiEmbed(targetEmoji)], components: [] });
        }
     });

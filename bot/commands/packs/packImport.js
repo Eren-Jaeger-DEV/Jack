@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
 const { importPackToServer } = require("../../utils/packManager");
 
 module.exports = {
@@ -21,11 +21,41 @@ module.exports = {
     const packName = ctx.type === "slash" ? ctx.options.getString("packname").toLowerCase() : ctx.args.join(" ").toLowerCase();
     if (!packName) return ctx.reply("❌ Usage: `/packimport <packname>`");
 
-    await ctx.reply(`⏳ Attempting to import pack \`${packName}\`... This may take a moment depending on the pack size.`);
+    const msg = await ctx.reply({ content: `⏳ Attempting to evaluate pack \`${packName}\` constraints...`, fetchReply: true });
 
-    const result = await importPackToServer(packName, ctx.guild);
+    const result = await importPackToServer(packName, ctx.guild, false);
 
-    // Using send instead of editReply in case of long timeout or secondary updates
-    return ctx.channel.send(result.success ? `✅ ${result.message}` : `❌ ${result.message}`);
+    if (!result.success && result.needsReplacement) {
+        const row = new ActionRowBuilder().addComponents(
+           new ButtonBuilder().setCustomId("replace_pack").setLabel("Force Replace Overflows").setStyle(ButtonStyle.Danger),
+           new ButtonBuilder().setCustomId("cancel_import").setLabel("Cancel").setStyle(ButtonStyle.Secondary)
+        );
+
+        await msg.edit({ content: `⚠️ ${result.message}\nDo you want to forcefuly delete the oldest custom emojis to make room for this pack?`, components: [row] });
+
+        const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+        collector.on('collect', async i => {
+            if (i.user.id !== (ctx.user?.id || ctx.author.id)) {
+                return i.reply({ content: "You cannot make this decision.", ephemeral: true });
+            }
+
+            if (i.customId === "cancel_import") {
+                return i.update({ content: "❌ Import Cancelled.", components: [] });
+            }
+
+            if (i.customId === "replace_pack") {
+                await i.update({ content: `⏳ Forcing replacement of old emojis to import \`${packName}\`...`, components: [] });
+                const forceResult = await importPackToServer(packName, ctx.guild, true);
+                return msg.edit({ content: forceResult.success ? `✅ ${forceResult.message}` : `❌ ${forceResult.message}`, components: [] });
+            }
+        });
+
+        collector.on('end', collected => {
+            if (collected.size === 0) msg.edit({ components: [] }).catch(()=>{});
+        });
+        return;
+    }
+
+    return msg.edit(result.success ? `✅ ${result.message}` : `❌ ${result.message}`);
   }
 };

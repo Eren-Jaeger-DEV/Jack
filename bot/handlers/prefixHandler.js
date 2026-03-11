@@ -55,6 +55,9 @@ module.exports = async (message, client) => {
      else if (subCommand === "browse") { commandName = "emojibrowse"; args.shift(); }
      else if (subCommand === "add") { commandName = "emojiadd"; args.shift(); }
      else if (subCommand === "remove") { commandName = "emojiremove"; args.shift(); }
+     else if (subCommand === "slots") { commandName = "emojislots"; args.shift(); }
+     else if (subCommand === "temp") { commandName = "emojitemp"; args.shift(); }
+     else if (subCommand === "cleanup") { commandName = "emojicleanup"; args.shift(); }
      // Else it defaults to calling "emoji" search CDN internally
   } else if (commandName === "sticker") {
      const subCommand = args[0]?.toLowerCase();
