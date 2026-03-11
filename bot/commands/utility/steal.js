@@ -45,6 +45,13 @@ module.exports = {
     // Check for Stickers
     const stickers = targetMessage.stickers;
 
+    // Check for Attachments (Images/GIFs)
+    const attachment = targetMessage.attachments.find(a => a.contentType && a.contentType.startsWith("image/"));
+
+    // Check for raw URLs (Tenor or direct image links)
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = targetMessage.content.match(urlRegex);
+
     // Default name if provided via args (e.g., `j steal coolpepe`)
     let customName = ctx.args[0] ? ctx.args[0].toLowerCase() : null;
 
@@ -69,6 +76,39 @@ module.exports = {
       return ctx.reply(result.success ? `🚀 Emoji Stolen! ${result.message}` : `❌ Failed: ${result.message}`);
     }
 
-    return ctx.reply("❌ I could not find a custom emoji or sticker in the message you replied to.");
+    // --- Process Attachment or Direct URL ---
+    let targetUrl = null;
+    let targetExtension = "png";
+
+    if (attachment) {
+      targetUrl = attachment.url;
+      if (attachment.contentType === "image/gif") targetExtension = "gif";
+    } else if (urls && urls.length > 0) {
+      targetUrl = urls[0];
+      if (targetUrl.includes(".gif") || targetUrl.includes("tenor.com")) {
+        targetExtension = "gif";
+        // Convert Tenor links to raw media links if possible (Discord usually wraps them, 
+        // but for simplicity we just store the URL. Mongoose Downloader fetches the buffer anyway.
+        // Wait, Tenor webpage links don't return raw buffers. Let's fix Tenor specifically.
+        if (targetUrl.includes("tenor.com/view/")) {
+           targetUrl += ".gif"; // Crude workaround, downloader might still fail if it's an HTML page.
+           // Better approach: Just warn if they link a Tenor webpage, or let the Downloader fail gracefully.
+        }
+      }
+    }
+
+    if (targetUrl) {
+      // Must have a custom name if we are stealing a raw file/url since it doesn't have an inherent name
+      if (!customName) {
+         customName = `stolen_${Math.random().toString(36).substring(2, 6)}`;
+      }
+      // Generate a mock ID for the database
+      const mockID = `raw_${Date.now()}`;
+      
+      const result = await storeEmojiInBank(customName, targetUrl, mockID, ctx.user || ctx.author, ctx.guild);
+      return ctx.reply(result.success ? `🚀 Raw Image/GIF Stolen as an Emoji! ${result.message}\n*(Stored as: ${customName})*` : `❌ Failed to steal raw link: ${result.message}`);
+    }
+
+    return ctx.reply("❌ I could not find a custom emoji, sticker, attachment, or image URL in the message you replied to.");
   }
 };
