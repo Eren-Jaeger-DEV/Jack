@@ -34,7 +34,12 @@ module.exports = async function emojiBrowserButtons(interaction) {
 
       // Determine if it's an emoji or sticker for the target context
       const isEmoji = await EmojiBank.findOne({ emojiID: idValue });
-      const targetType = isEmoji ? "emoji" : "sticker";
+      const isSticker = await StickerBank.findOne({ stickerID: idValue });
+      
+      let targetType;
+      if (isEmoji) targetType = "emoji";
+      else if (isSticker) targetType = "sticker";
+      else return interaction.reply({ content: "❌ Failed to locate this item in the database.", ephemeral: true });
 
       if (actionType === "rename") {
           const modal = new ModalBuilder()
