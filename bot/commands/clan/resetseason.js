@@ -5,6 +5,7 @@ module.exports = {
 
   name: "resetseason",
   category: "clan",
+  description: "Reset season and weekly synergy for all players",
 
   data: new SlashCommandBuilder()
     .setName("resetseason")

@@ -11,6 +11,7 @@ module.exports = {
 
   name: "unban",
   category: "moderation",
+  description: "Unban a user from the server",
 
   data: new SlashCommandBuilder()
     .setName('unban')

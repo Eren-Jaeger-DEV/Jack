@@ -11,6 +11,7 @@ module.exports = {
 
   name: "removerole",
   category: "moderation",
+  description: "Remove a role from a user",
 
   data: new SlashCommandBuilder()
     .setName('removerole')

@@ -11,6 +11,7 @@ module.exports = {
 
   name: "warnings",
   category: "moderation",
+  description: "View warnings for a user",
 
   data: new SlashCommandBuilder()
     .setName('warnings')

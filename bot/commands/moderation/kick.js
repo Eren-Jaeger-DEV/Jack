@@ -11,6 +11,7 @@ module.exports = {
 
   name: "kick",
   category: "moderation",
+  description: "Kick a member from the server",
 
   data: new SlashCommandBuilder()
     .setName('kick')

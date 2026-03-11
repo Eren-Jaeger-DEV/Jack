@@ -13,6 +13,7 @@ module.exports = {
 
   name: "warn",
   category: "moderation",
+  description: "Warn a user with a reason",
 
   data: new SlashCommandBuilder()
     .setName('warn')

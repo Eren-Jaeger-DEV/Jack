@@ -11,6 +11,7 @@ module.exports = {
 
   name: "unmute",
   category: "moderation",
+  description: "Remove timeout from a member",
 
   data: new SlashCommandBuilder()
     .setName('unmute')

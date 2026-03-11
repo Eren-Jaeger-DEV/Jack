@@ -11,6 +11,7 @@ module.exports = {
 
   name: "mute",
   category: "moderation",
+  description: "Timeout a member for a specified duration",
 
   data: new SlashCommandBuilder()
     .setName('mute')

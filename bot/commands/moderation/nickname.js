@@ -11,6 +11,7 @@ module.exports = {
 
   name: "nickname",
   category: "moderation",
+  description: "Change a user's nickname",
 
   data: new SlashCommandBuilder()
     .setName('nickname')

@@ -4,6 +4,7 @@ const { SlashCommandBuilder } = require("discord.js");
 module.exports = {
 
   name: "afk",
+  category: "utility",
   description: "Set yourself as AFK",
 
   data: new SlashCommandBuilder()
@@ -16,56 +17,43 @@ module.exports = {
         .setRequired(false)
     ),
 
-  /* ---------- SLASH COMMAND ---------- */
+  async run(ctx) {
 
-  async execute(interaction) {
+    let reason;
 
-    const reason = interaction.options.getString("reason") || "AFK";
+    /* SLASH */
 
-    const member = await interaction.guild.members.fetch(interaction.user.id);
+    if (ctx.type === "slash") {
+
+      reason = ctx.options.getString("reason") || "AFK";
+
+    }
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      reason = ctx.args.join(" ") || "AFK";
+
+    }
+
+    const member = await ctx.guild.members.fetch(ctx.user.id);
 
     await Afk.findOneAndUpdate(
-      { userId: interaction.user.id },
+      { userId: ctx.user.id },
       { reason, since: new Date() },
       { upsert: true }
     );
 
     if (!member.nickname || !member.nickname.startsWith("[AFK]")) {
 
-      const newNick = `[AFK] ${member.displayName.replace("[AFK] ","")}`;
-      
+      const newNick = `[AFK] ${member.displayName.replace("[AFK] ", "")}`;
 
       await member.setNickname(newNick).catch(() => {});
 
     }
 
-    interaction.reply(`You are now AFK: **${reason}**`);
-
-  },
-
-  /* ---------- PREFIX COMMAND ---------- */
-
-  async runPrefix(client, message, args) {
-
-    const reason = args.join(" ") || "AFK";
-
-    const member = await message.guild.members.fetch(message.author.id);
-
-    await Afk.findOneAndUpdate(
-      { userId: message.author.id },
-      { reason, since: new Date() },
-      { upsert: true }
-    );
-
-    if (!member.nickname || !member.nickname.startsWith("[AFK]")) {
-
-      const newNick = `[AFK] ${member.displayName}`;
-
-      await member.setNickname(newNick).catch(() => {});
-
-    }
-
-    message.reply(`You are now AFK: **${reason}**`);
+    ctx.reply(`You are now AFK: **${reason}**`);
 
   }
 

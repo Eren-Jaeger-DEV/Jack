@@ -7,6 +7,7 @@ module.exports = {
 
   name: "poll",
   category: "utility",
+  description: "Create a Yes/No poll",
 
   data: new SlashCommandBuilder()
     .setName('poll')

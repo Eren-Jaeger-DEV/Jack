@@ -1,11 +1,10 @@
+const { prefixes } = require("../../config/prefixes");
 const Context = require("../structures/Context");
 
 module.exports = async (message, client) => {
 
   if (!message.guild) return;
   if (message.author.bot) return;
-
-  const prefixes = ["j", "J", "jack", "Jack"];
 
   const prefix = prefixes.find(p =>
     message.content.startsWith(p)

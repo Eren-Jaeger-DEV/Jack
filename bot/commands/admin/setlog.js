@@ -19,20 +19,44 @@ module.exports = {
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-  async execute(interaction) {
+  async run(ctx) {
 
-    const channel = interaction.options.getChannel('channel');
+    /* Permission check for prefix */
+
+    if (ctx.type === "prefix") {
+      if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator))
+        return ctx.reply("❌ No permission.");
+    }
+
+    let channel;
+
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      channel = ctx.options.getChannel('channel');
+
+    }
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      channel = ctx.message.mentions.channels.first();
+
+      if (!channel) {
+        return ctx.reply("Usage: `jack setlog #channel`");
+      }
+
+    }
 
     await GuildConfig.findOneAndUpdate(
-      { guildId: interaction.guild.id },
+      { guildId: ctx.guild.id },
       { logChannelId: channel.id },
       { upsert: true }
     );
 
-    await interaction.reply({
-      content: `✅ Log channel set to ${channel}`,
-      ephemeral: true
-    });
+    await ctx.reply(`✅ Log channel set to ${channel}`);
 
   }
 

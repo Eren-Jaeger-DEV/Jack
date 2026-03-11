@@ -5,6 +5,7 @@ module.exports = {
 
   name: "topweekly",
   category: "clan",
+  description: "Show weekly synergy leaderboard",
 
   data: new SlashCommandBuilder()
     .setName("topweekly")

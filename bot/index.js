@@ -8,7 +8,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMembers
   ]
 });
 
@@ -30,6 +31,9 @@ mongoose
 
 client.once("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
+  
+  // Start the background XP flush worker
+  require("./utils/xpWorker")(client);
 });
 
 /* Login */

@@ -7,6 +7,7 @@ module.exports = {
 
   name: "serverinfo",
   category: "utility",
+  description: "Show information about the server",
 
   data: new SlashCommandBuilder()
     .setName('serverinfo')

@@ -7,6 +7,7 @@ module.exports = {
 
   name: "avatar",
   category: "utility",
+  description: "Show a user's avatar",
 
   data: new SlashCommandBuilder()
     .setName('avatar')

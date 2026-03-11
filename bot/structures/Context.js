@@ -8,6 +8,13 @@ class Context {
 
     this.isInteraction = typeof source.isChatInputCommand === "function";
 
+    /* slash / prefix identifier — used by commands for branching */
+    this.type = this.isInteraction ? "slash" : "prefix";
+
+    /* raw handles so commands can access interaction.options / message.mentions */
+    this.interaction = this.isInteraction ? source : null;
+    this.message = this.isInteraction ? null : source;
+
     this.user = source.user || source.author;
     this.member = source.member;
     this.guild = source.guild;

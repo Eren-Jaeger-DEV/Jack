@@ -5,52 +5,30 @@ module.exports = {
 
   name: "rank",
   category: "level",
+  description: "Show your level, XP, and server rank",
 
   data: new SlashCommandBuilder()
     .setName("rank")
     .setDescription("Show your rank"),
 
-  async execute(interaction) {
+  async run(ctx) {
 
     const profile = await Level.findOne({
-      userId: interaction.user.id,
-      guildId: interaction.guild.id
+      userId: ctx.user.id,
+      guildId: ctx.guild.id
     });
 
     if (!profile) {
-
-      return interaction.reply("No XP yet.");
-
+      return ctx.reply("No XP yet.");
     }
 
     const rank =
       (await Level.countDocuments({
-        guildId: interaction.guild.id,
+        guildId: ctx.guild.id,
         xp: { $gt: profile.xp }
       })) + 1;
 
-    interaction.reply(
-      `Level: **${profile.level}**\nXP: **${profile.xp}**\nRank: **${rank}**`
-    );
-
-  },
-
-  async runPrefix(client, message) {
-
-    const profile = await Level.findOne({
-      userId: message.author.id,
-      guildId: message.guild.id
-    });
-
-    if (!profile) return message.reply("No XP yet.");
-
-    const rank =
-      (await Level.countDocuments({
-        guildId: message.guild.id,
-        xp: { $gt: profile.xp }
-      })) + 1;
-
-    message.reply(
+    ctx.reply(
       `Level: **${profile.level}**\nXP: **${profile.xp}**\nRank: **${rank}**`
     );
 

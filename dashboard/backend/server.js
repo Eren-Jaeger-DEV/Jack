@@ -20,7 +20,7 @@ app.use(cors({
 /* SESSION */
 
 app.use(session({
-  secret: "jackbotsecret",
+  secret: process.env.SESSION_SECRET || "jackbotsecret",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -41,7 +41,7 @@ passport.deserializeUser((obj, done) => done(null, obj));
 passport.use(new DiscordStrategy({
   clientID: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
-  callbackURL: "http://localhost:3000/auth/discord/callback",
+  callbackURL: process.env.DASHBOARD_CALLBACK_URL || "http://localhost:3000/auth/discord/callback",
   scope: ["identify", "guilds"]
 },
 (accessToken, refreshToken, profile, done) => {
@@ -65,7 +65,7 @@ app.get("/auth/discord",
 app.get("/auth/discord/callback",
   passport.authenticate("discord", { failureRedirect: "/" }),
   (req, res) => {
-    res.redirect("http://localhost:3001/dashboard");
+    res.redirect(process.env.DASHBOARD_FRONTEND_URL || "http://localhost:3001/dashboard");
   }
 );
 
@@ -89,7 +89,7 @@ app.get("/api/server", (req, res) => {
     return res.status(401).json({ error: "Not logged in" });
   }
 
-  const guildId = "1341978655437619250";
+  const guildId = process.env.GUILD_ID || "1341978655437619250";
 
   if (!bot.isReady()) {
     return res.json({

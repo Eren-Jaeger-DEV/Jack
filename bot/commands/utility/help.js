@@ -5,6 +5,8 @@ const path = require("path");
 module.exports = {
 
   name: "help",
+  category: "utility",
+  description: "Show all available commands",
 
   data: new SlashCommandBuilder()
     .setName("help")
@@ -47,37 +49,12 @@ module.exports = {
 
   },
 
-  /* ---------- SLASH COMMAND ---------- */
+  /* ---------- HYBRID COMMAND ---------- */
 
-  async execute(interaction) {
+  async run(ctx) {
 
-    const categories = this.getCommands(false);
-
-    const embed = new EmbedBuilder()
-      .setTitle("📖 Jack Bot Command Guide")
-      .setDescription("All commands grouped automatically.")
-      .setColor("Blue")
-      .setFooter({ text: "Prefix also works: j | J | jack | Jack" });
-
-    for (const [category, cmds] of Object.entries(categories)) {
-
-      embed.addFields({
-        name: `📂 ${category}`,
-        value: cmds,
-        inline: false
-      });
-
-    }
-
-    interaction.reply({ embeds: [embed] });
-
-  },
-
-  /* ---------- PREFIX COMMAND ---------- */
-
-  async runPrefix(client, message) {
-
-    const categories = this.getCommands(true);
+    const isPrefix = ctx.type === "prefix";
+    const categories = this.getCommands(isPrefix);
 
     const embed = new EmbedBuilder()
       .setTitle("📖 Jack Bot Command Guide")
@@ -95,7 +72,7 @@ module.exports = {
 
     }
 
-    message.reply({ embeds: [embed] });
+    ctx.reply({ embeds: [embed] });
 
   }
 

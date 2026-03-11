@@ -11,6 +11,7 @@ module.exports = {
 
   name: "clear",
   category: "moderation",
+  description: "Delete multiple messages from a channel",
 
   data: new SlashCommandBuilder()
     .setName('clear')

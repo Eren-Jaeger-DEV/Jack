@@ -5,7 +5,7 @@ module.exports = {
 
   name: "disable",
   category: "admin",
-  description: "Disable a command category",
+  description: "Disable a command category in a channel or server-wide",
 
   data: new SlashCommandBuilder()
     .setName("disable")
@@ -34,63 +34,65 @@ module.exports = {
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-  async execute(interaction) {
+  async run(ctx) {
 
-    const category = interaction.options.getString("category");
-    const channel = interaction.options.getChannel("channel");
-    const all = interaction.options.getBoolean("all");
+    /* Permission check for prefix */
 
+    if (ctx.type === "prefix") {
+      if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator))
+        return ctx.reply("❌ No permission.");
+    }
+
+    let category;
     let channelId;
 
-    if (all) {
-      channelId = "all";
-    } else if (channel) {
-      channelId = channel.id;
-    } else {
-      return interaction.reply({
-        content: "Provide a channel or enable `all`.",
-        ephemeral: true
-      });
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      category = ctx.options.getString("category");
+      const channel = ctx.options.getChannel("channel");
+      const all = ctx.options.getBoolean("all");
+
+      if (all) {
+        channelId = "all";
+      } else if (channel) {
+        channelId = channel.id;
+      } else {
+        return ctx.reply("Provide a channel or enable `all`.");
+      }
+
+    }
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      category = ctx.args[0];
+      const target = ctx.args[1];
+
+      if (!category || !target)
+        return ctx.reply("Usage: `jack disable <category> <#channel | all>`");
+
+      channelId =
+        target === "all"
+          ? "all"
+          : ctx.message.mentions.channels.first()?.id;
+
+      if (!channelId)
+        return ctx.reply("Mention a channel or use 'all'.");
+
     }
 
     await Config.findOneAndUpdate(
-      { guildId: interaction.guild.id, channelId, category },
-      { guildId: interaction.guild.id, channelId, category },
+      { guildId: ctx.guild.id, channelId, category },
+      { guildId: ctx.guild.id, channelId, category },
       { upsert: true }
     );
 
-    const target = channel ? channel : "entire server";
+    const target = channelId === "all" ? "entire server" : `<#${channelId}>`;
 
-    interaction.reply(`🚫 ${category} commands disabled in ${target}`);
-
-  },
-
-  async runPrefix(client, message, args) {
-
-    if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-      return message.reply("No permission.");
-
-    const category = args[0];
-    const target = args[1];
-
-    if (!category || !target)
-      return message.reply("Usage: j disable <category> <#channel | all>");
-
-    const channelId =
-      target === "all"
-        ? "all"
-        : message.mentions.channels.first()?.id;
-
-    if (!channelId)
-      return message.reply("Mention a channel or use 'all'.");
-
-    await Config.findOneAndUpdate(
-      { guildId: message.guild.id, channelId, category },
-      { guildId: message.guild.id, channelId, category },
-      { upsert: true }
-    );
-
-    message.reply(`🚫 ${category} commands disabled in ${target}`);
+    ctx.reply(`🚫 ${category} commands disabled in ${target}`);
 
   }
 

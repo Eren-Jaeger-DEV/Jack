@@ -13,6 +13,7 @@ module.exports = {
 
   name: "unwarn",
   category: "moderation",
+  description: "Remove a warning from a user",
 
   data: new SlashCommandBuilder()
     .setName('unwarn')

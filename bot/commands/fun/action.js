@@ -4,7 +4,7 @@ module.exports = {
 
   name: "action",
   category: "fun",
-  description: "Perform a fun action",
+  description: "Perform a fun action (hug, slap, kiss, etc.)",
 
   data: new SlashCommandBuilder()
     .setName("action")
@@ -23,7 +23,7 @@ module.exports = {
           { name: "wave", value: "wave" },
           { name: "dance", value: "dance" },
           { name: "cry", value: "cry" },
-          { name: "punch", value: "slap" },   // fallback mapping
+          { name: "punch", value: "slap" },
           { name: "kick", value: "slap" },
           { name: "kill", value: "slap" },
           { name: "happy", value: "happy" },
@@ -41,12 +41,36 @@ module.exports = {
         .setRequired(false)
     ),
 
-  /* ---------- SLASH COMMAND ---------- */
+  async run(ctx) {
 
-  async execute(interaction) {
+    let type;
+    let user;
 
-    const type = interaction.options.getString("type");
-    const user = interaction.options.getUser("user");
+    /* SLASH */
+
+    if (ctx.type === "slash") {
+
+      type = ctx.options.getString("type");
+      user = ctx.options.getUser("user");
+
+    }
+
+    /* PREFIX */
+
+    if (ctx.type === "prefix") {
+
+      type = ctx.args[0];
+      user = ctx.message.mentions.users.first();
+
+      const allowed = [
+        "hug","pat","slap","kiss","poke","wave","dance","cry",
+        "punch","kick","kill","happy","sad","smile","innocent","evil","irritate"
+      ];
+
+      if (!type || !allowed.includes(type))
+        return ctx.reply(`Available actions: ${allowed.join(", ")}`);
+
+    }
 
     let gif;
 
@@ -64,58 +88,15 @@ module.exports = {
     }
 
     const text = user
-      ? `**${interaction.user.username}** ${type}s **${user.username}**`
-      : `**${interaction.user.username}** ${type}s`;
+      ? `**${ctx.user.username}** ${type}s **${user.username}**`
+      : `**${ctx.user.username}** ${type}s`;
 
     const embed = new EmbedBuilder()
       .setDescription(text)
       .setImage(gif)
       .setColor("Random");
 
-    interaction.reply({ embeds: [embed] });
-
-  },
-
-  /* ---------- PREFIX COMMAND ---------- */
-
-  async runPrefix(client, message, args) {
-
-    const type = args[0];
-    const user = message.mentions.users.first();
-
-    const allowed = [
-      "hug","pat","slap","kiss","poke","wave","dance","cry",
-      "punch","kick","kill","happy","sad","smile","innocent","evil","irritate"
-    ];
-
-    if (!allowed.includes(type))
-      return message.reply(`Available actions: ${allowed.join(", ")}`);
-
-    let gif;
-
-    try {
-
-      const res = await fetch(`https://nekos.best/api/v2/${type}`);
-      const data = await res.json();
-
-      gif = data?.results?.[0]?.url;
-
-    } catch {}
-
-    if (!gif) {
-      gif = "https://media.tenor.com/6Xb1Gq8Lh9kAAAAC/anime.gif";
-    }
-
-    const text = user
-      ? `**${message.author.username}** ${type}s **${user.username}**`
-      : `**${message.author.username}** ${type}s`;
-
-    const embed = new EmbedBuilder()
-      .setDescription(text)
-      .setImage(gif)
-      .setColor("Random");
-
-    message.reply({ embeds: [embed] });
+    ctx.reply({ embeds: [embed] });
 
   }
 

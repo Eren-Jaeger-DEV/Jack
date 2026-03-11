@@ -6,6 +6,7 @@ module.exports = {
 
   name: "prefixtest",
   category: "utility",
+  description: "Test prefix system",
 
   data: new SlashCommandBuilder()
     .setName('prefixtest')

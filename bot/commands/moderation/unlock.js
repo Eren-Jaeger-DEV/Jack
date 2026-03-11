@@ -11,6 +11,7 @@ module.exports = {
 
   name: "unlock",
   category: "moderation",
+  description: "Unlock the current channel",
 
   data: new SlashCommandBuilder()
     .setName('unlock')

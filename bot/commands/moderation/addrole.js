@@ -11,6 +11,7 @@ module.exports = {
 
   name: "addrole",
   category: "moderation",
+  description: "Add a role to a user",
 
   data: new SlashCommandBuilder()
     .setName('addrole')

@@ -5,6 +5,7 @@ module.exports = {
 
   name: "mysynergy",
   category: "clan",
+  description: "See how many synergy points you need to pass the next player",
 
   data: new SlashCommandBuilder()
     .setName("mysynergy")

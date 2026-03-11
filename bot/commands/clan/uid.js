@@ -5,6 +5,7 @@ module.exports = {
 
   name: "uid",
   category: "clan",
+  description: "View a player's BGMI UID",
 
   data: new SlashCommandBuilder()
     .setName("uid")
@@ -21,13 +22,15 @@ module.exports = {
 
     /* SLASH */
 
-    if (ctx.type === "slash")
-      user = ctx.interaction.options.getUser("user") || ctx.user;
+    if (ctx.type === "slash") {
+      user = ctx.options.getUser("user") || ctx.user;
+    }
 
     /* PREFIX */
 
-    if (ctx.type === "prefix")
+    if (ctx.type === "prefix") {
       user = ctx.message.mentions.users.first() || ctx.user;
+    }
 
     const player = await Player.findOne({
       discordId: user.id
