@@ -1,6 +1,7 @@
 const Context = require("../structures/Context");
 const buttonHandler = require("../handlers/buttonHandler");
 const modalHandler = require("../handlers/modalHandler");
+const browserModalHandler = require("../handlers/browserModalHandler");
 const popButtons = require("../interactions/popButtons");
 const reactionRoleButtons = require("../interactions/reactionRoleButtons");
 const emojiBrowserButtons = require("../interactions/emojiBrowserButtons");
@@ -102,9 +103,10 @@ module.exports = {
     /* ---------- MODAL SUBMISSIONS ---------- */
 
     if (interaction.isModalSubmit()) {
-
+      if (interaction.customId.startsWith("modal_rename_") || interaction.customId.startsWith("modal_pack_")) {
+        return browserModalHandler(interaction);
+      }
       return modalHandler(interaction);
-
     }
 
   }
