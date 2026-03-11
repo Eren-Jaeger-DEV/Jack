@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
 const { storeEmojiInBank } = require("../../utils/emojiDownloader");
 const { storeStickerInBank } = require("../../utils/stickerDownloader");
 
@@ -55,12 +55,74 @@ module.exports = {
     // Default name if provided via args (e.g., `j steal coolpepe`)
     let customName = ctx.args[0] ? ctx.args[0].toLowerCase() : null;
 
+    // Helper to handle GIF prompting vs direct store
+    const processAsset = async (name, url, id, extension, isNativeSticker = false) => {
+       if (isNativeSticker) {
+           const result = await storeStickerInBank(name, url, id, ctx.user || ctx.author, ctx.guild);
+           return ctx.reply(result.success ? `🚀 Sticker Stolen! ${result.message}` : `❌ Failed: ${result.message}`);
+       }
+
+       if (extension === "gif") {
+           // Prompt the user for Emoji vs Sticker
+           const row = new ActionRowBuilder().addComponents(
+               new ButtonBuilder()
+                 .setCustomId("choose_emoji")
+                 .setLabel("Steal as Emoji")
+                 .setStyle(ButtonStyle.Success),
+               new ButtonBuilder()
+                 .setCustomId("choose_sticker")
+                 .setLabel("Steal as Sticker")
+                 .setStyle(ButtonStyle.Primary)
+           );
+
+           const msg = await ctx.reply({ 
+               content: `You are stealing a **GIF** (\`${name}\`). How should I vault it?`, 
+               components: [row],
+               fetchReply: true 
+           });
+
+           const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+           collector.on('collect', async i => {
+               if (i.user.id !== (ctx.user?.id || ctx.author.id)) {
+                   return i.reply({ content: "You cannot make this choice.", ephemeral: true });
+               }
+
+               await i.deferUpdate();
+               let result;
+               let typeString = "";
+
+               if (i.customId === "choose_emoji") {
+                   result = await storeEmojiInBank(name, url, id, i.user, ctx.guild);
+                   typeString = "Emoji";
+               } else {
+                   result = await storeStickerInBank(name, url, id, i.user, ctx.guild);
+                   typeString = "Sticker";
+               }
+
+               await msg.edit({ 
+                   content: result.success ? `🚀 Vaulted as **${typeString}**! ${result.message}` : `❌ Failed: ${result.message}`,
+                   components: [] 
+               });
+           });
+
+           collector.on('end', collected => {
+               if (collected.size === 0) {
+                   msg.edit({ content: "⏳ Steal request timed out.", components: [] }).catch(()=>{});
+               }
+           });
+       } else {
+           // Default standard store for PNGs
+           const result = await storeEmojiInBank(name, url, id, ctx.user || ctx.author, ctx.guild);
+           return ctx.reply(result.success ? `🚀 Emoji Stolen! ${result.message}` : `❌ Failed: ${result.message}`);
+       }
+    };
+
     // --- Process Sticker ---
     if (stickers && stickers.size > 0) {
       const sticker = stickers.first();
       customName = customName || sticker.name;
-      const result = await storeStickerInBank(customName, sticker.url, sticker.id, ctx.user || ctx.author, ctx.guild);
-      return ctx.reply(result.success ? `🚀 Sticker Stolen! ${result.message}` : `❌ Failed: ${result.message}`);
+      return processAsset(customName, sticker.url, sticker.id, "png", true); // Pass true to force native sticker vaulting
     }
 
     // --- Process Emoji ---
@@ -72,8 +134,7 @@ module.exports = {
       const url = `https://cdn.discordapp.com/emojis/${id}.${extension}`;
 
       customName = customName || name;
-      const result = await storeEmojiInBank(customName, url, id, ctx.user || ctx.author, ctx.guild);
-      return ctx.reply(result.success ? `🚀 Emoji Stolen! ${result.message}` : `❌ Failed: ${result.message}`);
+      return processAsset(customName, url, id, extension);
     }
 
     // --- Process Attachment or Direct URL ---
@@ -87,26 +148,19 @@ module.exports = {
       targetUrl = urls[0];
       if (targetUrl.includes(".gif") || targetUrl.includes("tenor.com")) {
         targetExtension = "gif";
-        // Convert Tenor links to raw media links if possible (Discord usually wraps them, 
-        // but for simplicity we just store the URL. Mongoose Downloader fetches the buffer anyway.
-        // Wait, Tenor webpage links don't return raw buffers. Let's fix Tenor specifically.
         if (targetUrl.includes("tenor.com/view/")) {
-           targetUrl += ".gif"; // Crude workaround, downloader might still fail if it's an HTML page.
-           // Better approach: Just warn if they link a Tenor webpage, or let the Downloader fail gracefully.
+           targetUrl += ".gif";
         }
       }
     }
 
     if (targetUrl) {
-      // Must have a custom name if we are stealing a raw file/url since it doesn't have an inherent name
       if (!customName) {
          customName = `stolen_${Math.random().toString(36).substring(2, 6)}`;
       }
-      // Generate a mock ID for the database
       const mockID = `raw_${Date.now()}`;
       
-      const result = await storeEmojiInBank(customName, targetUrl, mockID, ctx.user || ctx.author, ctx.guild);
-      return ctx.reply(result.success ? `🚀 Raw Image/GIF Stolen as an Emoji! ${result.message}\n*(Stored as: ${customName})*` : `❌ Failed to steal raw link: ${result.message}`);
+      return processAsset(customName, targetUrl, mockID, targetExtension);
     }
 
     return ctx.reply("❌ I could not find a custom emoji, sticker, attachment, or image URL in the message you replied to.");
