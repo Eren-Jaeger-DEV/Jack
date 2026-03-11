@@ -138,4 +138,55 @@ module.exports = async function buttonHandler(interaction) {
 
   }
 
+  /* ---------- ANNOUNCEMENT BUTTON ---------- */
+  if (interaction.customId.startsWith("announce_btn_")) {
+    const channelId = interaction.customId.replace("announce_btn_", "");
+    
+    // Check permissions
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+       return interaction.reply({ content: "❌ No permission.", ephemeral: true });
+    }
+
+    const { ModalBuilder, TextInputBuilder, TextInputStyle } = require("discord.js");
+
+    const modal = new ModalBuilder()
+      .setCustomId(`announce_modal_${channelId}`)
+      .setTitle(`Announce to Channel`);
+
+    const titleInput = new TextInputBuilder()
+      .setCustomId("title")
+      .setLabel("Announcement Title")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true)
+      .setMaxLength(256);
+
+    const descInput = new TextInputBuilder()
+      .setCustomId("description")
+      .setLabel("Message")
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true);
+
+    const colorInput = new TextInputBuilder()
+      .setCustomId("color")
+      .setLabel("Hex Color Code (Optional)")
+      .setPlaceholder("#ff0000 or Random")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false);
+
+    const imageInput = new TextInputBuilder()
+      .setCustomId("image")
+      .setLabel("Image URL (Optional)")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false);
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(titleInput),
+      new ActionRowBuilder().addComponents(descInput),
+      new ActionRowBuilder().addComponents(colorInput),
+      new ActionRowBuilder().addComponents(imageInput)
+    );
+
+    return interaction.showModal(modal);
+  }
+
 };
