@@ -9,9 +9,10 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
  * @param {string} stickerID - Raw discord sticker ID
  * @param {import('discord.js').User} user - User stealing the sticker
  * @param {import('discord.js').Guild} guild - Source guild
+ * @param {Object} options - Extra metadata
  * @returns {Promise<{success: boolean, message: string, sticker?: any}>}
  */
-async function storeStickerInBank(name, url, stickerID, user, guild) {
+async function storeStickerInBank(name, url, stickerID, user, guild, options = {}) {
   try {
     const existingID = await StickerBank.findOne({ stickerID });
     if (existingID) {
@@ -39,7 +40,10 @@ async function storeStickerInBank(name, url, stickerID, user, guild) {
       url,
       format,
       addedBy: user.id,
-      sourceGuild: guild.id
+      sourceGuild: guild.id,
+      originalSource: options.originalSource || "discord_message",
+      fileType: options.fileType || "unknown",
+      convertedFormat: options.convertedFormat || "none"
     });
 
     return { success: true, message: `Stored as \`${finalName}\``, sticker: newSticker };

@@ -28,6 +28,18 @@ const StickerBankSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  originalSource: {
+    type: String,
+    default: "unknown"
+  },
+  fileType: {
+    type: String,
+    default: "unknown"
+  },
+  convertedFormat: {
+    type: String,
+    default: "none"
+  },
   createdAt: {
     type: Date,
     default: Date.now

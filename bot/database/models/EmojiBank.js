@@ -34,6 +34,18 @@ const EmojiBankSchema = new mongoose.Schema({
     type: String, // Guild ID where it was stolen from, useful for context
     required: true
   },
+  originalSource: {
+    type: String,
+    default: "unknown"
+  },
+  fileType: {
+    type: String,
+    default: "unknown" // original mime type or extension
+  },
+  convertedFormat: {
+    type: String,
+    default: "none" // exactly what it was converted into
+  },
   createdAt: {
     type: Date,
     default: Date.now

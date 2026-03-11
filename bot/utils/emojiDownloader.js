@@ -9,9 +9,10 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
  * @param {string} emojiID - Raw discord emoji ID
  * @param {import('discord.js').User} user - User stealing the emoji
  * @param {import('discord.js').Guild} guild - Source guild
+ * @param {Object} options - Extra metadata
  * @returns {Promise<{success: boolean, message: string, emoji?: any}>}
  */
-async function storeEmojiInBank(name, url, emojiID, user, guild) {
+async function storeEmojiInBank(name, url, emojiID, user, guild, options = {}) {
   try {
     // 1. Check ID uniqueness (Discord standardizes these IDs)
     const existingID = await EmojiBank.findOne({ emojiID });
@@ -45,7 +46,10 @@ async function storeEmojiInBank(name, url, emojiID, user, guild) {
       url,
       format,
       addedBy: user.id,
-      sourceGuild: guild.id
+      sourceGuild: guild.id,
+      originalSource: options.originalSource || "discord_message",
+      fileType: options.fileType || "unknown",
+      convertedFormat: options.convertedFormat || "none"
     });
 
     return { success: true, message: `Stored as \`${finalName}\``, emoji: newEmoji };

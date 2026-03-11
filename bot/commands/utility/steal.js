@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, AttachmentBuilder } = require("discord.js");
 const { storeEmojiInBank } = require("../../utils/emojiDownloader");
 const { storeStickerInBank } = require("../../utils/stickerDownloader");
+const { processImageForDiscord } = require("../../utils/imageProcessor");
 
 module.exports = {
 
@@ -139,15 +140,12 @@ module.exports = {
 
     // --- Process Attachment or Direct URL ---
     let targetUrl = null;
-    let targetExtension = "png";
 
     if (attachment) {
       targetUrl = attachment.url;
-      if (attachment.contentType === "image/gif") targetExtension = "gif";
     } else if (urls && urls.length > 0) {
       targetUrl = urls[0];
       if (targetUrl.includes(".gif") || targetUrl.includes("tenor.com")) {
-        targetExtension = "gif";
         if (targetUrl.includes("tenor.com/view/")) {
            targetUrl += ".gif";
         }
@@ -158,9 +156,80 @@ module.exports = {
       if (!customName) {
          customName = `stolen_${Math.random().toString(36).substring(2, 6)}`;
       }
-      const mockID = `raw_${Date.now()}`;
       
-      return processAsset(customName, targetUrl, mockID, targetExtension);
+      const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("create_emoji")
+            .setLabel("Create Emoji")
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId("create_sticker")
+            .setLabel("Create Sticker")
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId("cancel_steal")
+            .setLabel("Cancel")
+            .setStyle(ButtonStyle.Danger)
+      );
+
+      const promptMsg = await ctx.reply({ 
+          content: "Detected image attachment.\nWhat would you like to create?", 
+          components: [row],
+          fetchReply: true 
+      });
+
+      const collector = promptMsg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 30000 });
+
+      collector.on('collect', async i => {
+          if (i.user.id !== (ctx.user?.id || ctx.author.id)) {
+              return i.reply({ content: "You cannot make this choice.", ephemeral: true });
+          }
+
+          if (i.customId === "cancel_steal") {
+              return i.update({ content: "❌ Operation cancelled.", components: [] });
+          }
+
+          await i.update({ content: "⏳ Processing image... (Resizing and Compressing)", components: [] });
+
+          try {
+              const targetType = i.customId === "create_emoji" ? "emoji" : "sticker";
+              const processed = await processImageForDiscord(targetUrl, targetType);
+              
+              const attachmentBuilder = new AttachmentBuilder(processed.buffer, { name: `stolen_${customName}.${processed.finalFormat}` });
+              const uploadMsg = await ctx.channel.send({ content: `Vaulting processed image as ${targetType}...`, files: [attachmentBuilder] });
+              
+              const newUrl = uploadMsg.attachments.first().url;
+              const mockID = `raw_${Date.now()}`;
+              
+              const metadata = {
+                  originalSource: targetUrl,
+                  fileType: processed.originalFormat,
+                  convertedFormat: processed.finalFormat
+              };
+
+              let result;
+              if (targetType === "emoji") {
+                  result = await storeEmojiInBank(customName, newUrl, mockID, i.user, ctx.guild, metadata);
+              } else {
+                  result = await storeStickerInBank(customName, newUrl, mockID, i.user, ctx.guild, metadata);
+              }
+
+              return promptMsg.edit({ 
+                  content: result.success ? `🚀 Successfully processed and vaulted as **${targetType}**! ${result.message}` : `❌ Failed to vault: ${result.message}`,
+                  components: [] 
+              });
+          } catch (err) {
+              console.error("Image processing error:", err);
+              return promptMsg.edit({ content: "❌ Failed to process the image. It may be too large or an unsupported format.", components: [] });
+          }
+      });
+
+      collector.on('end', collected => {
+          if (collected.size === 0) {
+              promptMsg.edit({ content: "⏳ Operation timed out. Cancelled.", components: [] }).catch(() => {});
+          }
+      });
+      return;
     }
 
     return ctx.reply("❌ I could not find a custom emoji, sticker, attachment, or image URL in the message you replied to.");
