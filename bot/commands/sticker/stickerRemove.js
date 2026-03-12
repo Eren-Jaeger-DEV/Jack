@@ -16,7 +16,7 @@ module.exports = {
   async run(ctx) {
     
     if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return ctx.reply({ content: "❌ Only server administrators can permanently delete stickers from the global vault.", ephemeral: true });
+      return ctx.reply({ content: "❌ Only server administrators can permanently delete stickers from the global vault.", flags: 64 });
     }
 
     const stickerName = ctx.type === "slash" ? ctx.options.getString("stickername").toLowerCase() : ctx.args.join(" ").toLowerCase();

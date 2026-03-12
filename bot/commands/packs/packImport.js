@@ -15,7 +15,7 @@ module.exports = {
 
   async run(ctx) {
     if (!ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", ephemeral: true });
+      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", flags: 64 });
     }
 
     const packName = ctx.type === "slash" ? ctx.options.getString("packname").toLowerCase() : ctx.args.join(" ").toLowerCase();
@@ -36,7 +36,7 @@ module.exports = {
         const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
         collector.on('collect', async i => {
             if (i.user.id !== (ctx.user?.id || ctx.author.id)) {
-                return i.reply({ content: "You cannot make this decision.", ephemeral: true });
+                return i.reply({ content: "You cannot make this decision.", flags: 64 });
             }
 
             if (i.customId === "cancel_import") {

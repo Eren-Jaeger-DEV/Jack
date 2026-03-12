@@ -11,7 +11,7 @@ module.exports = async function emojiBrowserButtons(interaction) {
     // --- 1. Admin Action Selection (Dropdown) ---
     if (interaction.customId === "admin_select_action") {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator) && !interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-            return interaction.reply({ content: "❌ You don't have permission to manage the vault.", ephemeral: true });
+            return interaction.reply({ content: "❌ You don't have permission to manage the vault.", flags: 64 });
         }
 
         // Value format: state_id e.g. select_rename_12345
@@ -45,7 +45,7 @@ module.exports = async function emojiBrowserButtons(interaction) {
         else {
            // Fallback: If it's a rename or pack, we might have passed the ID but it's not in DB?
            // This shouldn't happen unless DB was wiped while browser was open.
-           return interaction.reply({ content: "❌ Failed to locate this item in the database. It may have been deleted.", ephemeral: true });
+           return interaction.reply({ content: "❌ Failed to locate this item in the database. It may have been deleted.", flags: 64 });
         }
 
         if (actionType === "rename") {
@@ -79,7 +79,7 @@ module.exports = async function emojiBrowserButtons(interaction) {
         }
 
         if (actionType === "delete") {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: 64 });
             const result = await deleteItem(targetType, idValue);
             return await interaction.editReply({ content: result.message });
         }
@@ -88,10 +88,10 @@ module.exports = async function emojiBrowserButtons(interaction) {
   // --- 2. Add to Server (Button) ---
   if (interaction.customId.startsWith("browser_add_")) {
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-       return interaction.reply({ content: "❌ You need `Manage Emojis and Stickers` permission to download vault items to this server.", ephemeral: true });
+       return interaction.reply({ content: "❌ You need `Manage Emojis and Stickers` permission to download vault items to this server.", flags: 64 });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     const isEmoji = interaction.customId.startsWith("browser_add_emoji_");
     const prefixLength = isEmoji ? "browser_add_emoji_".length : "browser_add_sticker_".length;
@@ -123,7 +123,7 @@ module.exports = async function emojiBrowserButtons(interaction) {
     } catch (err) {
     console.error("emojiBrowserButtons error:", err);
     if (!interaction.replied && !interaction.deferred) {
-        return interaction.reply({ content: "⚠️ Something went wrong while processing your browser request.", ephemeral: true }).catch(()=>{});
+        return interaction.reply({ content: "⚠️ Something went wrong while processing your browser request.", flags: 64 }).catch(()=>{});
     }
   }
 };

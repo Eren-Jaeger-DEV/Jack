@@ -9,7 +9,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentTyp
 async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
   if (!documents || documents.length === 0) {
     const replyFn = interactionOrCtx.editReply ? interactionOrCtx.editReply.bind(interactionOrCtx) : interactionOrCtx.reply.bind(interactionOrCtx);
-    return replyFn({ content: `No ${type}s found in the vault!`, ephemeral: true });
+    return replyFn({ content: `No ${type}s found in the vault!`, flags: 64 });
   }
 
   const itemsPerPage = 5;
@@ -184,7 +184,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     const authorId = interactionOrCtx.user ? interactionOrCtx.user.id : interactionOrCtx.author.id;
     if (i.user.id !== authorId && !i.customId.startsWith('browser_add_')) {
        // Only owner can paginate/admin. Anyone can try to Add.
-       return i.reply({ content: "You cannot control this menu.", ephemeral: true });
+       return i.reply({ content: "You cannot control this menu.", flags: 64 });
     }
 
     // Handled in interactions/emojiBrowserButtons.js globally:

@@ -18,7 +18,7 @@ module.exports = {
 
     // Only Admins/Mods can steal
     if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild) && !ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission to steal.", ephemeral: true });
+      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission to steal.", flags: 64 });
     }
 
     // Since stealing replies to messages, it fundamentally works best as a message command ("j steal")
@@ -26,7 +26,7 @@ module.exports = {
     let targetMessage = null;
 
     if (ctx.type === "slash") {
-       return ctx.reply({ content: "❌ Steal works best as a Prefix Command. Simply reply to a message with `jack steal`.", ephemeral: true });
+       return ctx.reply({ content: "❌ Steal works best as a Prefix Command. Simply reply to a message with `jack steal`.", flags: 64 });
     } else {
        // Is it a reply?
        if (!ctx.message.reference || !ctx.message.reference.messageId) {
@@ -86,7 +86,7 @@ module.exports = {
 
            collector.on('collect', async i => {
                if (i.user.id !== (ctx.user?.id || ctx.author.id)) {
-                   return i.reply({ content: "You cannot make this choice.", ephemeral: true });
+                   return i.reply({ content: "You cannot make this choice.", flags: 64 });
                }
 
                await i.deferUpdate();
@@ -182,7 +182,7 @@ module.exports = {
 
       collector.on('collect', async i => {
           if (i.user.id !== (ctx.user?.id || ctx.author.id)) {
-              return i.reply({ content: "You cannot make this choice.", ephemeral: true });
+              return i.reply({ content: "You cannot make this choice.", flags: 64 });
           }
 
           if (i.customId === "cancel_steal") {

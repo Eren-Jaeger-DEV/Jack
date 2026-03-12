@@ -20,7 +20,7 @@ module.exports = {
   async run(ctx) {
 
     if (!ctx.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this.", ephemeral: true });
+      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this.", flags: 64 });
     }
 
     let panelID, targetRole, label, emoji;
@@ -53,22 +53,22 @@ module.exports = {
     // Checking Bot Hierarchy
     const botMember = ctx.guild.members.cache.get(ctx.client.user.id) || await ctx.guild.members.fetch(ctx.client.user.id);
     if (targetRole.position >= botMember.roles.highest.position) {
-      return ctx.reply({ content: `❌ I cannot assign this role because its position is higher than or equal to my highest role. Move my role higher in settings!`, ephemeral: true });
+      return ctx.reply({ content: `❌ I cannot assign this role because its position is higher than or equal to my highest role. Move my role higher in settings!`, flags: 64 });
     }
 
     // Fetch Panel
     const panel = await ReactionRolePanel.findOne({ panelID, guildID: ctx.guild.id });
     if (!panel) {
-      return ctx.reply({ content: `❌ No panel found with ID \`${panelID}\`.`, ephemeral: true });
+      return ctx.reply({ content: `❌ No panel found with ID \`${panelID}\`.`, flags: 64 });
     }
 
     if (panel.roles.length >= 25) {
-      return ctx.reply({ content: `❌ A single message can only hold up to 25 buttons. This panel is full.`, ephemeral: true });
+      return ctx.reply({ content: `❌ A single message can only hold up to 25 buttons. This panel is full.`, flags: 64 });
     }
 
     // Avoid duplicate roles on same panel
     if (panel.roles.find(r => r.roleID === targetRole.id)) {
-      return ctx.reply({ content: `❌ That role is already linked to this panel!`, ephemeral: true });
+      return ctx.reply({ content: `❌ That role is already linked to this panel!`, flags: 64 });
     }
 
     // Push new role

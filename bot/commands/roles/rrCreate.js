@@ -24,7 +24,7 @@ module.exports = {
   async run(ctx) {
 
     if (!ctx.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this command.", ephemeral: true });
+      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this command.", flags: 64 });
     }
 
     let title, description, targetChannel, color;
@@ -79,7 +79,7 @@ module.exports = {
       roles: []
     });
 
-    return ctx.reply({ content: `✅ Sub-Panel successfully created in ${targetChannel}!\n**Panel ID:** \`${panelID}\``, ephemeral: false });
+    return ctx.reply({ content: `✅ Sub-Panel successfully created in ${targetChannel}!\n**Panel ID:** \`${panelID}\``, /* ephemeral false removed */ });
 
   }
 };

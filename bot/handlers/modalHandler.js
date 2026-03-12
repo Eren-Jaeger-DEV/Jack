@@ -19,7 +19,7 @@ module.exports = async function modalHandler(interaction) {
 
       return interaction.reply({
         content: "You already registered. Use /editprofile.",
-        ephemeral: true
+        flags: 64
       });
 
     }
@@ -44,7 +44,7 @@ module.exports = async function modalHandler(interaction) {
 
     return interaction.reply({
       content: "✅ Profile saved.\n\nUpload your **BGMI Basic Info** now.",
-      ephemeral: true
+      flags: 64
     });
 
   }
@@ -66,19 +66,19 @@ module.exports = async function modalHandler(interaction) {
         accountLevel: level,
         preferredModes
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!player) {
       return interaction.reply({
         content: "❌ You are not registered yet. Use `/register` first.",
-        ephemeral: true
+        flags: 64
       });
     }
 
     return interaction.reply({
       content: "✅ Profile beautifully updated!",
-      ephemeral: true
+      flags: 64
     });
 
   }
@@ -92,11 +92,11 @@ module.exports = async function modalHandler(interaction) {
     const targetChannel = interaction.guild.channels.cache.get(channelId);
 
     if (!targetChannel) {
-      return interaction.reply({ content: "❌ Target channel not found.", ephemeral: true });
+      return interaction.reply({ content: "❌ Target channel not found.", flags: 64 });
     }
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return interaction.reply({ content: "❌ No permission.", ephemeral: true });
+      return interaction.reply({ content: "❌ No permission.", flags: 64 });
     }
 
     const title = interaction.fields.getTextInputValue("title");
@@ -119,10 +119,10 @@ module.exports = async function modalHandler(interaction) {
 
     try {
       await targetChannel.send({ embeds: [embed] });
-      return interaction.reply({ content: `✅ Announcement sent to ${targetChannel}!`, ephemeral: true });
+      return interaction.reply({ content: `✅ Announcement sent to ${targetChannel}!`, flags: 64 });
     } catch (err) {
       console.error(err);
-      return interaction.reply({ content: "❌ Failed to send announcement. Ensure I have permissions in that channel.", ephemeral: true });
+      return interaction.reply({ content: "❌ Failed to send announcement. Ensure I have permissions in that channel.", flags: 64 });
     }
 
   }

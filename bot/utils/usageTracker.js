@@ -13,7 +13,7 @@ async function trackUsage(emojiName, userID) {
         $inc: { usageCount: 1 },
         $set: { lastUsed: new Date() }
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     return record;
   } catch (err) {

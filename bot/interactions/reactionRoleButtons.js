@@ -9,7 +9,7 @@ module.exports = async function reactionRoleButtons(interaction) {
   const panelID = idParts[2];
   const roleID = idParts[3];
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: 64 });
 
   const panel = await ReactionRolePanel.findOne({ panelID });
   if (!panel) {

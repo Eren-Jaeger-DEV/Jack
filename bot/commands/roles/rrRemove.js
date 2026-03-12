@@ -18,7 +18,7 @@ module.exports = {
   async run(ctx) {
 
     if (!ctx.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this.", ephemeral: true });
+      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this.", flags: 64 });
     }
 
     let panelID, targetRole;
@@ -41,11 +41,11 @@ module.exports = {
     }
 
     const panel = await ReactionRolePanel.findOne({ panelID, guildID: ctx.guild.id });
-    if (!panel) return ctx.reply({ content: `❌ No panel found with ID \`${panelID}\`.`, ephemeral: true });
+    if (!panel) return ctx.reply({ content: `❌ No panel found with ID \`${panelID}\`.`, flags: 64 });
 
     const roleIndex = panel.roles.findIndex(r => r.roleID === targetRole.id);
     if (roleIndex === -1) {
-      return ctx.reply({ content: `❌ **${targetRole.name}** is not attached to this panel using Panel ID \`${panelID}\`.`, ephemeral: true });
+      return ctx.reply({ content: `❌ **${targetRole.name}** is not attached to this panel using Panel ID \`${panelID}\`.`, flags: 64 });
     }
 
     panel.roles.splice(roleIndex, 1);

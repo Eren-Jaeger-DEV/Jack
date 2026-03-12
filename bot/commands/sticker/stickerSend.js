@@ -70,7 +70,7 @@ module.exports = {
     const collector = msg.createMessageComponentCollector({ time: 60000 });
     collector.on('collect', async i => {
        if (i.user.id !== (ctx.user?.id || ctx.author?.id)) {
-           return i.reply({ content: "You didn't run this command.", ephemeral: true });
+           return i.reply({ content: "You didn't run this command.", flags: 64 });
        }
        const selectedID = i.values[0].split("_")[0];
        const targetDoc = matches.find(m => m.stickerID === selectedID);

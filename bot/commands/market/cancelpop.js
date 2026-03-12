@@ -22,7 +22,7 @@ module.exports = {
   async run(ctx) {
 
     if (!ctx.member.roles.cache.has(ALLOWED_ROLE_ID)) {
-      return ctx.reply({ content: "❌ You don't have access to the POP market.", ephemeral: true });
+      return ctx.reply({ content: "❌ You don't have access to the POP market.", flags: 64 });
     }
 
     const isAdmin = ctx.member.permissions.has(PermissionFlagsBits.ManageMessages);
@@ -47,9 +47,9 @@ module.exports = {
 
     if (!listing) {
       if (listingIdArg && isAdmin) {
-         return ctx.reply({ content: `❌ No active listing found with ID \`${listingIdArg}\`.`, ephemeral: true });
+         return ctx.reply({ content: `❌ No active listing found with ID \`${listingIdArg}\`.`, flags: 64 });
       } else {
-         return ctx.reply({ content: "❌ You do not have any active POP listings.", ephemeral: true });
+         return ctx.reply({ content: "❌ You do not have any active POP listings.", flags: 64 });
       }
     }
 

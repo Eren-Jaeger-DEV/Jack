@@ -16,28 +16,28 @@ module.exports = async function popButtons(interaction) {
 
     // 1. Check Role Permission
     if (!interaction.member.roles.cache.has(ALLOWED_ROLE_ID)) {
-      return interaction.reply({ content: "❌ You don't have permission to buy POP.", ephemeral: true });
+      return interaction.reply({ content: "❌ You don't have permission to buy POP.", flags: 64 });
     }
 
     // Fetch listing
     const listing = await PopListing.findOne({ listingID, status: "active" });
     if (!listing) {
       refreshMarketPanel(interaction.client);
-      return interaction.reply({ content: "❌ This listing is no longer active.", ephemeral: true });
+      return interaction.reply({ content: "❌ This listing is no longer active.", flags: 64 });
     }
 
     // 2. Buyer cannot be the seller
     if (listing.sellerID === interaction.user.id) {
-      return interaction.reply({ content: "❌ You cannot buy your own listing.", ephemeral: true });
+      return interaction.reply({ content: "❌ You cannot buy your own listing.", flags: 64 });
     }
 
     // 3. Ensure no active deal already exists for this listing
     const existingDeal = await PopDeal.findOne({ listingID, status: "ongoing" });
     if (existingDeal) {
-      return interaction.reply({ content: "❌ Someone is already making a deal for this listing.", ephemeral: true });
+      return interaction.reply({ content: "❌ Someone is already making a deal for this listing.", flags: 64 });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // Create the deal channel
@@ -122,11 +122,11 @@ module.exports = async function popButtons(interaction) {
     const listingID = interaction.customId.replace("deal_final_", "");
 
     const deal = await PopDeal.findOne({ listingID, channelID: interaction.channel.id, status: "ongoing" });
-    if (!deal) return interaction.reply({ content: "❌ Deal not found or already closed.", ephemeral: true });
+    if (!deal) return interaction.reply({ content: "❌ Deal not found or already closed.", flags: 64 });
 
     // Only buyer and seller
     if (interaction.user.id !== deal.buyerID && interaction.user.id !== deal.sellerID) {
-      return interaction.reply({ content: "❌ Only the buyer or seller can finalize this deal.", ephemeral: true });
+      return interaction.reply({ content: "❌ Only the buyer or seller can finalize this deal.", flags: 64 });
     }
 
     await interaction.reply("✅ Deal finalized! Generating transcript and deleting channel...");
@@ -176,12 +176,12 @@ module.exports = async function popButtons(interaction) {
     const listingID = interaction.customId.replace("deal_cancel_", "");
 
     const deal = await PopDeal.findOne({ listingID, channelID: interaction.channel.id, status: "ongoing" });
-    if (!deal) return interaction.reply({ content: "❌ Deal not found or already closed.", ephemeral: true });
+    if (!deal) return interaction.reply({ content: "❌ Deal not found or already closed.", flags: 64 });
 
     // Buyer, Seller, Mods
     const isMod = interaction.member.permissions.has(PermissionFlagsBits.ManageMessages);
     if (!isMod && interaction.user.id !== deal.buyerID && interaction.user.id !== deal.sellerID) {
-      return interaction.reply({ content: "❌ You don't have permission to cancel this deal.", ephemeral: true });
+      return interaction.reply({ content: "❌ You don't have permission to cancel this deal.", flags: 64 });
     }
 
     await interaction.reply("🚫 Deal cancelled! Relisting on the market. Deleting channel...");

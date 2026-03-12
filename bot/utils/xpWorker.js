@@ -14,7 +14,7 @@ module.exports = function xpWorker(client) {
       const profile = await Level.findOneAndUpdate(
         { guildId, userId },
         { $inc: { xp: xp, weeklyXp: xp } },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
 
       const nextLevelXp = 5 * (profile.level ** 2) + 50 * profile.level + 100;

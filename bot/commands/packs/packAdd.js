@@ -17,7 +17,7 @@ module.exports = {
   async run(ctx) {
     
     if (!ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", ephemeral: true });
+      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", flags: 64 });
     }
 
     let emojiName, packName;

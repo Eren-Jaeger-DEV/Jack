@@ -16,7 +16,7 @@ module.exports = {
   async run(ctx) {
 
     if (!ctx.member.roles.cache.has(ALLOWED_ROLE_ID)) {
-      return ctx.reply({ content: "❌ You don't have access to the POP market.", ephemeral: true });
+      return ctx.reply({ content: "❌ You don't have access to the POP market.", flags: 64 });
     }
 
     // Also explicitly restrict prefix usage to "pop market" specifically if we map it like that

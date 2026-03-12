@@ -17,7 +17,7 @@ module.exports = {
   async run(ctx) {
     
     if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return ctx.reply({ content: "❌ Only server administrators can permanently delete emojis from the global vault.", ephemeral: true });
+      return ctx.reply({ content: "❌ Only server administrators can permanently delete emojis from the global vault.", flags: 64 });
     }
 
     const emojiName = ctx.type === "slash" ? ctx.options.getString("emojiname").toLowerCase() : ctx.args.join(" ").toLowerCase();

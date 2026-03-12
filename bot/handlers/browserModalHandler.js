@@ -11,7 +11,7 @@ module.exports = async function browserModalHandler(interaction) {
     const idStr = interaction.customId;
 
     if (idStr.startsWith("modal_rename_")) {
-       await interaction.deferReply({ ephemeral: true });
+       await interaction.deferReply({ flags: 64 });
 
        const newName = interaction.fields.getTextInputValue("new_name");
        
@@ -24,7 +24,7 @@ module.exports = async function browserModalHandler(interaction) {
     }
 
     if (idStr.startsWith("modal_pack_")) {
-       await interaction.deferReply({ ephemeral: true });
+       await interaction.deferReply({ flags: 64 });
 
        const packName = interaction.fields.getTextInputValue("pack_name");
        
@@ -42,7 +42,7 @@ module.exports = async function browserModalHandler(interaction) {
   } catch (err) {
     console.error("browserModalHandler error:", err);
     if (!interaction.replied && !interaction.deferred) {
-       return await interaction.reply({ content: "⚠️ Failed to process modal submission.", ephemeral: true }).catch(()=>{});
+       return await interaction.reply({ content: "⚠️ Failed to process modal submission.", flags: 64 }).catch(()=>{});
     }
   }
 };

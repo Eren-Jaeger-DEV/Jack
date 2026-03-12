@@ -36,7 +36,7 @@ module.exports = {
 
     // 1. Role Restriction Check
     if (!ctx.member.roles.cache.has(ALLOWED_ROLE_ID)) {
-      return ctx.reply({ content: "❌ You don't have permission to use the POP market.", ephemeral: true });
+      return ctx.reply({ content: "❌ You don't have permission to use the POP market.", flags: 64 });
     }
 
     let item, amountRaw, priceRaw;
@@ -60,17 +60,17 @@ module.exports = {
     const price = priceParser(priceRaw);
 
     if (!popAmount || popAmount <= 0) {
-      return ctx.reply({ content: `❌ Invalid POP amount: \`${amountRaw}\`. Please use formats like 1000, 1k, 2.5k.`, ephemeral: true });
+      return ctx.reply({ content: `❌ Invalid POP amount: \`${amountRaw}\`. Please use formats like 1000, 1k, 2.5k.`, flags: 64 });
     }
 
     if (!price || price <= 0) {
-      return ctx.reply({ content: `❌ Invalid price: \`${priceRaw}\`. Please use formats like ₹1000, 1000, 1k.`, ephemeral: true });
+      return ctx.reply({ content: `❌ Invalid price: \`${priceRaw}\`. Please use formats like ₹1000, 1000, 1k.`, flags: 64 });
     }
 
     // 3. User can only have ONE active listing
     const existingListing = await PopListing.findOne({ sellerID: ctx.user.id, status: "active" });
     if (existingListing) {
-      return ctx.reply({ content: `❌ You already have an active listing (ID: ${existingListing.listingID}). Please cancel it first or wait for it to sell.`, ephemeral: true });
+      return ctx.reply({ content: `❌ You already have an active listing (ID: ${existingListing.listingID}). Please cancel it first or wait for it to sell.`, flags: 64 });
     }
 
     // 4. Generate unique ID & Save Output

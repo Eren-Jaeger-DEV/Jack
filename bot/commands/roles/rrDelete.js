@@ -16,7 +16,7 @@ module.exports = {
   async run(ctx) {
 
     if (!ctx.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this.", ephemeral: true });
+      return ctx.reply({ content: "❌ You need `Manage Roles` permission to use this.", flags: 64 });
     }
 
     let panelID;
@@ -29,7 +29,7 @@ module.exports = {
     }
 
     const panel = await ReactionRolePanel.findOne({ panelID, guildID: ctx.guild.id });
-    if (!panel) return ctx.reply({ content: `❌ No panel found with ID \`${panelID}\`.`, ephemeral: true });
+    if (!panel) return ctx.reply({ content: `❌ No panel found with ID \`${panelID}\`.`, flags: 64 });
 
     // Attempt to delete message
     try {

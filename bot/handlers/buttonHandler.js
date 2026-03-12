@@ -89,7 +89,7 @@ module.exports = async function buttonHandler(interaction) {
 
     return interaction.reply({
       content: `✅ Ticket created: ${channel}`,
-      ephemeral: true
+      flags: 64
     });
 
   }
@@ -110,7 +110,7 @@ module.exports = async function buttonHandler(interaction) {
 
     await interaction.reply({
       content: "Saving transcript...",
-      ephemeral: true
+      flags: 64
     });
 
     const attachment = await transcript.createTranscript(interaction.channel);
@@ -144,7 +144,7 @@ module.exports = async function buttonHandler(interaction) {
     
     // Check permissions
     if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-       return interaction.reply({ content: "❌ No permission.", ephemeral: true });
+       return interaction.reply({ content: "❌ No permission.", flags: 64 });
     }
 
     const { ModalBuilder, TextInputBuilder, TextInputStyle } = require("discord.js");

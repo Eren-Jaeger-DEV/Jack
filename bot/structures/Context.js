@@ -40,7 +40,7 @@ class Context {
       return await this.channel.send(data);
 
     } catch (err) {
-      if (err?.code === 10062) {
+      if (String(err?.code) === "10062" || err?.message === "Unknown interaction") {
         console.warn("Reply skipped: interaction expired (10062).");
         return null;
       }

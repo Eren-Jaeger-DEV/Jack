@@ -12,7 +12,7 @@ module.exports = {
 
   async run(ctx) {
      if (!ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers) && !ctx.member.permissions.has(PermissionFlagsBits.Administrator)) {
-         return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", ephemeral: true });
+         return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", flags: 64 });
      }
 
      await ctx.deferReply();
