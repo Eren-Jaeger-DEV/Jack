@@ -4,7 +4,18 @@ const mongoose = require('mongoose');
 
 // --- Mock Mongoose Query Chain ---
 const mockDoc = { 
-  id: "mock_id", 
+  id: "mock_id",
+  name: "mock_string",
+  stickers: ["mock_string"], // for packAdd.js, packImport.js
+  emojiList: ["mock_string"], // for emojiRemove.js
+  format: "png",
+  url: "https://mock.com",
+  roles: [], // for rrRemove.js
+  sellerID: "mock_id", // cancelpop
+  listingID: "mock_id", // cancelpop
+  sellerName: "mock_user", // cancelpop
+  popAmount: 100, // cancelpop
+  price: 100, // cancelpop
   save: async () => mockDoc,
   deleteOne: async () => mockDoc,
 };
@@ -33,6 +44,14 @@ mongoose.Model.updateMany = function() { return mockQuerySingle; };
 mongoose.Model.deleteOne = function() { return mockQuerySingle; };
 mongoose.Model.deleteMany = function() { return mockQuerySingle; };
 mongoose.Model.create = async () => mockDoc;
+mongoose.Model.countDocuments = function() { return mockQuerySingle; };
+mongoose.Model.findOneAndDelete = function() { return mockQuerySingle; };
+mongoose.Model.findOneAndUpdate = function() { return mockQuerySingle; };
+
+// --- Mock Fetch ---
+global.fetch = async () => ({
+  json: async () => ({ results: [{ url: "https://mock.com/gif.gif" }] })
+});
 
 // --- Mock Context ---
 function createMock(overrides = {}) {
@@ -88,7 +107,7 @@ let failed = 0;
         const command = require(filePath);
         
         const mockOptions = createMock({
-            getString: () => "mock_string",
+            getString: (name) => name === 'color' ? '#0000ff' : "mock_string",
             getChannel: () => createMock({ id: "mock_channel_id", name: "mock_channel" }),
             getUser: () => createMock({ id: "mock_user_id", username: "mock_user", tag: "mock#1234", displayAvatarURL: () => "https://mock.com/avatar.png" }),
             getMember: () => createMock({ id: "mock_member_id", user: createMock({ id: "mock_user_id", username: "mock" }) }),
@@ -121,9 +140,27 @@ let failed = 0;
             }),
             roles: createMock({
                 cache: createMock({ get: () => createMock({ name: "mock_role", id: "mock" }), find: () => createMock() })
+            }),
+            emojis: createMock({
+                create: async () => createMock({ id: "mock_emoji_id" }),
+                fetch: async () => createMock({ delete: async () => {} })
             })
           }),
-          channel: createMock({ id: "mock_channel_id", send: async () => createMock() }),
+          channel: createMock({ 
+            id: "mock_channel_id", 
+            send: async () => createMock({ id: "mock_message_id" }),
+            messages: createMock({ fetch: async () => ({}) }),
+            bulkDelete: async () => {}
+          }),
+          client: createMock({
+            channels: createMock({ 
+              fetch: async () => createMock({
+                messages: createMock({ fetch: async () => createMock({ edit: async () => {} }) }),
+                send: async () => createMock({ id: "mock_id" })
+              }) 
+            }),
+            user: createMock({ id: "mock_bot_id" })
+          }),
           reply: async () => createMock(),
           deferReply: async () => createMock(),
           editReply: async () => createMock()
