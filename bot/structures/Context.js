@@ -40,15 +40,20 @@ class Context {
       return await this.channel.send(data);
 
     } catch (err) {
+      if (err?.code === 10062) {
+        console.warn("Reply skipped: interaction expired (10062).");
+        return null;
+      }
+
       console.error("Reply error:", err);
     }
 
   }
 
-  async defer() {
+  async defer(options = {}) {
 
     if (this.isInteraction) {
-      return this.source.deferReply();
+      return this.source.deferReply(options);
     }
 
   }

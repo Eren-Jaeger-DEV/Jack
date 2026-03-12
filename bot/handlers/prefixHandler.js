@@ -1,5 +1,6 @@
 const { prefixes } = require("../../config/prefixes");
 const Context = require("../structures/Context");
+const CommandUsage = require("../database/models/CommandUsage");
 
 module.exports = async (message, client) => {
 
@@ -82,6 +83,13 @@ module.exports = async (message, client) => {
   try {
 
     await command.run(ctx);
+
+      await CommandUsage.create({
+         commandName: String(command.name || commandName).toLowerCase(),
+         userID: message.author.id,
+         guildID: message.guild.id,
+         timestamp: new Date()
+      }).catch(() => null);
 
   } catch (err) {
 
