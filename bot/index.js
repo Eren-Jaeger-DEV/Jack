@@ -29,11 +29,15 @@ mongoose
 
 /* Ready */
 
-client.once("clientReady", () => {
+client.once("clientReady", async () => {
   console.log(`Logged in as ${client.user.tag}`);
   
+  // Preload Canvas Leveling Backgrounds
+  const { preloadBackgrounds } = require("./modules/leveling/backgroundCache");
+  await preloadBackgrounds();
+
   // Start the background XP flush worker
-  require("./utils/xpWorker")(client);
+  require("./modules/leveling/xpWorker")(client);
 });
 
 /* Login */

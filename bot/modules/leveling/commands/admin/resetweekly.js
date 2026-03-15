@@ -1,0 +1,21 @@
+const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const Level = require("../../../../database/models/Level");
+
+module.exports = {
+  name: "resetweekly",
+  category: "admin",
+  description: "Reset weekly XP for EVERYONE in the server",
+  data: new SlashCommandBuilder()
+    .setName("resetweekly")
+    .setDescription("Reset weekly XP for EVERYONE in the server")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+  async run(ctx) {
+    await Level.updateMany(
+      { guildId: ctx.guild.id },
+      { weeklyXp: 0 }
+    );
+
+    return ctx.reply({ content: "⏳ Weekly XP has been reset for the entire server.", ephemeral: true });
+  }
+};

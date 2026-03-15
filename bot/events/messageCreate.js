@@ -1,6 +1,6 @@
 const afkHandler = require("../handlers/afkHandler");
 const screenshotHandler = require("../handlers/screenshotHandler");
-const levelHandler = require("../handlers/levelHandler");
+const levelHandler = require("../modules/leveling/levelHandler");
 const prefixHandler = require("../handlers/prefixHandler");
 
 module.exports = {
