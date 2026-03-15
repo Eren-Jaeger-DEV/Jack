@@ -60,6 +60,9 @@ module.exports = async function generateRankCard(member, profile, serverRank, we
   const avatarSize = 150;
   const avatarX = 50;
   const avatarY = 75;
+  const padding = 30;
+  const textStartX = avatarX + avatarSize + padding;
+
   ctx.save();
   ctx.beginPath();
   ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
@@ -84,30 +87,33 @@ module.exports = async function generateRankCard(member, profile, serverRank, we
   let nameText = member.displayName;
   // Truncate name if too long
   if (nameText.length > 15) nameText = nameText.substring(0, 15) + "...";
-  ctx.fillText(nameText, 230, 90);
+  ctx.fillText(nameText, textStartX, 90);
 
   // Ranks & Weekly Stats
   ctx.font = "20px sans-serif";
   ctx.fillStyle = "#bbbbbb";
   
-  ctx.fillText("Server Rank:", 230, 140);
+  ctx.fillText("Server Rank:", textStartX, 140);
+  const serverRankWidth = ctx.measureText("Server Rank: ").width;
   ctx.fillStyle = "#FFD700";
   ctx.font = "bold 24px sans-serif";
-  ctx.fillText(`#${serverRank}`, 360, 140);
+  ctx.fillText(`#${serverRank}`, textStartX + serverRankWidth, 140);
 
   ctx.font = "20px sans-serif";
   ctx.fillStyle = "#bbbbbb";
-  ctx.fillText("Weekly Rank:", 230, 180);
+  ctx.fillText("Weekly Rank:", textStartX, 180);
+  const weeklyRankWidth = ctx.measureText("Weekly Rank: ").width;
   ctx.fillStyle = "#FFba00";
   ctx.font = "bold 24px sans-serif";
-  ctx.fillText(`#${weeklyRank}`, 370, 180);
+  ctx.fillText(`#${weeklyRank}`, textStartX + weeklyRankWidth, 180);
 
   ctx.font = "20px sans-serif";
   ctx.fillStyle = "#bbbbbb";
-  ctx.fillText("Weekly XP:", 230, 220);
+  ctx.fillText("Weekly XP:", textStartX, 220);
+  const weeklyXpWidth = ctx.measureText("Weekly XP: ").width;
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 24px sans-serif";
-  ctx.fillText(profile.weeklyXp.toLocaleString(), 350, 220);
+  ctx.fillText(profile.weeklyXp.toLocaleString(), textStartX + weeklyXpWidth, 220);
 
   // RIGHT PANEL (Level + XP)
   

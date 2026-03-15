@@ -6,9 +6,10 @@ module.exports = async (message, client) => {
 
   if (!message.guild) return;
   if (message.author.bot) return;
+  if (message.interaction) return; // Prevent slash + prefix collision
 
   const prefix = prefixes.find(p =>
-    message.content.startsWith(p)
+    message.content.toLowerCase().startsWith(p.toLowerCase()) // Fix case sensitivity logic if needed, or normal startsWith
   );
 
   if (!prefix) return;
@@ -95,7 +96,9 @@ module.exports = async (message, client) => {
 
     console.error(`Prefix command error (${commandName})`, err);
 
-    ctx.reply("⚠️ Command execution failed.");
+    try {
+      await ctx.reply("⚠️ Command execution failed.");
+    } catch (e) { }
 
   }
 
