@@ -17,7 +17,21 @@ module.exports = {
     ),
 
   async run(ctx) {
-    const url = ctx.options.getString("url");
+    let url = "";
+
+    if (ctx.isInteraction && ctx.options?.getString("url")) {
+      url = ctx.options.getString("url");
+    } else if (!ctx.isInteraction && ctx.args?.length > 0) {
+      if (ctx.args[0] === "set" && ctx.args.length > 1) {
+        url = ctx.args[1];
+      } else {
+        url = ctx.args[0];
+      }
+    }
+
+    if (!url) {
+      return ctx.reply({ content: "Please provide a valid image URL.", ephemeral: true });
+    }
     
     if (!url.match(/\.(jpeg|jpg|png)$/i)) {
       return ctx.reply({ content: "Please provide a valid image URL ending in .png, .jpg, or .jpeg", ephemeral: true });

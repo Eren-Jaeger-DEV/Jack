@@ -14,7 +14,16 @@ module.exports = {
     ),
 
   async run(ctx) {
-    const targetUser = ctx.options?.getUser("user") || ctx.user;
+    let targetUser = ctx.user;
+
+    // Handle slash options OR prefix mentions/args
+    if (ctx.isInteraction && ctx.options?.getUser("user")) {
+      targetUser = ctx.options.getUser("user");
+    } else if (!ctx.isInteraction && ctx.message?.mentions?.users?.size > 0) {
+      targetUser = ctx.message.mentions.users.first();
+    } else if (!ctx.isInteraction && ctx.args?.length > 0) {
+      targetUser = await ctx.client.users.fetch(ctx.args[0]).catch(() => ctx.user);
+    }
 
     const member = await ctx.guild.members.fetch(targetUser.id).catch(() => null);
     if (!member) {
@@ -52,11 +61,23 @@ module.exports = {
       weeklyXp: { $gt: profile.weeklyXp }
     }) + 1;
 
-    await ctx.deferReply();
+    // Send loading message for prefix or defer for slash
+    let loadingMsg = null;
+    if (ctx.isInteraction) {
+      await ctx.defer();
+    } else {
+      loadingMsg = await ctx.reply("⏳ Generating rank card...");
+    }
 
     const buffer = await rankCard(member, profile, serverRank, weeklyRank);
     const attachment = new AttachmentBuilder(buffer, { name: "rank.png" });
 
-    return ctx.editReply({ files: [attachment] });
+    // Send reply
+    if (ctx.isInteraction) {
+      return ctx.interaction.editReply({ files: [attachment] });
+    } else {
+      if (loadingMsg && loadingMsg.deletable) await loadingMsg.delete().catch(() => null);
+      return ctx.reply({ files: [attachment] });
+    }
   }
 };

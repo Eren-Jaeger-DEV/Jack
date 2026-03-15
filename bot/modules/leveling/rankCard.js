@@ -25,20 +25,20 @@ module.exports = async function generateRankCard(member, profile, serverRank, we
 
   // Load Background
   let background;
-  try {
-    if (profile.background && profile.background.startsWith("http")) {
+  if (profile.background && profile.background.startsWith("http")) {
+    try {
       background = await loadImage(profile.background);
-    } else {
+    } catch (err) {
+      console.log(`⚠ Warning: Failed to load custom background for ${profile.userId}. Falling back to default.`);
       background = getBackground("default");
     }
-  } catch (err) {
-    console.error("Failed to load background image:", err);
-    // Fallback simple color block
-    ctx.fillStyle = "#1e1e1e";
-    ctx.fillRect(0, 0, 900, 300);
+  } else {
+    background = getBackground("default");
   }
 
+  // Draw Background
   if (background) {
+    // If our background is a dynamic fallback canvas instead of an Image element, this still draws safely.
     ctx.drawImage(background, 0, 0, 900, 300);
   }
 

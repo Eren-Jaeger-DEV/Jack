@@ -12,7 +12,19 @@ module.exports = {
     .addUserOption(option => option.setName("user").setDescription("User to reset XP for").setRequired(true)),
 
   async run(ctx) {
-    const target = ctx.options.getUser("user");
+    let target = null;
+
+    if (ctx.isInteraction) {
+      target = ctx.options.getUser("user");
+    } else {
+      if (ctx.message?.mentions?.users?.size > 0) {
+        target = ctx.message.mentions.users.first();
+      } else if (ctx.args?.length > 0) {
+        target = await ctx.client.users.fetch(ctx.args[0]).catch(() => null);
+      }
+    }
+
+    if (!target) return ctx.reply({ content: "Please provide a valid user.", ephemeral: true });
 
     await Level.findOneAndUpdate(
       { userId: target.id, guildId: ctx.guild.id },

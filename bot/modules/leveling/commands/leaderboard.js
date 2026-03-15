@@ -16,7 +16,14 @@ module.exports = {
     ),
 
   async run(ctx) {
-    const subCommand = ctx.options?.getSubcommand() || "global";
+    let subCommand = "global";
+
+    if (ctx.isInteraction && ctx.options?.getSubcommand(false)) {
+      subCommand = ctx.options.getSubcommand(false);
+    } else if (!ctx.isInteraction && ctx.args?.length > 0) {
+      subCommand = ctx.args[0].toLowerCase();
+    }
+
     const isWeekly = subCommand === "weekly";
     const sortField = isWeekly ? "weeklyXp" : "xp";
     const title = isWeekly ? "Weekly Leaderboard" : "Global Leaderboard";

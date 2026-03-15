@@ -14,8 +14,23 @@ module.exports = {
     .addIntegerOption(option => option.setName("level").setDescription("Level to set").setRequired(true)),
 
   async run(ctx) {
-    const target = ctx.options.getUser("user");
-    const level = ctx.options.getInteger("level");
+    let target = null;
+    let level = 0;
+
+    if (ctx.isInteraction) {
+      target = ctx.options.getUser("user");
+      level = ctx.options.getInteger("level");
+    } else {
+      if (ctx.message?.mentions?.users?.size > 0) {
+        target = ctx.message.mentions.users.first();
+      } else if (ctx.args?.length > 0) {
+        target = await ctx.client.users.fetch(ctx.args[0]).catch(() => null);
+      }
+      level = parseInt(ctx.args[1], 10);
+    }
+
+    if (!target) return ctx.reply({ content: "Please provide a valid user.", ephemeral: true });
+    if (isNaN(level)) return ctx.reply({ content: "Please provide a valid level.", ephemeral: true });
     const requiredXp = xpForLevel(level);
 
     const profile = await Level.findOneAndUpdate(
