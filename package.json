@@ -4,7 +4,7 @@
   "description": "Jack Discord Bot",
   "main": "bot/index.js",
   "scripts": {
-    "start": "node bot/index.js"
+    "start": "node main.js"
   },
   "keywords": [],
   "author": "",
