@@ -1,0 +1,6 @@
+{
+  "name": "sticker",
+  "version": "1.0.0",
+  "description": "Sticker commands module",
+  "main": "index.js"
+}

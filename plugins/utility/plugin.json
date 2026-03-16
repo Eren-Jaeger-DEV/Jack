@@ -1,0 +1,6 @@
+{
+  "name": "utility",
+  "version": "1.0.0",
+  "description": "Utility commands module",
+  "main": "index.js"
+}

@@ -1,5 +1,5 @@
 const Level = require("../database/models/Level");
-const xpCache = require("../modules/leveling/xpCache");
+const xpCache = require("../../plugins/leveling/xpCache");
 
 /* Store VC join timestamps in memory */
 const voiceSessions = new Map();

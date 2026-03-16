@@ -1,0 +1,6 @@
+{
+  "name": "clan",
+  "version": "1.0.0",
+  "description": "Clan commands module",
+  "main": "index.js"
+}

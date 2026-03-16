@@ -31,13 +31,8 @@ mongoose
 
 client.once("clientReady", async () => {
   console.log(`Logged in as ${client.user.tag}`);
-  
-  // Preload Canvas Leveling Backgrounds
-  const { preloadBackgrounds } = require("./modules/leveling/backgroundCache");
-  await preloadBackgrounds();
-
-  // Start the background XP flush worker
-  require("./modules/leveling/xpWorker")(client);
+  // Load all standalone plugins synchronously
+  require("../core/pluginLoader")(client);
 });
 
 /* Login */

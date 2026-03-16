@@ -1,0 +1,6 @@
+{
+  "name": "market",
+  "version": "1.0.0",
+  "description": "Market commands module",
+  "main": "index.js"
+}

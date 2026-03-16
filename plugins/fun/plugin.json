@@ -1,0 +1,6 @@
+{
+  "name": "fun",
+  "version": "1.0.0",
+  "description": "Fun commands module",
+  "main": "index.js"
+}

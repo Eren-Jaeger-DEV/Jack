@@ -1,0 +1,6 @@
+{
+  "name": "emoji",
+  "version": "1.0.0",
+  "description": "Emoji commands module",
+  "main": "index.js"
+}

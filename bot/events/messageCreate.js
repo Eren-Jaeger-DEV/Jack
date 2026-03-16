@@ -1,6 +1,5 @@
 const afkHandler = require("../handlers/afkHandler");
 const screenshotHandler = require("../handlers/screenshotHandler");
-const levelHandler = require("../modules/leveling/levelHandler");
 const prefixHandler = require("../handlers/prefixHandler");
 
 module.exports = {
@@ -16,7 +15,6 @@ module.exports = {
 
       await afkHandler(message);
       await screenshotHandler(message);
-      await levelHandler(message);
 
       await prefixHandler(message, client);
 

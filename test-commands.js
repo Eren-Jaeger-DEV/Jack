@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const commandsPath = path.join(__dirname, 'bot', 'commands');
+const commandsPath = path.join(__dirname, 'plugins');
 const commandFolders = fs.readdirSync(commandsPath);
 
 let total = 0;
@@ -11,8 +11,8 @@ let failed = 0;
 console.log("Starting command validation...\n");
 
 for (const folder of commandFolders) {
-  const folderPath = path.join(commandsPath, folder);
-  if (!fs.statSync(folderPath).isDirectory()) continue;
+  const folderPath = path.join(commandsPath, folder, 'commands');
+  if (!fs.existsSync(folderPath)) continue;
 
   const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
   

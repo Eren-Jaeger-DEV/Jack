@@ -1,0 +1,6 @@
+{
+  "name": "leveling",
+  "version": "1.0.0",
+  "description": "XP leveling system",
+  "main": "index.js"
+}
