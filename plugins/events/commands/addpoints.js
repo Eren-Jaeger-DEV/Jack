@@ -1,7 +1,5 @@
 /**
- * addpoints.js — /eventaddpoints
- * Manually adds a specified number of points to a user within an active event.
- * Recalculates the leaderboard automatically after every change.
+ * addpoints.js — /eventaddpoints | j event addpoints <eventId> @user <points>
  */
 
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
@@ -9,23 +7,21 @@ const { addPoints } = require('../services/leaderboardEngine');
 
 module.exports = {
   name: 'eventaddpoints',
-  description: 'Add points to a participant in an active event',
+  aliases: ['ev-addpts', 'evaddpoints', 'evpts'],
+  category: 'events',
+  description: 'Add or subtract points for a participant in an active event',
+  usage: '/eventaddpoints <eventId> @user <points>  |  j event addpoints <eventId> @user <points>',
+  details: 'Points are cumulative. Use a negative number to subtract.',
 
   data: new SlashCommandBuilder()
     .setName('eventaddpoints')
     .setDescription('Add points to a user in an active event')
     .addStringOption(o =>
-      o.setName('eventid')
-        .setDescription('The Event ID (e.g. cb-001)')
-        .setRequired(true))
+      o.setName('eventid').setDescription('Event ID (e.g. cb-001)').setRequired(true))
     .addUserOption(o =>
-      o.setName('user')
-        .setDescription('The participant to add points to')
-        .setRequired(true))
+      o.setName('user').setDescription('The participant').setRequired(true))
     .addIntegerOption(o =>
-      o.setName('points')
-        .setDescription('Points to add (use negative to subtract)')
-        .setRequired(true))
+      o.setName('points').setDescription('Points to add (negative to subtract)').setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
   async run(ctx) {
@@ -33,20 +29,31 @@ module.exports = {
                     ctx.member.permissions.has(PermissionFlagsBits.Administrator);
     if (!hasPerm) return ctx.reply({ content: '❌ Only moderators can add event points.', ephemeral: true });
 
-    const eventId = ctx.options.getString('eventid').toLowerCase();
-    const targetUser = ctx.options.getUser('user');
-    const points = ctx.options.getInteger('points');
+    let eventId, targetUser, points;
 
-    await ctx.deferReply();
+    if (ctx.options?.getString) {
+      eventId = ctx.options.getString('eventid').toLowerCase();
+      targetUser = ctx.options.getUser('user');
+      points = ctx.options.getInteger('points');
+    } else {
+      eventId = ctx.args[0]?.toLowerCase();
+      targetUser = ctx.message?.mentions?.users?.first();
+      points = parseInt(ctx.args[2]);
+    }
+
+    if (!eventId || !targetUser || isNaN(points)) {
+      return ctx.reply('❌ Usage: `j event addpoints cb-001 @user 850`');
+    }
+
+    if (ctx.options?.getString) await ctx.defer();
 
     try {
       const event = await addPoints(eventId, targetUser.id, points);
-
       const newTotal = event.points.get(targetUser.id) || 0;
       const rank = event.leaderboard.findIndex(e => e.discordId === targetUser.id) + 1;
-
       const sign = points >= 0 ? '+' : '';
-      await ctx.editReply({
+
+      const replyData = {
         embeds: [{
           color: points >= 0 ? 0x57F287 : 0xED4245,
           title: `${points >= 0 ? '📈' : '📉'} Points Updated — ${event.name}`,
@@ -59,9 +66,17 @@ module.exports = {
           footer: { text: `Updated by ${ctx.user.tag}` },
           timestamp: new Date()
         }]
-      });
+      };
+
+      if (ctx.options?.getString) {
+        await ctx.editReply(replyData);
+      } else {
+        await ctx.reply(replyData);
+      }
     } catch (err) {
-      await ctx.editReply({ content: `❌ ${err.message}` });
+      const msg = { content: `❌ ${err.message}` };
+      if (ctx.options?.getString) await ctx.editReply(msg);
+      else await ctx.reply(msg);
     }
   }
 };
