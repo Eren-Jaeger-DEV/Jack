@@ -1,5 +1,5 @@
+require("dotenv").config({ path: require("path").join(__dirname, "../../.env") });
 const bot = require("../../bot/index");
-
 const express = require("express");
 const session = require("express-session");
 const passport = require("passport");
@@ -11,7 +11,12 @@ const app = express();
 /* CORS */
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3001"],
+  origin: [
+    "http://localhost:5173", 
+    "http://localhost:3001", 
+    "https://dashboard.mceclipsehub.online",
+    "https://devdashboard.mceclipsehub.online"
+  ],
   credentials: true,
   methods: ["GET","POST"],
   allowedHeaders: ["Content-Type"]
