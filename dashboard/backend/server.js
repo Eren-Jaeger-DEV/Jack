@@ -32,9 +32,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Temporarily disable secure requirement to test if the proxy is dropping it
+    secure: true, // Secure must be true for SameSite=none
     httpOnly: true,
-    sameSite: "lax"
+    sameSite: "none"
   }
 }));
 
@@ -104,13 +104,15 @@ app.get("/api/auth/callback",
 /* USER API */
 
 app.get("/api/user", (req, res) => {
+  res.header("Cache-Control", "private, no-cache, no-store, must-revalidate");
+  res.header("Expires", "-1");
+  res.header("Pragma", "no-cache");
 
   if (!req.user) {
     return res.status(401).json({ error: "Not logged in" });
   }
 
   res.json(req.user);
-
 });
 
 /* SERVER INFO API */
