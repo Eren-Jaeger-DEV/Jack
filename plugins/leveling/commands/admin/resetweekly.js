@@ -2,11 +2,11 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const Level = require("../../../../bot/database/models/Level");
 
 module.exports = {
-  name: "resetweekly",
+  name: "xpresetweekly",
   category: "admin",
   description: "Reset weekly XP for EVERYONE in the server",
   data: new SlashCommandBuilder()
-    .setName("resetweekly")
+    .setName("xpresetweekly")
     .setDescription("Reset weekly XP for EVERYONE in the server")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 

@@ -1,32 +1,52 @@
+/**
+ * deploy-commands.js
+ *
+ * Scans all plugins for commands with a `data` property (SlashCommandBuilder)
+ * and registers them globally with Discord's API.
+ *
+ * Run with: node deploy-commands.js
+ */
+
 require('dotenv').config();
 
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
+const path = require('path');
 
 const commands = [];
 
-/* READ COMMAND FILES */
+/* SCAN ALL PLUGINS */
 
-const commandFolders = fs.readdirSync('./bot/commands');
+const pluginsPath = path.join(__dirname, 'plugins');
 
-for (const folder of commandFolders) {
-
-  const commandFiles = fs
-    .readdirSync(`./bot/commands/${folder}`)
-    .filter(file => file.endsWith('.js'));
-
-  for (const file of commandFiles) {
-
-    const command = require(`./bot/commands/${folder}/${file}`);
-
-    if ('data' in command) {
-      console.log("Loaded:", command.data.name);
-     commands.push(command.data.toJSON());
-     }
-      
-  
-
+function loadCommandsFromDir(dir) {
+  if (!fs.existsSync(dir)) return;
+  const entries = fs.readdirSync(dir);
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry);
+    if (fs.statSync(fullPath).isDirectory()) {
+      loadCommandsFromDir(fullPath);
+    } else if (entry.endsWith('.js')) {
+      try {
+        const command = require(fullPath);
+        if ('data' in command && command.data) {
+          console.log(`Loaded: ${command.data.name}`);
+          commands.push(command.data.toJSON());
+        }
+      } catch (err) {
+        console.error(`Failed to load ${fullPath}:`, err.message);
+      }
+    }
   }
+}
+
+const pluginFolders = fs.readdirSync(pluginsPath).filter(f =>
+  fs.statSync(path.join(pluginsPath, f)).isDirectory()
+);
+
+for (const folder of pluginFolders) {
+  const commandsDir = path.join(pluginsPath, folder, 'commands');
+  loadCommandsFromDir(commandsDir);
 }
 
 /* DISCORD REST */
@@ -34,20 +54,16 @@ for (const folder of commandFolders) {
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
 (async () => {
-
   try {
-
-    console.log(`🚀 Deploying ${commands.length} commands...`);
+    console.log(`\n🚀 Deploying ${commands.length} commands globally...`);
 
     await rest.put(
       Routes.applicationCommands(process.env.CLIENT_ID),
       { body: commands }
     );
 
-    console.log('✅ Slash commands updated.');
-
+    console.log('✅ All slash commands registered successfully.');
   } catch (error) {
-    console.error(error);
+    console.error('❌ Deployment failed:', error);
   }
-
 })();

@@ -32,9 +32,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true, // Secure must be true for SameSite=none
+    secure: process.env.NODE_ENV !== "development", // Secure must be true for SameSite=none
     httpOnly: true,
-    sameSite: "none"
+    sameSite: process.env.NODE_ENV === "development" ? "lax" : "none"
   }
 }));
 

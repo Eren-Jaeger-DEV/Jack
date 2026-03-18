@@ -8,6 +8,12 @@ export default defineConfig({
     allowedHosts: [
       'dashboard.mceclipsehub.online',
       'devdashboard.mceclipsehub.online'
-    ]
+    ],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
+      }
+    }
   }
 })

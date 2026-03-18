@@ -9,6 +9,7 @@ const guildConfigSchema = new mongoose.Schema({
     admin: { type: Boolean, default: true },
     clan: { type: Boolean, default: true },
     emoji: { type: Boolean, default: true },
+    events: { type: Boolean, default: true },
     fun: { type: Boolean, default: true },
     leveling: { type: Boolean, default: true },
     market: { type: Boolean, default: true },

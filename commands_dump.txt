@@ -1,0 +1,324 @@
+[ADMIN] Command: announce
+  Desc: Create a beautiful announcement in any channel
+  File: /plugins/admin/commands/announce.js
+
+[ADMIN] Command: disable
+  Desc: Disable a command category in a channel or server-wide
+  File: /plugins/admin/commands/disable.js
+
+[ADMIN] Command: enable
+  Desc: Enable a command category in a channel or server-wide
+  File: /plugins/admin/commands/enable.js
+
+[ADMIN] Command: serveroverview
+  Desc: Create the server overview panel
+  File: /plugins/admin/commands/serveroverview.js
+
+[ADMIN] Command: setlog
+  Desc: Set the moderation log channel
+  File: /plugins/admin/commands/setlog.js
+
+[ADMIN] Command: setup
+  Desc: Setup the permanent admin guide dashboard
+  File: /plugins/admin/commands/setupAdminGuide.js
+
+[ADMIN] Command: ticketpanel
+  Desc: Create the ticket panel
+  File: /plugins/admin/commands/ticketpanel.js
+
+[CLAN] Command: addsyn
+  Desc: Add synergy points to a player
+  File: /plugins/clan/commands/addsyn.js
+
+[CLAN] Command: clanroster
+  Desc: View the full clan player roster
+  File: /plugins/clan/commands/clanroster.js
+
+[CLAN] Command: deleteplayer
+  Desc: Delete a player's clan profile
+  File: /plugins/clan/commands/deleteplayer.js
+
+[CLAN] Command: editprofile
+  Desc: Edit your BGMI player profile
+  File: /plugins/clan/commands/editprofile.js
+
+[CLAN] Command: ign
+  Desc: View a player's in-game name
+  File: /plugins/clan/commands/ign.js
+
+[CLAN] Command: minussyn
+  Desc: Remove synergy points from a player
+  File: /plugins/clan/commands/minussyn.js
+
+[CLAN] Command: mysynergy
+  Desc: See how many synergy points you need to pass the next player
+  File: /plugins/clan/commands/mysynergy.js
+
+[CLAN] Command: profile
+  Desc: Show BGMI player profile
+  File: /plugins/clan/commands/profile.js
+
+[CLAN] Command: register
+  Desc: Register your BGMI player profile
+  File: /plugins/clan/commands/register.js
+
+[CLAN] Command: resetseason
+  Desc: Reset season and weekly synergy for all players
+  File: /plugins/clan/commands/resetseason.js
+
+[CLAN] Command: resetweekly
+  Desc: Reset weekly synergy and assign Weekly MVP
+  File: /plugins/clan/commands/resetweekly.js
+
+[CLAN] Command: topseason
+  Desc: Show season synergy leaderboard
+  File: /plugins/clan/commands/topseason.js
+
+[CLAN] Command: topweekly
+  Desc: Show weekly synergy leaderboard
+  File: /plugins/clan/commands/topweekly.js
+
+[CLAN] Command: uid
+  Desc: View a player's BGMI UID
+  File: /plugins/clan/commands/uid.js
+
+[EMOJI] Command: emojiadd
+  Desc: Summon a specific emoji from the Global Vault to your server.
+  File: /plugins/emoji/commands/emojiAdd.js
+
+[EMOJI] Command: emojibank
+  Desc: View the Global Emoji Bank list.
+  File: /plugins/emoji/commands/emojiBank.js
+
+[EMOJI] Command: emojibrowse
+  Desc: Browse the visual interface of the Global Emoji Vault.
+  File: /plugins/emoji/commands/emojiBrowse.js
+
+[EMOJI] Command: emojicleanup
+  Desc: Scans for server emojis unused in the CDN for 30+ days.
+  File: /plugins/emoji/commands/emojiCleanup.js
+
+[EMOJI] Command: emojiremove
+  Desc: Remove an emoji from the global vault.
+  File: /plugins/emoji/commands/emojiRemove.js
+
+[EMOJI] Command: emoji
+  Desc: Summon an emoji from the global CDN directly into chat.
+  File: /plugins/emoji/commands/emojiSearch.js
+
+[EMOJI] Command: emojislots
+  Desc: Check the current server emoji and sticker slot usage.
+  File: /plugins/emoji/commands/emojiSlots.js
+
+[EMOJI] Command: emojitemp
+  Desc: Temporarily install a global emoji for 10 minutes to save slots.
+  File: /plugins/emoji/commands/emojiTemp.js
+
+[FUN] Command: action
+  Desc: Perform a fun action (hug, slap, kiss, etc.)
+  File: /plugins/fun/commands/action.js
+
+[LEVELING] Command: addxp
+  Desc: Add XP to a user
+  File: /plugins/leveling/commands/admin/addxp.js
+
+[LEVELING] Command: removexp
+  Desc: Remove XP from a user
+  File: /plugins/leveling/commands/admin/removexp.js
+
+[LEVELING] Command: resetweekly
+  Desc: Reset weekly XP for EVERYONE in the server
+  File: /plugins/leveling/commands/admin/resetweekly.js
+
+[LEVELING] Command: resetxp
+  Desc: Reset all XP for a user
+  File: /plugins/leveling/commands/admin/resetxp.js
+
+[LEVELING] Command: resetxpall
+  Desc: Reset ALL XP for EVERYONE in the server
+  File: /plugins/leveling/commands/admin/resetxpall.js
+
+[LEVELING] Command: setlevel
+  Desc: Set Level for a user
+  File: /plugins/leveling/commands/admin/setlevel.js
+
+[LEVELING] Command: setxp
+  Desc: Set XP for a user
+  File: /plugins/leveling/commands/admin/setxp.js
+
+[LEVELING] Command: leaderboard
+  Desc: View the server XP leaderboard
+  File: /plugins/leveling/commands/leaderboard.js
+
+[LEVELING] Command: rank
+  Desc: Show your or another user's rank card
+  File: /plugins/leveling/commands/rank.js
+
+[LEVELING] Command: rankbackground
+  Desc: Set your custom rank card background
+  File: /plugins/leveling/commands/rankbackground.js
+
+[MARKET] Command: cancelpop
+  Desc: Cancel your active POP market listing
+  File: /plugins/market/commands/cancelpop.js
+
+[MARKET] Command: popmarket
+  Desc: Force refresh the POP marketplace panel
+  File: /plugins/market/commands/popmarket.js
+
+[MARKET] Command: sell
+  Desc: List your POP for sale on the marketplace
+  File: /plugins/market/commands/sellpop.js
+
+[MODERATION] Command: addrole
+  Desc: Add a role to a user
+  File: /plugins/moderation/commands/addrole.js
+
+[MODERATION] Command: ban
+  Desc: Ban a member from the server
+  File: /plugins/moderation/commands/ban.js
+
+[MODERATION] Command: clear
+  Desc: Delete multiple messages from a channel
+  File: /plugins/moderation/commands/clear.js
+
+[MODERATION] Command: clearall
+  Desc: Delete all messages in the channel
+  File: /plugins/moderation/commands/clearall.js
+
+[MODERATION] Command: clearwarns
+  Desc: Clear all warnings from a user
+  File: /plugins/moderation/commands/clearwarns.js
+
+[MODERATION] Command: kick
+  Desc: Kick a member from the server
+  File: /plugins/moderation/commands/kick.js
+
+[MODERATION] Command: lock
+  Desc: Lock the current channel
+  File: /plugins/moderation/commands/lock.js
+
+[MODERATION] Command: mute
+  Desc: Timeout a member for a specified duration
+  File: /plugins/moderation/commands/mute.js
+
+[MODERATION] Command: nickname
+  Desc: Change a user's nickname
+  File: /plugins/moderation/commands/nickname.js
+
+[MODERATION] Command: removerole
+  Desc: Remove a role from a user
+  File: /plugins/moderation/commands/removerole.js
+
+[MODERATION] Command: unban
+  Desc: Unban a user from the server
+  File: /plugins/moderation/commands/unban.js
+
+[MODERATION] Command: unlock
+  Desc: Unlock the current channel
+  File: /plugins/moderation/commands/unlock.js
+
+[MODERATION] Command: unmute
+  Desc: Remove timeout from a member
+  File: /plugins/moderation/commands/unmute.js
+
+[MODERATION] Command: unwarn
+  Desc: Remove a warning from a user
+  File: /plugins/moderation/commands/unwarn.js
+
+[MODERATION] Command: warn
+  Desc: Warn a user with a reason
+  File: /plugins/moderation/commands/warn.js
+
+[MODERATION] Command: warnings
+  Desc: View warnings for a user
+  File: /plugins/moderation/commands/warnings.js
+
+[PACKS] Command: packadd
+  Desc: Add an existing global emoji to an Emoji Pack
+  File: /plugins/packs/commands/packAdd.js
+
+[PACKS] Command: packcreate
+  Desc: Create an empty Emoji Pack in the Global Vault
+  File: /plugins/packs/commands/packCreate.js
+
+[PACKS] Command: packimport
+  Desc: Download a full Global Emoji Pack into your server automatically.
+  File: /plugins/packs/commands/packImport.js
+
+[PACKS] Command: packremove
+  Desc: Remove an emoji from its Emoji Pack
+  File: /plugins/packs/commands/packRemove.js
+
+[ROLES] Command: rradd
+  Desc: Add a Role option to a Reaction Role Panel
+  File: /plugins/roles/commands/rrAdd.js
+
+[ROLES] Command: rrcreate
+  Desc: Create a new Reaction Role Custom Panel
+  File: /plugins/roles/commands/rrCreate.js
+
+[ROLES] Command: rrdelete
+  Desc: Delete an active Reaction Role Panel permanently
+  File: /plugins/roles/commands/rrDelete.js
+
+[ROLES] Command: rrremove
+  Desc: Remove a Role option from a Reaction Role Panel
+  File: /plugins/roles/commands/rrRemove.js
+
+[STICKER] Command: stickeradd
+  Desc: Summon a specific sticker from the Global Vault to your server.
+  File: /plugins/sticker/commands/stickerAdd.js
+
+[STICKER] Command: stickerbank
+  Desc: View the Global Sticker Bank list.
+  File: /plugins/sticker/commands/stickerBank.js
+
+[STICKER] Command: stickerbrowse
+  Desc: Browse the visual interface of the Global Sticker Vault.
+  File: /plugins/sticker/commands/stickerBrowse.js
+
+[STICKER] Command: stickerremove
+  Desc: Remove a sticker from the global vault.
+  File: /plugins/sticker/commands/stickerRemove.js
+
+[STICKER] Command: sticker
+  Desc: Summon a sticker from the global CDN directly into chat (Bypasses server slots).
+  File: /plugins/sticker/commands/stickerSend.js
+
+[UTILITY] Command: afk
+  Desc: Set yourself as AFK
+  File: /plugins/utility/commands/afk.js
+
+[UTILITY] Command: avatar
+  Desc: Show a user's avatar
+  File: /plugins/utility/commands/avatar.js
+
+[UTILITY] Command: help
+  Desc: Show all available commands
+  File: /plugins/utility/commands/help.js
+
+[UTILITY] Command: ping
+  Desc: Check bot latency
+  File: /plugins/utility/commands/ping.js
+
+[UTILITY] Command: poll
+  Desc: Create a Yes/No poll
+  File: /plugins/utility/commands/poll.js
+
+[UTILITY] Command: prefixtest
+  Desc: Test prefix system
+  File: /plugins/utility/commands/prefixTest.js
+
+[UTILITY] Command: serverinfo
+  Desc: Show information about the server
+  File: /plugins/utility/commands/serverinfo.js
+
+[UTILITY] Command: steal
+  Desc: Steal an emoji or sticker by replying to a message and store it globally.
+  File: /plugins/utility/commands/steal.js
+
+[UTILITY] Command: userinfo
+  Desc: Get information about a user
+  File: /plugins/utility/commands/userinfo.js
+
