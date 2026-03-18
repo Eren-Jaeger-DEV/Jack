@@ -13,8 +13,8 @@ module.exports = {
   aliases: ['ev-create', 'evcreate'],
   category: 'events',
   description: 'Create a new clan event',
-  usage: '/eventcreate <type> <name>  |  j event create <type> <name>',
-  details: 'Types: clanBattle, intraMatch, foster, seasonal, fun',
+  usage: "/eventcreate <type> <name>  |  j event create <type> <name>",
+  details: "Types: clanBattle, intraMatch, foster, seasonal, fun",
 
   data: new SlashCommandBuilder()
     .setName('eventcreate')

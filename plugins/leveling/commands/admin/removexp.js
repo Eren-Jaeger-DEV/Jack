@@ -7,8 +7,8 @@ module.exports = {
   category: "admin",
   description: "Remove XP from a user",
   aliases: ["xp-","takexp"],
-  usage: '/removexp @user <amount>  |  j removexp @user <amount>',
-  details: 'Admin: Removes XP from a user's level progress.',
+  usage: "/removexp @user <amount>  |  j removexp @user <amount>",
+  details: "Admin: Removes XP from a user's level progress.",
   data: new SlashCommandBuilder()
     .setName("removexp")
     .setDescription("Remove XP from a user")

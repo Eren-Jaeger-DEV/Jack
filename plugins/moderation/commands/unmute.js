@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Remove timeout from a member",
   aliases: ["untimeout","unsilence"],
-  usage: '/unmute @user  |  j unmute @user',
-  details: 'Removes a timeout from a member early.',
+  usage: "/unmute @user  |  j unmute @user",
+  details: "Removes a timeout from a member early.",
 
   data: new SlashCommandBuilder()
     .setName('unmute')

@@ -6,8 +6,8 @@ module.exports = {
   category: "emoji",
   description: "Scans for server emojis unused in the CDN for 30+ days.",
   aliases: ["mojiscan","emojiscan"],
-  usage: '/emojicleanup  |  j emoji cleanup',
-  details: 'Scans for server emojis unused in the CDN for 30+ days to free up slots.',
+  usage: "/emojicleanup  |  j emoji cleanup",
+  details: "Scans for server emojis unused in the CDN for 30+ days to free up slots.",
 
   data: new SlashCommandBuilder()
     .setName("emojicleanup")

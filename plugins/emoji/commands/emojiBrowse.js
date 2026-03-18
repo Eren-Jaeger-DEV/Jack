@@ -8,8 +8,8 @@ module.exports = {
   category: "emoji",
   description: "Browse the visual interface of the Global Emoji Vault.",
   aliases: ["emojivault","browsemoji"],
-  usage: '/emojibrowse  |  j emoji browse',
-  details: 'Opens a visual paginated browser for the Global Emoji Vault.',
+  usage: "/emojibrowse  |  j emoji browse",
+  details: "Opens a visual paginated browser for the Global Emoji Vault.",
 
   data: new SlashCommandBuilder()
     .setName("emojibrowse")

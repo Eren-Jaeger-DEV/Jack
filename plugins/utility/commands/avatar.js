@@ -9,8 +9,8 @@ module.exports = {
   category: "utility",
   description: "Show a user's avatar",
   aliases: ['av', 'pfp', 'icon'],
-  usage: '/avatar [@user]  |  j avatar [@user]',
-  details: 'Displays the full-size avatar of yourself or another user.',
+  usage: "/avatar [@user]  |  j avatar [@user]",
+  details: "Displays the full-size avatar of yourself or another user.",
 
   data: new SlashCommandBuilder()
     .setName('avatar')

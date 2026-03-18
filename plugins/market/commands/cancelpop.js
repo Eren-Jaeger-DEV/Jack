@@ -10,8 +10,8 @@ module.exports = {
   category: "market",
   description: "Cancel your active POP market listing",
   aliases: ["popcancel","unsell"],
-  usage: '/cancelpop  |  j pop cancel',
-  details: 'Cancels your active POP listing from the marketplace.',
+  usage: "/cancelpop  |  j pop cancel",
+  details: "Cancels your active POP listing from the marketplace.",
 
   data: new SlashCommandBuilder()
     .setName("cancelpop")

@@ -9,8 +9,8 @@ module.exports = {
   category: "utility",
   description: "Steal an emoji or sticker by replying to a message and store it globally.",
   aliases: ["snatch","stealemoji"],
-  usage: '/steal (reply to a message with emoji/sticker)  |  j steal',
-  details: 'Steals an emoji or sticker from a replied message and stores it in the Global Vault.',
+  usage: "/steal (reply to a message with emoji/sticker)  |  j steal",
+  details: "Steals an emoji or sticker from a replied message and stores it in the Global Vault.",
 
   data: new SlashCommandBuilder()
     .setName("steal")

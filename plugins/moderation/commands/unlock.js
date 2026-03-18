@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Unlock the current channel",
   aliases: ["unlockchannel","open"],
-  usage: '/unlock  |  j unlock',
-  details: 'Unlocks a previously locked channel so members can speak again.',
+  usage: "/unlock  |  j unlock",
+  details: "Unlocks a previously locked channel so members can speak again.",
 
   data: new SlashCommandBuilder()
     .setName('unlock')

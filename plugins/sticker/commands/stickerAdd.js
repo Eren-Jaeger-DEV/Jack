@@ -7,8 +7,8 @@ module.exports = {
   category: "sticker",
   description: "Summon a specific sticker from the Global Vault to your server.",
   aliases: ["stickerget","getsticker"],
-  usage: '/stickeradd <name>  |  j sticker add <name>',
-  details: 'Copies a sticker from the Global Vault into your server.',
+  usage: "/stickeradd <name>  |  j sticker add <name>",
+  details: "Copies a sticker from the Global Vault into your server.",
 
   data: new SlashCommandBuilder()
     .setName("stickeradd")

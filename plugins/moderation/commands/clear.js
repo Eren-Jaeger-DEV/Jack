@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Delete multiple messages from a channel",
   aliases: ["purge","delete","clean"],
-  usage: '/clear <amount>  |  j clear <amount>',
-  details: 'Bulk-deletes up to 100 messages in the current channel.',
+  usage: "/clear <amount>  |  j clear <amount>",
+  details: "Bulk-deletes up to 100 messages in the current channel.",
 
   data: new SlashCommandBuilder()
     .setName('clear')

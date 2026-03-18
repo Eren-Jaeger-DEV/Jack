@@ -7,8 +7,8 @@ module.exports = {
   category: "admin",
   description: "Set the moderation log channel",
   aliases: ["modlog","setmodlog"],
-  usage: '/setlog  |  j setlog',
-  details: 'Sets the channel where moderation actions are logged.',
+  usage: "/setlog  |  j setlog",
+  details: "Sets the channel where moderation actions are logged.",
 
   data: new SlashCommandBuilder()
     .setName('setlog')

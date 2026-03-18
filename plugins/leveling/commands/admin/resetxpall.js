@@ -6,8 +6,8 @@ module.exports = {
   category: "admin",
   description: "Reset ALL XP for EVERYONE in the server",
   aliases: ["wipelevels","clearallxp"],
-  usage: '/resetxpall  |  j resetxpall',
-  details: 'Admin: Wipes XP for ALL members server-wide. Irreversible.',
+  usage: "/resetxpall  |  j resetxpall",
+  details: "Admin: Wipes XP for ALL members server-wide. Irreversible.",
   data: new SlashCommandBuilder()
     .setName("resetxpall")
     .setDescription("Reset ALL XP for EVERYONE in the server")

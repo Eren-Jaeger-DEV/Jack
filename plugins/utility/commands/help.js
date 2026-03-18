@@ -77,8 +77,8 @@ module.exports = {
   aliases: ['h', 'commands', 'cmds'],
   category: 'utility',
   description: 'Show all commands, grouped by plugin, with usage and aliases',
-  usage: '/help [category]  |  j help [category]',
-  details: 'Categories: admin, clan, emoji, events, fun, leveling, market, moderation, packs, roles, sticker, utility',
+  usage: "/help [category]  |  j help [category]",
+  details: "Categories: admin, clan, emoji, events, fun, leveling, market, moderation, packs, roles, sticker, utility",
 
   data: new SlashCommandBuilder()
     .setName('help')

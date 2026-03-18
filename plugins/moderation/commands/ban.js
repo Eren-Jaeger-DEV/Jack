@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Ban a member from the server",
   aliases: ["banish"],
-  usage: '/ban @user [reason]  |  j ban @user [reason]',
-  details: 'Permanently bans a member from the server with an optional reason.',
+  usage: "/ban @user [reason]  |  j ban @user [reason]",
+  details: "Permanently bans a member from the server with an optional reason.",
 
   data: new SlashCommandBuilder()
     .setName('ban')

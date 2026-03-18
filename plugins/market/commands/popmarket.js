@@ -9,8 +9,8 @@ module.exports = {
   category: "market",
   description: "Force refresh the POP marketplace panel",
   aliases: ["market","marketplace"],
-  usage: '/popmarket  |  j pop market',
-  details: 'Force-refreshes the POP marketplace panel in the designated channel.',
+  usage: "/popmarket  |  j pop market",
+  details: "Force-refreshes the POP marketplace panel in the designated channel.",
 
   data: new SlashCommandBuilder()
     .setName("popmarket")

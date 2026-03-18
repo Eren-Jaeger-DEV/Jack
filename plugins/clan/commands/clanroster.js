@@ -7,8 +7,8 @@ module.exports = {
   category: "clan",
   description: "View the full clan player roster",
   aliases: ["roster","players"],
-  usage: '/clanroster  |  j clanroster',
-  details: 'Shows the full registered clan member list with IGN, UID, and synergy.',
+  usage: "/clanroster  |  j clanroster",
+  details: "Shows the full registered clan member list with IGN, UID, and synergy.",
 
   data: new SlashCommandBuilder()
     .setName("clanroster")

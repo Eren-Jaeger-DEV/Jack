@@ -7,8 +7,8 @@ module.exports = {
   category: "clan",
   description: "View a player's in-game name",
   aliases: ['gamename', 'ingamename'],
-  usage: '/ign [@user]  |  j ign [@user]',
-  details: 'Displays the in-game name of a registered BGMI player.',
+  usage: "/ign [@user]  |  j ign [@user]",
+  details: "Displays the in-game name of a registered BGMI player.",
 
   data: new SlashCommandBuilder()
     .setName("ign")

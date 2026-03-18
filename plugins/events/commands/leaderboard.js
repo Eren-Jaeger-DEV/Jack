@@ -13,8 +13,8 @@ module.exports = {
   aliases: ['ev-lb', 'evlb', 'eventlb'],
   category: 'events',
   description: 'Show live leaderboard for an event with IGN and synergy',
-  usage: '/eventleaderboard <eventId>  |  j event lb <eventId>',
-  details: 'Shows rank, IGN (from Player model), points, and season synergy.',
+  usage: "/eventleaderboard <eventId>  |  j event lb <eventId>",
+  details: "Shows rank, IGN (from Player model), points, and season synergy.",
 
   data: new SlashCommandBuilder()
     .setName('eventleaderboard')

@@ -6,8 +6,8 @@ module.exports = {
   category: "leveling",
   description: "View the server XP leaderboard",
   aliases: ["lb","top","levels"],
-  usage: '/leaderboard  |  j leaderboard',
-  details: 'Shows the top XP leaderboard for the server, sorted by level and XP.',
+  usage: "/leaderboard  |  j leaderboard",
+  details: "Shows the top XP leaderboard for the server, sorted by level and XP.",
   data: new SlashCommandBuilder()
     .setName("leaderboard")
     .setDescription("View the server XP leaderboard")

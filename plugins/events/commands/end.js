@@ -15,8 +15,8 @@ module.exports = {
   aliases: ['ev-end', 'evend'],
   category: 'events',
   description: 'End an event, post final results, and assign winner roles',
-  usage: '/eventend <eventId>  |  j event end <eventId>',
-  details: 'Sorts leaderboard, picks winners, posts to event channel, rotates winner role.',
+  usage: "/eventend <eventId>  |  j event end <eventId>",
+  details: "Sorts leaderboard, picks winners, posts to event channel, rotates winner role.",
 
   data: new SlashCommandBuilder()
     .setName('eventend')

@@ -10,8 +10,8 @@ module.exports = {
   aliases: ['ev-start', 'evstart'],
   category: 'events',
   description: 'Start a pending event and set it as active',
-  usage: '/eventstart <eventId>  |  j event start <eventId>',
-  details: 'Transitions event from upcoming → active and posts announcement.',
+  usage: "/eventstart <eventId>  |  j event start <eventId>",
+  details: "Transitions event from upcoming to active and posts announcement.",
 
   data: new SlashCommandBuilder()
     .setName('eventstart')

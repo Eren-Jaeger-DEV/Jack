@@ -15,8 +15,8 @@ module.exports = {
   category: "moderation",
   description: "Warn a user with a reason",
   aliases: ["strike","warning"],
-  usage: '/warn @user <reason>  |  j warn @user <reason>',
-  details: 'Issues a formal warning to a member and stores it in the database.',
+  usage: "/warn @user <reason>  |  j warn @user <reason>",
+  details: "Issues a formal warning to a member and stores it in the database.",
 
   data: new SlashCommandBuilder()
     .setName('warn')

@@ -8,8 +8,8 @@ module.exports = {
   category: "emoji",
   description: "Summon a specific emoji from the Global Vault to your server.",
   aliases: ["emojiget","getmoji"],
-  usage: '/emojiadd <name>  |  j emoji add <name>',
-  details: 'Summons a specific emoji from the Global Vault into your server.',
+  usage: "/emojiadd <name>  |  j emoji add <name>",
+  details: "Summons a specific emoji from the Global Vault into your server.",
 
   data: new SlashCommandBuilder()
     .setName("emojiadd")

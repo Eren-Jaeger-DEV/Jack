@@ -7,8 +7,8 @@ module.exports = {
   category: "roles",
   description: "Create a new Reaction Role Custom Panel",
   aliases: ["createreactionrole","rr-create","newrr"],
-  usage: '/rrcreate  |  j rr create',
-  details: 'Creates a new custom Reaction Role panel with buttons in the channel.',
+  usage: "/rrcreate  |  j rr create",
+  details: "Creates a new custom Reaction Role panel with buttons in the channel.",
 
   data: new SlashCommandBuilder()
     .setName("rrcreate")

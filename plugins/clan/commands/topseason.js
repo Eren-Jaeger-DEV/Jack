@@ -7,8 +7,8 @@ module.exports = {
   category: "clan",
   description: "Show season synergy leaderboard",
   aliases: ["seasonlb","seasonboard"],
-  usage: '/topseason  |  j topseason',
-  details: 'Displays the season synergy leaderboard for all registered players.',
+  usage: "/topseason  |  j topseason",
+  details: "Displays the season synergy leaderboard for all registered players.",
 
   data: new SlashCommandBuilder()
     .setName("topseason")

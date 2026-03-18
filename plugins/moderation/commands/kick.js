@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Kick a member from the server",
   aliases: ["boot","remove"],
-  usage: '/kick @user [reason]  |  j kick @user [reason]',
-  details: 'Kicks a member from the server.',
+  usage: "/kick @user [reason]  |  j kick @user [reason]",
+  details: "Kicks a member from the server.",
 
   data: new SlashCommandBuilder()
     .setName('kick')

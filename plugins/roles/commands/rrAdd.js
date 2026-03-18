@@ -8,8 +8,8 @@ module.exports = {
   category: "roles",
   description: "Add a Role option to a Reaction Role Panel",
   aliases: ["addreactionrole","rr-add"],
-  usage: '/rradd  |  j rr add',
-  details: 'Adds a new role option button to an existing Reaction Role Panel.',
+  usage: "/rradd  |  j rr add",
+  details: "Adds a new role option button to an existing Reaction Role Panel.",
 
   data: new SlashCommandBuilder()
     .setName("rradd")

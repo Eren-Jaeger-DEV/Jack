@@ -7,8 +7,8 @@ module.exports = {
   category: "packs",
   description: "Create an empty Emoji Pack in the Global Vault",
   aliases: ["newpack","createpack"],
-  usage: '/packcreate <name>  |  j pack create <name>',
-  details: 'Creates a new empty Emoji Pack in the Global Vault.',
+  usage: "/packcreate <name>  |  j pack create <name>",
+  details: "Creates a new empty Emoji Pack in the Global Vault.",
 
   data: new SlashCommandBuilder()
     .setName("packcreate")

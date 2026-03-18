@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Clear all warnings from a user",
   aliases: ["warnsclear","clearwarnings"],
-  usage: '/clearwarns @user  |  j clearwarns @user',
-  details: 'Clears all warnings from a user's record.',
+  usage: "/clearwarns @user  |  j clearwarns @user",
+  details: "Clears all warnings from a user's record.",
 
   data: new SlashCommandBuilder()
     .setName('clearwarns')

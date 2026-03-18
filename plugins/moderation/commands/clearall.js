@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Delete all messages in the channel",
   aliases: ["nuke","clearall"],
-  usage: '/clearall  |  j clearall',
-  details: 'Deletes ALL messages in the channel by cloning and deleting it.',
+  usage: "/clearall  |  j clearall",
+  details: "Deletes ALL messages in the channel by cloning and deleting it.",
 
   data: new SlashCommandBuilder()
     .setName('clearall')

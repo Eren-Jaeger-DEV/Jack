@@ -7,8 +7,8 @@ module.exports = {
   category: "admin",
   description: "Set XP for a user",
   aliases: ["xpset","forcexp"],
-  usage: '/setxp @user <amount>  |  j setxp @user <amount>',
-  details: 'Admin: Sets a user's total XP to an exact amount.',
+  usage: "/setxp @user <amount>  |  j setxp @user <amount>",
+  details: "Admin: Sets a user's total XP to an exact amount.",
   data: new SlashCommandBuilder()
     .setName("setxp")
     .setDescription("Set XP for a user")

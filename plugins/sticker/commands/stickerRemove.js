@@ -7,8 +7,8 @@ module.exports = {
   category: "sticker",
   description: "Remove a sticker from the global vault.",
   aliases: ["stickerdel","delsticker"],
-  usage: '/stickerremove <name>  |  j sticker remove <name>',
-  details: 'Removes a sticker from the Global Vault permanently.',
+  usage: "/stickerremove <name>  |  j sticker remove <name>",
+  details: "Removes a sticker from the Global Vault permanently.",
 
   data: new SlashCommandBuilder()
     .setName("stickerremove")

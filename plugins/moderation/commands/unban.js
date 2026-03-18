@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Unban a user from the server",
   aliases: ["pardon","forgive"],
-  usage: '/unban <userId>  |  j unban <userId>',
-  details: 'Unbans a user by their Discord ID.',
+  usage: "/unban <userId>  |  j unban <userId>",
+  details: "Unbans a user by their Discord ID.",
 
   data: new SlashCommandBuilder()
     .setName('unban')

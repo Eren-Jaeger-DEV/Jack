@@ -9,8 +9,8 @@ module.exports = {
   category: "utility",
   description: "Get information about a user",
   aliases: ["ui","whois","user"],
-  usage: '/userinfo [@user]  |  j userinfo [@user]',
-  details: 'Shows detailed info about a user: roles, join date, creation date, etc.',
+  usage: "/userinfo [@user]  |  j userinfo [@user]",
+  details: "Shows detailed info about a user: roles, join date, creation date, etc.",
 
   data: new SlashCommandBuilder()
     .setName('userinfo')

@@ -13,8 +13,8 @@ module.exports = {
   category: "moderation",
   description: "Remove a role from a user",
   aliases: ["rr-role","takerole","roledel"],
-  usage: '/removerole @user @role  |  j removerole @user @role',
-  details: 'Removes a role from a member.',
+  usage: "/removerole @user @role  |  j removerole @user @role",
+  details: "Removes a role from a member.",
 
   data: new SlashCommandBuilder()
     .setName('removerole')

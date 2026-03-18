@@ -7,8 +7,8 @@ module.exports = {
   category: "packs",
   description: "Download a full Global Emoji Pack into your server automatically.",
   aliases: ["importpack","downloadpack"],
-  usage: '/packimport <packName>  |  j pack import <packName>',
-  details: 'Downloads a full emoji pack into your server, filling available emoji slots.',
+  usage: "/packimport <packName>  |  j pack import <packName>",
+  details: "Downloads a full emoji pack into your server, filling available emoji slots.",
 
   data: new SlashCommandBuilder()
     .setName("packimport")

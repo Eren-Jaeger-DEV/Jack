@@ -14,7 +14,7 @@ module.exports = {
   description: "Change a user's nickname",
   aliases: ['nick', 'setnick', 'rename'],
   usage: '/nickname @user <name>  |  j nickname @user <name>',
-  details: 'Changes a member\'s displayed server nickname.',
+  details: "Changes a member\'s displayed server nickname.",
 
   data: new SlashCommandBuilder()
     .setName('nickname')

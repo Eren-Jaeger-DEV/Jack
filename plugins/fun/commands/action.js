@@ -6,8 +6,8 @@ module.exports = {
   category: "fun",
   description: "Perform a fun action (hug, slap, kiss, etc.)",
   aliases: ["do","react"],
-  usage: '/action <type> [@user]  |  j action <type> [@user]',
-  details: 'Performs a fun animated action: hug, slap, kiss, poke, pat, and more.',
+  usage: "/action <type> [@user]  |  j action <type> [@user]",
+  details: "Performs a fun animated action: hug, slap, kiss, poke, pat, and more.",
 
   data: new SlashCommandBuilder()
     .setName("action")

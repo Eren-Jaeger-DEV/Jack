@@ -6,8 +6,8 @@ module.exports = {
   category: "emoji",
   description: "Temporarily install a global emoji for 10 minutes to save slots.",
   aliases: ["tempemoji","borrowmoji"],
-  usage: '/emojitemp <name>  |  j emoji temp <name>',
-  details: 'Temporarily installs a global emoji for 10 minutes to save permanent slots.',
+  usage: "/emojitemp <name>  |  j emoji temp <name>",
+  details: "Temporarily installs a global emoji for 10 minutes to save permanent slots.",
 
   data: new SlashCommandBuilder()
     .setName("emojitemp")

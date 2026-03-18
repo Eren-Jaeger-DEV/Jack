@@ -7,8 +7,8 @@ module.exports = {
   category: "clan",
   description: "View a player's BGMI UID",
   aliases: ['playeruid', 'bgmiuid'],
-  usage: '/uid [@user]  |  j uid [@user]',
-  details: 'Shows the BGMI UID of a registered clan player.',
+  usage: "/uid [@user]  |  j uid [@user]",
+  details: "Shows the BGMI UID of a registered clan player.",
 
   data: new SlashCommandBuilder()
     .setName("uid")

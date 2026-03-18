@@ -11,8 +11,8 @@ module.exports = {
   category: "admin",
   description: "Setup the permanent admin guide dashboard",
   aliases: ["setup-admin-guide", "adminguide"],
-  usage: '/setup admin-guide  |  j setup admin-guide',
-  details: 'Posts the permanent staff command dashboard in the current channel. Refreshes automatically if already set.',
+  usage: "/setup admin-guide  |  j setup admin-guide",
+  details: "Posts the permanent staff command dashboard in the current channel. Refreshes automatically if already set.",
 
   data: new SlashCommandBuilder()
     .setName("setup")

@@ -8,8 +8,8 @@ module.exports = {
   category: "emoji",
   description: "Remove an emoji from the global vault.",
   aliases: ["emojidel","delmoji"],
-  usage: '/emojiremove <name>  |  j emoji remove <name>',
-  details: 'Removes a specific emoji from the Global Vault permanently.',
+  usage: "/emojiremove <name>  |  j emoji remove <name>",
+  details: "Removes a specific emoji from the Global Vault permanently.",
 
   data: new SlashCommandBuilder()
     .setName("emojiremove")

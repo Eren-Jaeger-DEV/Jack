@@ -10,8 +10,8 @@ module.exports = {
   aliases: ['ev-addpts', 'evaddpoints', 'evpts'],
   category: 'events',
   description: 'Add or subtract points for a participant in an active event',
-  usage: '/eventaddpoints <eventId> @user <points>  |  j event addpoints <eventId> @user <points>',
-  details: 'Points are cumulative. Use a negative number to subtract.',
+  usage: "/eventaddpoints <eventId> @user <points>  |  j event addpoints <eventId> @user <points>",
+  details: "Points are cumulative. Use a negative number to subtract.",
 
   data: new SlashCommandBuilder()
     .setName('eventaddpoints')

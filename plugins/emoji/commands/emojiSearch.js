@@ -9,8 +9,8 @@ module.exports = {
   category: "emoji",
   description: "Summon an emoji from the global CDN directly into chat.",
   aliases: ["moji","sendemoji"],
-  usage: '/emoji <name>  |  j emoji <name>',
-  details: 'Summons any emoji from the Global CDN directly into chat as a large image.',
+  usage: "/emoji <name>  |  j emoji <name>",
+  details: "Summons any emoji from the Global CDN directly into chat as a large image.",
 
   data: new SlashCommandBuilder()
     .setName("emoji")

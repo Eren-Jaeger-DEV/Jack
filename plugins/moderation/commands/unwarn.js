@@ -15,8 +15,8 @@ module.exports = {
   category: "moderation",
   description: "Remove a warning from a user",
   aliases: ["removewarn","warnremove"],
-  usage: '/unwarn @user <warnId>  |  j unwarn @user <warnId>',
-  details: 'Removes a specific warning from a user's record by warn ID.',
+  usage: "/unwarn @user <warnId>  |  j unwarn @user <warnId>",
+  details: "Removes a specific warning from a user's record by warn ID.",
 
   data: new SlashCommandBuilder()
     .setName('unwarn')

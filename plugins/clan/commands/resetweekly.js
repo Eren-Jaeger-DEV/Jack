@@ -7,8 +7,8 @@ module.exports = {
   category: "clan",
   description: "Reset weekly synergy and assign Weekly MVP",
   aliases: ["weekreset","rweekly"],
-  usage: '/resetweekly  |  j resetweekly',
-  details: 'Admin: Resets weekly synergy for all players and assigns the Weekly MVP role.',
+  usage: "/resetweekly  |  j resetweekly",
+  details: "Admin: Resets weekly synergy for all players and assigns the Weekly MVP role.",
 
   data: new SlashCommandBuilder()
     .setName("resetweekly")

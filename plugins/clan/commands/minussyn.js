@@ -7,8 +7,8 @@ module.exports = {
   category: "clan",
   description: "Remove synergy points from a player",
   aliases: ["syn-","removesynergy","rmsyn"],
-  usage: '/minussyn @user <points>  |  j minussyn @user <points>',
-  details: 'Deducts synergy points from a registered clan player.',
+  usage: "/minussyn @user <points>  |  j minussyn @user <points>",
+  details: "Deducts synergy points from a registered clan player.",
 
   data: new SlashCommandBuilder()
     .setName("minussyn")

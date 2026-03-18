@@ -12,8 +12,8 @@ module.exports = {
   category: "market",
   description: "List your POP for sale on the marketplace",
   aliases: ["sellpop","listpop"],
-  usage: '/sell  |  j sell pop',
-  details: 'Lists your POP for sale on the server marketplace.',
+  usage: "/sell  |  j sell pop",
+  details: "Lists your POP for sale on the server marketplace.",
 
   data: new SlashCommandBuilder()
     .setName("sell")

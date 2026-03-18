@@ -8,8 +8,8 @@ module.exports = {
   category: "packs",
   description: "Remove an emoji from its Emoji Pack",
   aliases: ["removepack","packdelete"],
-  usage: '/packremove <packName> <emojiName>  |  j pack remove <packName> <emojiName>',
-  details: 'Removes an emoji from an emoji pack.',
+  usage: "/packremove <packName> <emojiName>  |  j pack remove <packName> <emojiName>",
+  details: "Removes an emoji from an emoji pack.",
 
   data: new SlashCommandBuilder()
     .setName("packremove")

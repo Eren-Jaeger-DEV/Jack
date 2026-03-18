@@ -8,7 +8,7 @@ module.exports = {
   description: "Delete a player's clan profile",
   aliases: ['delplayer', 'removeplayer'],
   usage: '/deleteplayer @user  |  j deleteplayer @user',
-  details: 'Permanently removes a player\'s clan profile from the database.',
+  details: "Permanently removes a player\'s clan profile from the database.",
 
   data: new SlashCommandBuilder()
     .setName("deleteplayer")
