@@ -32,7 +32,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === "development" ? false : true, // Enforce secure cookies in production (HTTPS)
+    secure: false, // Temporarily disable secure requirement to test if the proxy is dropping it
     httpOnly: true,
     sameSite: "lax"
   }
@@ -71,9 +71,24 @@ app.get("/api/auth/login",
 /* DISCORD CALLBACK */
 
 app.get("/api/auth/callback",
-  passport.authenticate("discord", { failureRedirect: "/" }),
-  (req, res) => {
-    res.redirect(process.env.DASHBOARD_FRONTEND_URL || "http://localhost:5173/");
+  (req, res, next) => {
+    passport.authenticate("discord", (err, user, info) => {
+      if (err) {
+        console.error("Discord Auth System Error:", err);
+        return res.status(500).send(`Authentication Error: ${err.message || err}`);
+      }
+      if (!user) {
+        console.error("Discord Auth Rejected (No User):", info);
+        return res.status(401).send(`Authentication Failed: ${JSON.stringify(info)}`);
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error("Express Login Error:", loginErr);
+          return res.status(500).send(`Login Error: ${loginErr.message}`);
+        }
+        res.redirect(process.env.DASHBOARD_FRONTEND_URL || "http://localhost:5173/");
+      });
+    })(req, res, next);
   }
 );
 
