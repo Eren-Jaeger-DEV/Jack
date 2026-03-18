@@ -62,6 +62,15 @@ app.get("/test", (req, res) => {
   res.send("Backend works");
 });
 
+app.get("/api/test-session", (req, res) => {
+  req.session.test = "test-value-123";
+  res.json({ message: "Session Set!", sessionID: req.sessionID });
+});
+
+app.get("/api/test-session2", (req, res) => {
+  res.json({ sessionID: req.sessionID, testValue: req.session.test || null });
+});
+
 /* DISCORD LOGIN */
 
 app.get("/api/auth/login",
