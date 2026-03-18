@@ -5,6 +5,9 @@ module.exports = {
   name: "emojislots",
   category: "emoji",
   description: "Check the current server emoji and sticker slot usage.",
+  aliases: ["slots","emojicap"],
+  usage: '/emojislots  |  j emoji slots',
+  details: 'Shows current emoji and sticker slot usage for the server.',
 
   data: new SlashCommandBuilder()
     .setName("emojislots")

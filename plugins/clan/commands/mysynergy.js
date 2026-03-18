@@ -6,6 +6,9 @@ module.exports = {
   name: "mysynergy",
   category: "clan",
   description: "See how many synergy points you need to pass the next player",
+  aliases: ["mysyn","mypoints"],
+  usage: '/mysynergy  |  j mysynergy',
+  details: 'Shows your current synergy and how many points you need to pass the next player.',
 
   data: new SlashCommandBuilder()
     .setName("mysynergy")

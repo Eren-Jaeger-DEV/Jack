@@ -30,6 +30,9 @@ module.exports = {
   name: "sticker",
   category: "sticker",
   description: "Summon a sticker from the global CDN directly into chat (Bypasses server slots).",
+  aliases: ["sendsticker","getstick"],
+  usage: '/sticker <name>  |  j sticker <name>',
+  details: 'Sends a sticker from the Global CDN directly into chat (bypasses server sticker slots).',
 
   data: new SlashCommandBuilder()
     .setName("sticker")

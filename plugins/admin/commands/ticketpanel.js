@@ -12,6 +12,9 @@ module.exports = {
   name: "ticketpanel",
   category: "admin",
   description: "Create the ticket panel",
+  aliases: ["ticket","tickets"],
+  usage: '/ticketpanel  |  j ticketpanel',
+  details: 'Creates the ticket creation panel in the designated channel.',
 
   data: new SlashCommandBuilder()
     .setName("ticketpanel")

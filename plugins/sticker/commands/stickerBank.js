@@ -6,6 +6,9 @@ module.exports = {
   name: "stickerbank",
   category: "sticker",
   description: "View the Global Sticker Bank list.",
+  aliases: ["stickerlist","stickers"],
+  usage: '/stickerbank  |  j sticker bank',
+  details: 'Shows a text list of all stickers in the Global Vault.',
 
   data: new SlashCommandBuilder()
     .setName("stickerbank")

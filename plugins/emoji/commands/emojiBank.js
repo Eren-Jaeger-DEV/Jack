@@ -6,6 +6,9 @@ module.exports = {
   name: "emojibank",
   category: "emoji",
   description: "View the Global Emoji Bank list.",
+  aliases: ["emojilist","mojis"],
+  usage: '/emojibank  |  j emoji bank',
+  details: 'Shows a text list of all emojis stored in the Global Vault.',
 
   data: new SlashCommandBuilder()
     .setName("emojibank")

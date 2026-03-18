@@ -5,6 +5,9 @@ module.exports = {
   name: "resetxp",
   category: "admin",
   description: "Reset all XP for a user",
+  aliases: ["clearxp","xpreset"],
+  usage: '/resetxp @user  |  j resetxp @user',
+  details: 'Admin: Fully resets all XP for a specific user.',
   data: new SlashCommandBuilder()
     .setName("resetxp")
     .setDescription("Reset all XP for a user")

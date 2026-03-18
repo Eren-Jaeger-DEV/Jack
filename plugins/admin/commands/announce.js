@@ -15,6 +15,9 @@ module.exports = {
   name: "announce",
   category: "admin",
   description: "Create a beautiful announcement in any channel",
+  aliases: ["ann"],
+  usage: '/announce  |  j announce',
+  details: 'Sends a styled announcement embed to any channel you choose.',
 
   data: new SlashCommandBuilder()
     .setName("announce")

@@ -6,6 +6,9 @@ module.exports = {
   name: "topweekly",
   category: "clan",
   description: "Show weekly synergy leaderboard",
+  aliases: ["weeklylb","weeklyboard"],
+  usage: '/topweekly  |  j topweekly',
+  details: 'Displays the weekly synergy leaderboard for all registered players.',
 
   data: new SlashCommandBuilder()
     .setName("topweekly")

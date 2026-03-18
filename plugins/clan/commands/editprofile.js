@@ -13,6 +13,9 @@ module.exports = {
   name: "editprofile",
   category: "clan",
   description: "Edit your BGMI player profile",
+  aliases: ["editp","updateprofile"],
+  usage: '/editprofile  |  j editprofile',
+  details: 'Edit your own BGMI player profile (IGN, UID, level, mode preferences).',
 
   data: new SlashCommandBuilder()
     .setName("editprofile")

@@ -6,6 +6,9 @@ module.exports = {
   name: "setlevel",
   category: "admin",
   description: "Set Level for a user",
+  aliases: ["lvlset","forcelvl"],
+  usage: '/setlevel @user <level>  |  j setlevel @user <level>',
+  details: 'Admin: Forces a user to a specific level directly.',
   data: new SlashCommandBuilder()
     .setName("setlevel")
     .setDescription("Set Level for a user")

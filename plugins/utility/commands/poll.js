@@ -8,6 +8,9 @@ module.exports = {
   name: "poll",
   category: "utility",
   description: "Create a Yes/No poll",
+  aliases: ["vote","yesno"],
+  usage: '/poll <question>  |  j poll <question>',
+  details: 'Creates a Yes/No poll embed with reaction buttons.',
 
   data: new SlashCommandBuilder()
     .setName('poll')

@@ -12,6 +12,9 @@ module.exports = {
   name: "warnings",
   category: "moderation",
   description: "View warnings for a user",
+  aliases: ["warns","checkwarns"],
+  usage: '/warnings @user  |  j warnings @user',
+  details: 'Shows all recorded warnings for a member.',
 
   data: new SlashCommandBuilder()
     .setName('warnings')

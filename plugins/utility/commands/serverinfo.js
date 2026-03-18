@@ -8,6 +8,9 @@ module.exports = {
   name: "serverinfo",
   category: "utility",
   description: "Show information about the server",
+  aliases: ["si","server","guildinfo"],
+  usage: '/serverinfo  |  j serverinfo',
+  details: 'Shows detailed info about the server: owner, member count, channels, boosts, etc.',
 
   data: new SlashCommandBuilder()
     .setName('serverinfo')

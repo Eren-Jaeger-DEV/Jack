@@ -12,6 +12,9 @@ module.exports = {
   name: "lock",
   category: "moderation",
   description: "Lock the current channel",
+  aliases: ["lockdown","lockchannel"],
+  usage: '/lock  |  j lock',
+  details: 'Locks the current channel so members cannot send messages.',
 
   data: new SlashCommandBuilder()
     .setName('lock')

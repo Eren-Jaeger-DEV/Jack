@@ -7,6 +7,9 @@ module.exports = {
   name: "rrremove",
   category: "roles",
   description: "Remove a Role option from a Reaction Role Panel",
+  aliases: ["removereactionrole","rr-remove"],
+  usage: '/rrremove  |  j rr remove',
+  details: 'Removes a specific role button from a Reaction Role Panel.',
 
   data: new SlashCommandBuilder()
     .setName("rrremove")

@@ -6,6 +6,9 @@ module.exports = {
   name: "rrdelete",
   category: "roles",
   description: "Delete an active Reaction Role Panel permanently",
+  aliases: ["deletereactionrole","rr-delete","delrr"],
+  usage: '/rrdelete  |  j rr delete',
+  details: 'Permanently deletes an existing Reaction Role Panel.',
 
   data: new SlashCommandBuilder()
     .setName("rrdelete")

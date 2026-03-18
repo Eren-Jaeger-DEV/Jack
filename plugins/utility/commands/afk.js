@@ -6,6 +6,9 @@ module.exports = {
   name: "afk",
   category: "utility",
   description: "Set yourself as AFK",
+  aliases: ["away","setafk"],
+  usage: '/afk [reason]  |  j afk [reason]',
+  details: 'Marks you as AFK. Bot will mention others when they ping you.',
 
   data: new SlashCommandBuilder()
     .setName("afk")

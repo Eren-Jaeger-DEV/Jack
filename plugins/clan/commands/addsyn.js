@@ -6,6 +6,9 @@ module.exports = {
   name: "addsyn",
   category: "clan",
   description: "Add synergy points to a player",
+  aliases: ["syn+","addsynergy"],
+  usage: '/addsyn @user <points>  |  j addsyn @user <points>',
+  details: 'Adds synergy points to a registered clan player.',
 
   data: new SlashCommandBuilder()
     .setName("addsyn")

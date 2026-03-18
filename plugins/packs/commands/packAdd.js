@@ -6,6 +6,9 @@ module.exports = {
   name: "packadd",
   category: "packs",
   description: "Add an existing global emoji to an Emoji Pack",
+  aliases: ["addpack","packemoji"],
+  usage: '/packadd <packName> <emojiName>  |  j pack add <packName> <emojiName>',
+  details: 'Adds an existing Global Vault emoji to an emoji pack.',
 
   data: new SlashCommandBuilder()
     .setName("packadd")

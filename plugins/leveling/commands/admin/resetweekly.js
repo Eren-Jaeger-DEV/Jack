@@ -5,6 +5,9 @@ module.exports = {
   name: "xpresetweekly",
   category: "admin",
   description: "Reset weekly XP for EVERYONE in the server",
+  aliases: ["xpweeklyreset","clearweeklyxp"],
+  usage: '/xpresetweekly  |  j xpresetweekly',
+  details: 'Admin: Resets weekly XP for every member in the server.',
   data: new SlashCommandBuilder()
     .setName("xpresetweekly")
     .setDescription("Reset weekly XP for EVERYONE in the server")

@@ -6,6 +6,9 @@ module.exports = {
   name: "disable",
   category: "admin",
   description: "Disable a command category in a channel or server-wide",
+  aliases: ["cmdoff","disablecmd"],
+  usage: '/disable  |  j disable',
+  details: 'Disables a command category in a specific channel or server-wide.',
 
   data: new SlashCommandBuilder()
     .setName("disable")

@@ -5,6 +5,9 @@ module.exports = {
   name: "serveroverview",
   category: "admin",
   description: "Create the server overview panel",
+  aliases: ["overview","sov"],
+  usage: '/serveroverview  |  j serveroverview',
+  details: 'Creates or refreshes a pinned server overview info panel in a channel.',
 
   data: new SlashCommandBuilder()
     .setName("serveroverview")

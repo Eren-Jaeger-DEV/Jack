@@ -5,6 +5,9 @@ module.exports = {
   name: "rankbackground",
   category: "leveling",
   description: "Set your custom rank card background",
+  aliases: ["rankbg","setbg"],
+  usage: '/rankbackground  |  j rankbackground',
+  details: 'Set a custom background image for your personal rank card.',
   data: new SlashCommandBuilder()
     .setName("rankbackground")
     .setDescription("Manage your rank background")

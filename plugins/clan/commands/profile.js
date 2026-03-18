@@ -6,6 +6,9 @@ module.exports = {
   name: "profile",
   category: "clan",
   description: "Show BGMI player profile",
+  aliases: ["p","playerprofile"],
+  usage: '/profile [@user]  |  j profile [@user]',
+  details: 'Shows a player's full BGMI profile card including IGN, UID, synergy, and level.',
 
   data: new SlashCommandBuilder()
     .setName("profile")

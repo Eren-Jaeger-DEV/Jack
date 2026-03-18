@@ -6,6 +6,9 @@ module.exports = {
   name: "rank",
   category: "leveling",
   description: "Show your or another user's rank card",
+  aliases: ['level', 'xp'],
+  usage: '/rank [@user]  |  j rank [@user]',
+  details: 'Displays your (or another user\'s) rank card with level, XP bar, and server position.',
   data: new SlashCommandBuilder()
     .setName("rank")
     .setDescription("View your current level and XP")

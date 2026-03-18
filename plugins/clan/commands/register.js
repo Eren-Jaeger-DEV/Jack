@@ -11,6 +11,9 @@ module.exports = {
   name: "register",
   category: "clan",
   description: "Register your BGMI player profile",
+  aliases: ["reg","joinroster"],
+  usage: '/register  |  j register',
+  details: 'Registers your BGMI player profile (IGN, UID, level, preferred modes).',
 
   data: new SlashCommandBuilder()
     .setName("register")

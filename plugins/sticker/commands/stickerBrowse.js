@@ -7,6 +7,9 @@ module.exports = {
   name: "stickerbrowse",
   category: "sticker",
   description: "Browse the visual interface of the Global Sticker Vault.",
+  aliases: ["stickervault","browsesticker"],
+  usage: '/stickerbrowse  |  j sticker browse',
+  details: 'Opens a visual paginated browser for the Global Sticker Vault.',
 
   data: new SlashCommandBuilder()
     .setName("stickerbrowse")

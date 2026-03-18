@@ -12,6 +12,9 @@ module.exports = {
   name: "mute",
   category: "moderation",
   description: "Timeout a member for a specified duration",
+  aliases: ["timeout","silence","shutup"],
+  usage: '/mute @user <duration> [reason]  |  j mute @user <duration> [reason]',
+  details: 'Times out a member for a specified duration (e.g. 10m, 1h, 1d).',
 
   data: new SlashCommandBuilder()
     .setName('mute')

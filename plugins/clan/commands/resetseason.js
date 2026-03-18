@@ -6,6 +6,9 @@ module.exports = {
   name: "resetseason",
   category: "clan",
   description: "Reset season and weekly synergy for all players",
+  aliases: ["seasonreset","rseasn"],
+  usage: '/resetseason  |  j resetseason',
+  details: 'Admin: Resets season and weekly synergy for ALL clan players.',
 
   data: new SlashCommandBuilder()
     .setName("resetseason")

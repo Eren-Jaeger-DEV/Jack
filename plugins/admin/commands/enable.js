@@ -6,6 +6,9 @@ module.exports = {
   name: "enable",
   category: "admin",
   description: "Enable a command category in a channel or server-wide",
+  aliases: ["cmdon","enablecmd"],
+  usage: '/enable  |  j enable',
+  details: 'Re-enables a previously disabled command category.',
 
   data: new SlashCommandBuilder()
     .setName("enable")
