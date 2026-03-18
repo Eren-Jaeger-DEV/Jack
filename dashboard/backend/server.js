@@ -8,6 +8,9 @@ const cors = require("cors");
 
 const app = express();
 
+// Trust Nginx reverse proxy so secure cookies and callbacks resolve to HTTPS correctly
+app.set("trust proxy", 1);
+
 /* CORS */
 
 app.use(cors({
@@ -29,7 +32,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false,
+    secure: process.env.NODE_ENV === "development" ? false : true, // Enforce secure cookies in production (HTTPS)
     httpOnly: true,
     sameSite: "lax"
   }
