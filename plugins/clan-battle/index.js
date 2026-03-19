@@ -40,7 +40,7 @@ module.exports = {
 
               const freshBattle = await battleService.getActiveBattle(battle.guildId);
               if (freshBattle) {
-                await battleService.refreshLeaderboard(channel, freshBattle);
+                await battleService.refreshLeaderboard(client, freshBattle);
               }
             } catch (err) {
               console.error(`[ClanBattle] Leaderboard refresh after reset failed:`, err.message);
@@ -74,10 +74,9 @@ module.exports = {
           return interaction.reply({ content: '❌ No active battle.', ephemeral: true });
         }
 
-        const lb = battleService.getLeaderboardPage(battle, newPage);
-        const components = lb.totalPages > 1 ? [battleService.buildButtons(lb.page, lb.totalPages)] : [];
-
-        await interaction.update({ embeds: [lb.embed], components });
+        // Delete old and send new in battle channel
+        await interaction.deferUpdate().catch(() => {});
+        await battleService.refreshLeaderboard(client, battle, newPage);
 
       } catch (err) {
         if (err?.code === 10062) return; // Unknown interaction

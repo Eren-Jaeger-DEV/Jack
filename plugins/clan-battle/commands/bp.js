@@ -58,8 +58,8 @@ module.exports = {
         points = parseInt(ctx.args?.[0]);
       }
 
-      if (!points || isNaN(points)) {
-        return ctx.reply({ content: `Usage: \`j bp <points>\` — Points must be a number between 1 and ${battleService.MAX_POINTS}.`, ephemeral: isEphemeral });
+      if (isNaN(points) || points <= 0 || points > 100) {
+        return ctx.reply({ content: `❌ Points must be a number between 1 and 100.`, ephemeral: isEphemeral });
       }
 
       // Player DB check — must have a registered IGN
@@ -85,10 +85,10 @@ module.exports = {
 
       await ctx.reply({ content: `✅ **${points}** battle points recorded for **${player.ign}**!`, ephemeral: isEphemeral });
 
-      // Refresh leaderboard (delete old, send new at bottom)
+      // Refresh leaderboard (delete old, send new in BATTLE channel)
       const freshBattle = await battleService.getActiveBattle(ctx.guild.id);
       if (freshBattle) {
-        await battleService.refreshLeaderboard(ctx.channel, freshBattle);
+        await battleService.refreshLeaderboard(ctx.client, freshBattle);
       }
 
     } catch (err) {

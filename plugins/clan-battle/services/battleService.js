@@ -8,8 +8,9 @@
 const Battle = require('../models/Battle');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-const PLAYERS_PER_PAGE = 10;
-const MAX_POINTS       = 100;
+const PLAYERS_PER_PAGE       = 10;
+const MAX_POINTS             = 100;
+const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
 
 /* ═══════════════════════════════════════════
  *  BATTLE LIFECYCLE
@@ -196,29 +197,40 @@ function buildButtons(page, totalPages) {
  * Delete old leaderboard message and send a new one.
  * Returns the new message ID.
  */
-async function refreshLeaderboard(channel, battle, page = 0) {
-  // 1. Delete old message
-  await deleteOldLeaderboardMessage(channel, battle);
+async function refreshLeaderboard(client, battle, page = 0) {
+  try {
+    const channel = await client.channels.fetch(CLAN_BATTLE_CHANNEL_ID).catch(() => null);
+    if (!channel) return null;
 
-  // 2. Build & send new one
-  const lb = getLeaderboardPage(battle, page);
-  const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
+    // 1. Delete old message
+    await deleteOldLeaderboardMessage(client, battle);
 
-  const msg = await channel.send({ embeds: [lb.embed], components });
+    // 2. Build & send new one
+    const lb = getLeaderboardPage(battle, page);
+    const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
 
-  // 3. Save new message ID
-  battle.leaderboardMessageId = msg.id;
-  await battle.save();
+    const msg = await channel.send({ embeds: [lb.embed], components });
 
-  return msg;
+    // 3. Save new message ID
+    battle.leaderboardMessageId = msg.id;
+    await battle.save();
+
+    return msg;
+  } catch (err) {
+    console.error(`[ClanBattle] Failed to refresh leaderboard:`, err.message);
+    return null;
+  }
 }
 
 /**
  * Delete the old leaderboard message safely.
  */
-async function deleteOldLeaderboardMessage(channel, battle) {
+async function deleteOldLeaderboardMessage(client, battle) {
   if (!battle.leaderboardMessageId) return;
   try {
+    const channel = await client.channels.fetch(CLAN_BATTLE_CHANNEL_ID).catch(() => null);
+    if (!channel) return;
+
     const oldMsg = await channel.messages.fetch(battle.leaderboardMessageId).catch(() => null);
     if (oldMsg) await oldMsg.delete().catch(() => {});
   } catch (err) {

@@ -15,11 +15,6 @@ const battleService = require('../services/battleService');
 const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
 const WINNER_ROLE_ID         = '1477872032644599892';
 
-function isAdmin(member) {
-  return member.permissions.has(PermissionFlagsBits.ManageGuild) ||
-         member.permissions.has(PermissionFlagsBits.Administrator);
-}
-
 module.exports = {
   name: 'messageCreate',
 
@@ -27,7 +22,7 @@ module.exports = {
     if (!message.guild) return;
     if (message.author.bot) return;
     const content = message.content.toLowerCase().trim();
-    const isUserAdmin = isAdmin(message.member);
+    const isUserAdmin = message.member && message.member.permissions.has(PermissionFlagsBits.ManageGuild);
 
     // Read-only logic: Delete non-admin messages in the battle channel
     if (message.channel.id === CLAN_BATTLE_CHANNEL_ID && !isUserAdmin) {
@@ -43,23 +38,24 @@ module.exports = {
     if (!isUserAdmin) return;
 
     /* ═══════════════════════════════════════════
-     *  TRIGGER 1 — Battle Start
+     *  TRIGGER 1 — Battle Start (STRICT)
      * ═══════════════════════════════════════════ */
-    if (content.includes('clan battle started')) {
+    if (content === 'clan battle started') {
       try {
         // Prevent multiple active battles
         const existing = await battleService.getActiveBattle(message.guild.id);
         if (existing) {
+          console.warn(`[ClanBattle] Admin ${message.author.tag} tried to start a battle, but one is already active.`);
           return message.reply('⚠️ A clan battle is already active. End it before starting a new one.');
         }
 
         // Create new battle
         const battle = await battleService.createBattle(message.guild.id, message.channel.id);
 
-        console.log(`[ClanBattle] Battle started in guild ${message.guild.id}`);
+        console.log(`[ClanBattle] ⚔️ Battle started in guild ${message.guild.id} by ${message.author.tag}`);
 
         // Send initial leaderboard
-        await battleService.refreshLeaderboard(message.channel, battle);
+        await battleService.refreshLeaderboard(client, battle);
 
         await message.react('⚔️');
 
@@ -71,9 +67,9 @@ module.exports = {
     }
 
     /* ═══════════════════════════════════════════
-     *  TRIGGER 2 — Battle End
+     *  TRIGGER 2 — Battle End (STRICT)
      * ═══════════════════════════════════════════ */
-    if (content.includes('clan battle ends')) {
+    if (content === 'clan battle ends') {
       try {
         const battle = await battleService.getActiveBattle(message.guild.id);
         if (!battle) {
@@ -86,7 +82,7 @@ module.exports = {
         console.log(`[ClanBattle] Battle ended in guild ${message.guild.id}`);
 
         // Delete old leaderboard
-        await battleService.deleteOldLeaderboardMessage(message.channel, finalBattle);
+        await battleService.deleteOldLeaderboardMessage(client, finalBattle);
 
         // Get final results (top 6)
         const { results, top6 } = battleService.buildFinalResults(finalBattle);
