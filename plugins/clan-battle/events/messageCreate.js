@@ -26,10 +26,21 @@ module.exports = {
   async execute(message, client) {
     if (!message.guild) return;
     if (message.author.bot) return;
-    if (message.channel.id !== CLAN_BATTLE_CHANNEL_ID) return;
-    if (!isAdmin(message.member)) return;
-
     const content = message.content.toLowerCase().trim();
+    const isUserAdmin = isAdmin(message.member);
+
+    // Read-only logic: Delete non-admin messages in the battle channel
+    if (message.channel.id === CLAN_BATTLE_CHANNEL_ID && !isUserAdmin) {
+      try {
+        await message.delete().catch(() => {});
+      } catch (err) {
+        // Silently fail if cannot delete
+      }
+      return;
+    }
+
+    if (message.channel.id !== CLAN_BATTLE_CHANNEL_ID) return;
+    if (!isUserAdmin) return;
 
     /* ═══════════════════════════════════════════
      *  TRIGGER 1 — Battle Start

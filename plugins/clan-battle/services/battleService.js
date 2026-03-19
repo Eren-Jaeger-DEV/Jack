@@ -6,7 +6,7 @@
  */
 
 const Battle = require('../models/Battle');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const PLAYERS_PER_PAGE = 10;
 const MAX_POINTS       = 100;
@@ -144,27 +144,33 @@ function getLeaderboardPage(battle, page = 0) {
   const start = safePage * PLAYERS_PER_PAGE;
   const slice = sorted.slice(start, start + PLAYERS_PER_PAGE);
 
-  let board = '```\n🏆 Contribution Point Rankings\n\n';
-  board += padRight('', 4) + padRight('Member', 20) + padRight('Today', 8) + 'Total\n';
-  board += '─'.repeat(45) + '\n';
+  let board = '```md\n';
+  board += padRight('Member', 20) + padRight('Today', 8) + 'Total\n';
+  board += '─'.repeat(35) + '\n';
 
   if (slice.length === 0) {
-    board += '  No players registered yet.\n';
+    board += 'No players registered yet.\n';
   } else {
     for (let i = 0; i < slice.length; i++) {
       const rank = start + i + 1;
       const p = slice[i];
-      board += padRight(String(rank), 4) +
-               padRight(truncate(p.ign, 18), 20) +
+      // Format: "1 PlayerA" in the 20-char column
+      const memberStr = `${rank} ${truncate(p.ign, 16)}`;
+      board += padRight(memberStr, 20) +
                padRight(String(p.todayPoints), 8) +
                String(p.totalPoints) + '\n';
     }
   }
 
-  board += `\nPage ${safePage + 1}/${totalPages}`;
   board += '```';
 
-  return { content: board, page: safePage, totalPages };
+  const embed = new EmbedBuilder()
+    .setTitle('🏆 Contribution Point Rankings')
+    .setDescription(board)
+    .setFooter({ text: `Page ${safePage + 1} / ${totalPages}` })
+    .setColor('#FFD700');
+
+  return { embed, page: safePage, totalPages };
 }
 
 /**
@@ -198,7 +204,7 @@ async function refreshLeaderboard(channel, battle, page = 0) {
   const lb = getLeaderboardPage(battle, page);
   const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
 
-  const msg = await channel.send({ content: lb.content, components });
+  const msg = await channel.send({ embeds: [lb.embed], components });
 
   // 3. Save new message ID
   battle.leaderboardMessageId = msg.id;

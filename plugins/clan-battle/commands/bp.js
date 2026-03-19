@@ -41,14 +41,12 @@ module.exports = {
 
   async run(ctx) {
     try {
-      // Channel check
-      if (ctx.channel.id !== CLAN_BATTLE_CHANNEL_ID) {
-        return ctx.reply('❌ This command can only be used in the clan battle channel.');
-      }
+      // Use ephemeral for slash commands
+      const isEphemeral = ctx.isInteraction;
 
       // Clan role check
       if (!ctx.member.roles.cache.has(CLAN_ROLE_ID)) {
-        return ctx.reply('❌ You must be a clan member to submit battle points.');
+        return ctx.reply({ content: '❌ You must be a clan member to submit battle points.', ephemeral: isEphemeral });
       }
 
       // Parse points
@@ -61,31 +59,31 @@ module.exports = {
       }
 
       if (!points || isNaN(points)) {
-        return ctx.reply(`Usage: \`j bp <points>\` — Points must be a number between 1 and ${battleService.MAX_POINTS}.`);
+        return ctx.reply({ content: `Usage: \`j bp <points>\` — Points must be a number between 1 and ${battleService.MAX_POINTS}.`, ephemeral: isEphemeral });
       }
 
       // Player DB check — must have a registered IGN
       const player = await Player.findOne({ discordId: ctx.user.id });
       if (!player || !player.ign) {
-        return ctx.reply('❌ You are not registered. Use `/register` first.');
+        return ctx.reply({ content: '❌ You are not registered. Use `/register` first.', ephemeral: isEphemeral });
       }
 
       // Active battle check
       const battle = await battleService.getActiveBattle(ctx.guild.id);
       if (!battle) {
-        return ctx.reply('❌ No clan battle is currently active.');
+        return ctx.reply({ content: '❌ No clan battle is currently active.', ephemeral: isEphemeral });
       }
 
       // Add points
       const result = await battleService.addPoints(ctx.guild.id, ctx.user.id, player.ign, points);
 
       if (!result.success) {
-        return ctx.reply(`❌ ${result.error}`);
+        return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
       }
 
       console.log(`[ClanBattle] ${ctx.user.tag} submitted ${points} points`);
 
-      await ctx.reply(`✅ **${points}** battle points recorded for **${player.ign}**!`);
+      await ctx.reply({ content: `✅ **${points}** battle points recorded for **${player.ign}**!`, ephemeral: isEphemeral });
 
       // Refresh leaderboard (delete old, send new at bottom)
       const freshBattle = await battleService.getActiveBattle(ctx.guild.id);

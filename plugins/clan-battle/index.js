@@ -77,7 +77,7 @@ module.exports = {
         const lb = battleService.getLeaderboardPage(battle, newPage);
         const components = lb.totalPages > 1 ? [battleService.buildButtons(lb.page, lb.totalPages)] : [];
 
-        await interaction.update({ content: lb.content, components });
+        await interaction.update({ embeds: [lb.embed], components });
 
       } catch (err) {
         if (err?.code === 10062) return; // Unknown interaction
