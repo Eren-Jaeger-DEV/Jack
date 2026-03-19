@@ -1,7 +1,0 @@
-{
-  "name": "events",
-  "version": "1.0.0",
-  "description": "Unified clan event system (Clan Battle, Intra Match, Foster, Seasonal, Fun Matches)",
-  "main": "index.js",
-  "author": "Jack Dev"
-}

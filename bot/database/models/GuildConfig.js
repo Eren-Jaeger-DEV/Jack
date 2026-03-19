@@ -9,7 +9,6 @@ const guildConfigSchema = new mongoose.Schema({
     admin: { type: Boolean, default: true },
     clan: { type: Boolean, default: true },
     emoji: { type: Boolean, default: true },
-    events: { type: Boolean, default: true },
     fun: { type: Boolean, default: true },
     leveling: { type: Boolean, default: true },
     market: { type: Boolean, default: true },
@@ -17,7 +16,9 @@ const guildConfigSchema = new mongoose.Schema({
     packs: { type: Boolean, default: true },
     roles: { type: Boolean, default: true },
     sticker: { type: Boolean, default: true },
-    utility: { type: Boolean, default: true }
+    utility: { type: Boolean, default: true },
+    'intra-match': { type: Boolean, default: true },
+    'clan-battle': { type: Boolean, default: true }
   },
   pluginSettings: {
     type: Map,

@@ -23,15 +23,6 @@ module.exports = async (message, client) => {
 
   /* ─── MULTI-WORD ALIAS ROUTING ─── */
 
-  // j event create/start/addpoints/lb/end
-  if (commandName === "event" || commandName === "ev") {
-    const sub = args[0]?.toLowerCase();
-    if (sub === "create") { commandName = "eventcreate"; args.shift(); }
-    else if (sub === "start") { commandName = "eventstart"; args.shift(); }
-    else if (sub === "addpoints" || sub === "addpts" || sub === "pts") { commandName = "eventaddpoints"; args.shift(); }
-    else if (sub === "lb" || sub === "leaderboard") { commandName = "eventleaderboard"; args.shift(); }
-    else if (sub === "end") { commandName = "eventend"; args.shift(); }
-  }
 
   // j rr create/add/remove/delete
   if (commandName === "rr") {

@@ -1,0 +1,7 @@
+{
+  "name": "clan-battle",
+  "version": "1.0.0",
+  "description": "Automated clan battle system with contribution points, leaderboard, and winner roles",
+  "main": "index.js",
+  "author": "Jack Dev"
+}
