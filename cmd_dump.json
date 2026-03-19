@@ -1,0 +1,1999 @@
+[
+  {
+    "plugin": "admin",
+    "category": "admin",
+    "name": "announce",
+    "description": "Create a beautiful announcement in any channel",
+    "usage": "/announce  |  j announce",
+    "aliases": [
+      "ann"
+    ],
+    "details": "Sends a styled announcement embed to any channel you choose.",
+    "options": [
+      {
+        "name": "channel",
+        "description": "The channel to send the announcement to",
+        "type": 7,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/admin/commands/announce.js"
+  },
+  {
+    "plugin": "admin",
+    "category": "admin",
+    "name": "disable",
+    "description": "Disable a command category in a channel or server-wide",
+    "usage": "/disable  |  j disable",
+    "aliases": [
+      "cmdoff",
+      "disablecmd"
+    ],
+    "details": "Disables a command category in a specific channel or server-wide.",
+    "options": [
+      {
+        "name": "category",
+        "description": "Command category",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "channel",
+        "description": "Channel to disable commands in",
+        "type": 7,
+        "required": false
+      },
+      {
+        "name": "all",
+        "description": "Disable this category in the whole server",
+        "type": 5,
+        "required": false
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/admin/commands/disable.js"
+  },
+  {
+    "plugin": "admin",
+    "category": "admin",
+    "name": "enable",
+    "description": "Enable a command category in a channel or server-wide",
+    "usage": "/enable  |  j enable",
+    "aliases": [
+      "cmdon",
+      "enablecmd"
+    ],
+    "details": "Re-enables a previously disabled command category.",
+    "options": [
+      {
+        "name": "category",
+        "description": "Command category",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "channel",
+        "description": "Channel to enable commands in",
+        "type": 7,
+        "required": false
+      },
+      {
+        "name": "all",
+        "description": "Enable in the whole server",
+        "type": 5,
+        "required": false
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/admin/commands/enable.js"
+  },
+  {
+    "plugin": "admin",
+    "category": "admin",
+    "name": "serveroverview",
+    "description": "Create the server overview panel",
+    "usage": "/serveroverview  |  j serveroverview",
+    "aliases": [
+      "overview",
+      "sov"
+    ],
+    "details": "Creates or refreshes a pinned server overview info panel in a channel.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/admin/commands/serveroverview.js"
+  },
+  {
+    "plugin": "admin",
+    "category": "admin",
+    "name": "setlog",
+    "description": "Set the moderation log channel",
+    "usage": "/setlog  |  j setlog",
+    "aliases": [
+      "modlog",
+      "setmodlog"
+    ],
+    "details": "Sets the channel where moderation actions are logged.",
+    "options": [
+      {
+        "name": "channel",
+        "description": "Select log channel",
+        "type": 7,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/admin/commands/setlog.js"
+  },
+  {
+    "plugin": "admin",
+    "category": "admin",
+    "name": "setup",
+    "description": "Setup the permanent admin guide dashboard",
+    "usage": "/setup admin-guide  |  j setup admin-guide",
+    "aliases": [
+      "setup-admin-guide",
+      "adminguide"
+    ],
+    "details": "Posts the permanent staff command dashboard in the current channel. Refreshes automatically if already set.",
+    "options": [
+      {
+        "name": "admin-guide",
+        "description": "Create or refresh the staff admin command dashboard",
+        "type": 1
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/admin/commands/setupAdminGuide.js"
+  },
+  {
+    "plugin": "admin",
+    "category": "admin",
+    "name": "ticketpanel",
+    "description": "Create the ticket panel",
+    "usage": "/ticketpanel  |  j ticketpanel",
+    "aliases": [
+      "ticket",
+      "tickets"
+    ],
+    "details": "Creates the ticket creation panel in the designated channel.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/admin/commands/ticketpanel.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "addsyn",
+    "description": "Add synergy points to a player",
+    "usage": "/addsyn @user <points>  |  j addsyn @user <points>",
+    "aliases": [
+      "syn+",
+      "addsynergy"
+    ],
+    "details": "Adds synergy points to a registered clan player.",
+    "options": [
+      {
+        "name": "user",
+        "description": "Player",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "points",
+        "description": "Synergy points",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/addsyn.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "clanroster",
+    "description": "View the full clan player roster",
+    "usage": "/clanroster  |  j clanroster",
+    "aliases": [
+      "roster",
+      "players"
+    ],
+    "details": "Shows the full registered clan member list with IGN, UID, and synergy.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/clanroster.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "deleteplayer",
+    "description": "Delete a player's clan profile",
+    "usage": "/deleteplayer @user  |  j deleteplayer @user",
+    "aliases": [
+      "delplayer",
+      "removeplayer"
+    ],
+    "details": "Permanently removes a player's clan profile from the database.",
+    "options": [
+      {
+        "name": "user",
+        "description": "Player to delete",
+        "type": 6,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/deleteplayer.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "editprofile",
+    "description": "Edit your BGMI player profile",
+    "usage": "/editprofile  |  j editprofile",
+    "aliases": [
+      "editp",
+      "updateprofile"
+    ],
+    "details": "Edit your own BGMI player profile (IGN, UID, level, mode preferences).",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/editprofile.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "ign",
+    "description": "View a player's in-game name",
+    "usage": "/ign [@user]  |  j ign [@user]",
+    "aliases": [
+      "gamename",
+      "ingamename"
+    ],
+    "details": "Displays the in-game name of a registered BGMI player.",
+    "options": [
+      {
+        "name": "user",
+        "description": "Player",
+        "type": 6,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/ign.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "minussyn",
+    "description": "Remove synergy points from a player",
+    "usage": "/minussyn @user <points>  |  j minussyn @user <points>",
+    "aliases": [
+      "syn-",
+      "removesynergy",
+      "rmsyn"
+    ],
+    "details": "Deducts synergy points from a registered clan player.",
+    "options": [
+      {
+        "name": "user",
+        "description": "Player",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "points",
+        "description": "Synergy points",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/minussyn.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "mysynergy",
+    "description": "See how many synergy points you need to pass the next player",
+    "usage": "/mysynergy  |  j mysynergy",
+    "aliases": [
+      "mysyn",
+      "mypoints"
+    ],
+    "details": "Shows your current synergy and how many points you need to pass the next player.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/mysynergy.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "profile",
+    "description": "Show BGMI player profile",
+    "usage": "/profile [@user]  |  j profile [@user]",
+    "aliases": [
+      "p",
+      "playerprofile"
+    ],
+    "details": "Shows a player's full BGMI profile card including IGN, UID, synergy, and level.",
+    "options": [
+      {
+        "name": "user",
+        "description": "Profile",
+        "type": 6,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/profile.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "register",
+    "description": "Register your BGMI player profile",
+    "usage": "/register  |  j register",
+    "aliases": [
+      "reg",
+      "joinroster"
+    ],
+    "details": "Registers your BGMI player profile (IGN, UID, level, preferred modes).",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/register.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "resetseason",
+    "description": "Reset season and weekly synergy for all players",
+    "usage": "/resetseason  |  j resetseason",
+    "aliases": [
+      "seasonreset",
+      "rseasn"
+    ],
+    "details": "Admin: Resets season and weekly synergy for ALL clan players.",
+    "options": [],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/resetseason.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "resetweekly",
+    "description": "Reset weekly synergy and assign Weekly MVP",
+    "usage": "/resetweekly  |  j resetweekly",
+    "aliases": [
+      "weekreset",
+      "rweekly"
+    ],
+    "details": "Admin: Resets weekly synergy for all players and assigns the Weekly MVP role.",
+    "options": [],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/resetweekly.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "topseason",
+    "description": "Show season synergy leaderboard",
+    "usage": "/topseason  |  j topseason",
+    "aliases": [
+      "seasonlb",
+      "seasonboard"
+    ],
+    "details": "Displays the season synergy leaderboard for all registered players.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/topseason.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "topweekly",
+    "description": "Show weekly synergy leaderboard",
+    "usage": "/topweekly  |  j topweekly",
+    "aliases": [
+      "weeklylb",
+      "weeklyboard"
+    ],
+    "details": "Displays the weekly synergy leaderboard for all registered players.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/topweekly.js"
+  },
+  {
+    "plugin": "clan",
+    "category": "clan",
+    "name": "uid",
+    "description": "View a player's BGMI UID",
+    "usage": "/uid [@user]  |  j uid [@user]",
+    "aliases": [
+      "playeruid",
+      "bgmiuid"
+    ],
+    "details": "Shows the BGMI UID of a registered clan player.",
+    "options": [
+      {
+        "name": "user",
+        "description": "Player",
+        "type": 6,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/clan/commands/uid.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emojiadd",
+    "description": "Summon a specific emoji from the Global Vault to your server.",
+    "usage": "/emojiadd <name>  |  j emoji add <name>",
+    "aliases": [
+      "emojiget",
+      "getmoji"
+    ],
+    "details": "Summons a specific emoji from the Global Vault into your server.",
+    "options": [
+      {
+        "name": "emojiname",
+        "description": "Name of the emoji to download",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiAdd.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emojibank",
+    "description": "View the Global Emoji Bank list.",
+    "usage": "/emojibank  |  j emoji bank",
+    "aliases": [
+      "emojilist",
+      "mojis"
+    ],
+    "details": "Shows a text list of all emojis stored in the Global Vault.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiBank.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emojibrowse",
+    "description": "Browse the visual interface of the Global Emoji Vault.",
+    "usage": "/emojibrowse  |  j emoji browse",
+    "aliases": [
+      "emojivault",
+      "browsemoji"
+    ],
+    "details": "Opens a visual paginated browser for the Global Emoji Vault.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiBrowse.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emojicleanup",
+    "description": "Scans for server emojis unused in the CDN for 30+ days.",
+    "usage": "/emojicleanup  |  j emoji cleanup",
+    "aliases": [
+      "mojiscan",
+      "emojiscan"
+    ],
+    "details": "Scans for server emojis unused in the CDN for 30+ days to free up slots.",
+    "options": [],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiCleanup.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emojiremove",
+    "description": "Remove an emoji from the global vault.",
+    "usage": "/emojiremove <name>  |  j emoji remove <name>",
+    "aliases": [
+      "emojidel",
+      "delmoji"
+    ],
+    "details": "Removes a specific emoji from the Global Vault permanently.",
+    "options": [
+      {
+        "name": "emojiname",
+        "description": "Name of the emoji to delete",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiRemove.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emoji",
+    "description": "Summon an emoji from the global CDN directly into chat.",
+    "usage": "/emoji <name>  |  j emoji <name>",
+    "aliases": [
+      "moji",
+      "sendemoji"
+    ],
+    "details": "Summons any emoji from the Global CDN directly into chat as a large image.",
+    "options": [
+      {
+        "name": "query",
+        "description": "The emoji name to search",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiSearch.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emojislots",
+    "description": "Check the current server emoji and sticker slot usage.",
+    "usage": "/emojislots  |  j emoji slots",
+    "aliases": [
+      "slots",
+      "emojicap"
+    ],
+    "details": "Shows current emoji and sticker slot usage for the server.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiSlots.js"
+  },
+  {
+    "plugin": "emoji",
+    "category": "emoji",
+    "name": "emojitemp",
+    "description": "Temporarily install a global emoji for 10 minutes to save slots.",
+    "usage": "/emojitemp <name>  |  j emoji temp <name>",
+    "aliases": [
+      "tempemoji",
+      "borrowmoji"
+    ],
+    "details": "Temporarily installs a global emoji for 10 minutes to save permanent slots.",
+    "options": [
+      {
+        "name": "name",
+        "description": "Exact name of the vault emoji",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/emoji/commands/emojiTemp.js"
+  },
+  {
+    "plugin": "events",
+    "category": "events",
+    "name": "eventaddpoints",
+    "description": "Add or subtract points for a participant in an active event",
+    "usage": "/eventaddpoints <eventId> @user <points>  |  j event addpoints <eventId> @user <points>",
+    "aliases": [
+      "ev-addpts",
+      "evaddpoints",
+      "evpts"
+    ],
+    "details": "Points are cumulative. Use a negative number to subtract.",
+    "options": [
+      {
+        "name": "eventid",
+        "description": "Event ID (e.g. cb-001)",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "user",
+        "description": "The participant",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "points",
+        "description": "Points to add (negative to subtract)",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/events/commands/addpoints.js"
+  },
+  {
+    "plugin": "events",
+    "category": "events",
+    "name": "eventcreate",
+    "description": "Create a new clan event",
+    "usage": "/eventcreate <type> <name>  |  j event create <type> <name>",
+    "aliases": [
+      "ev-create",
+      "evcreate"
+    ],
+    "details": "Types: clanBattle, intraMatch, foster, seasonal, fun",
+    "options": [
+      {
+        "name": "type",
+        "description": "Type of event",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "name",
+        "description": "Display name for this event (e.g. \"Week 3 Clan Battle\")",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/events/commands/create.js"
+  },
+  {
+    "plugin": "events",
+    "category": "events",
+    "name": "eventend",
+    "description": "End an event, post final results, and assign winner roles",
+    "usage": "/eventend <eventId>  |  j event end <eventId>",
+    "aliases": [
+      "ev-end",
+      "evend"
+    ],
+    "details": "Sorts leaderboard, picks winners, posts to event channel, rotates winner role.",
+    "options": [
+      {
+        "name": "eventid",
+        "description": "Event ID (e.g. cb-001)",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/events/commands/end.js"
+  },
+  {
+    "plugin": "events",
+    "category": "events",
+    "name": "eventleaderboard",
+    "description": "Show live leaderboard for an event with IGN and synergy",
+    "usage": "/eventleaderboard <eventId>  |  j event lb <eventId>",
+    "aliases": [
+      "ev-lb",
+      "evlb",
+      "eventlb"
+    ],
+    "details": "Shows rank, IGN (from Player model), points, and season synergy.",
+    "options": [
+      {
+        "name": "eventid",
+        "description": "Event ID (e.g. cb-001)",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/events/commands/leaderboard.js"
+  },
+  {
+    "plugin": "events",
+    "category": "events",
+    "name": "eventstart",
+    "description": "Start a pending event and set it as active",
+    "usage": "/eventstart <eventId>  |  j event start <eventId>",
+    "aliases": [
+      "ev-start",
+      "evstart"
+    ],
+    "details": "Transitions event from upcoming to active and posts announcement.",
+    "options": [
+      {
+        "name": "eventid",
+        "description": "Event ID (e.g. cb-001)",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/events/commands/start.js"
+  },
+  {
+    "plugin": "fun",
+    "category": "fun",
+    "name": "action",
+    "description": "Perform a fun action (hug, slap, kiss, etc.)",
+    "usage": "/action <type> [@user]  |  j action <type> [@user]",
+    "aliases": [
+      "do",
+      "react"
+    ],
+    "details": "Performs a fun animated action: hug, slap, kiss, poke, pat, and more.",
+    "options": [
+      {
+        "name": "type",
+        "description": "Action type",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "user",
+        "description": "Target user",
+        "type": 6,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/fun/commands/action.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "admin",
+    "name": "addxp",
+    "description": "Add XP to a user",
+    "usage": "/addxp @user <amount>  |  j addxp @user <amount>",
+    "aliases": [
+      "xp+",
+      "givexp"
+    ],
+    "details": "Admin: Adds XP directly to a user's level progress.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to add XP to",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "amount",
+        "description": "Amount of XP",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/admin/addxp.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "admin",
+    "name": "removexp",
+    "description": "Remove XP from a user",
+    "usage": "/removexp @user <amount>  |  j removexp @user <amount>",
+    "aliases": [
+      "xp-",
+      "takexp"
+    ],
+    "details": "Admin: Removes XP from a user's level progress.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to remove XP from",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "amount",
+        "description": "Amount of XP",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/admin/removexp.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "admin",
+    "name": "xpresetweekly",
+    "description": "Reset weekly XP for EVERYONE in the server",
+    "usage": "/xpresetweekly  |  j xpresetweekly",
+    "aliases": [
+      "xpweeklyreset",
+      "clearweeklyxp"
+    ],
+    "details": "Admin: Resets weekly XP for every member in the server.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/admin/resetweekly.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "admin",
+    "name": "resetxp",
+    "description": "Reset all XP for a user",
+    "usage": "/resetxp @user  |  j resetxp @user",
+    "aliases": [
+      "clearxp",
+      "xpreset"
+    ],
+    "details": "Admin: Fully resets all XP for a specific user.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to reset XP for",
+        "type": 6,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/admin/resetxp.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "admin",
+    "name": "resetxpall",
+    "description": "Reset ALL XP for EVERYONE in the server",
+    "usage": "/resetxpall  |  j resetxpall",
+    "aliases": [
+      "wipelevels",
+      "clearallxp"
+    ],
+    "details": "Admin: Wipes XP for ALL members server-wide. Irreversible.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/admin/resetxpall.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "admin",
+    "name": "setlevel",
+    "description": "Set Level for a user",
+    "usage": "/setlevel @user <level>  |  j setlevel @user <level>",
+    "aliases": [
+      "lvlset",
+      "forcelvl"
+    ],
+    "details": "Admin: Forces a user to a specific level directly.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to set level for",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "level",
+        "description": "Level to set",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/admin/setlevel.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "admin",
+    "name": "setxp",
+    "description": "Set XP for a user",
+    "usage": "/setxp @user <amount>  |  j setxp @user <amount>",
+    "aliases": [
+      "xpset",
+      "forcexp"
+    ],
+    "details": "Admin: Sets a user's total XP to an exact amount.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to set XP for",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "amount",
+        "description": "Amount of XP",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/admin/setxp.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "leveling",
+    "name": "leaderboard",
+    "description": "View the server XP leaderboard",
+    "usage": "/leaderboard  |  j leaderboard",
+    "aliases": [
+      "lb",
+      "top",
+      "levels"
+    ],
+    "details": "Shows the top XP leaderboard for the server, sorted by level and XP.",
+    "options": [
+      {
+        "name": "global",
+        "description": "View the all-time XP leaderboard",
+        "type": 1
+      },
+      {
+        "name": "weekly",
+        "description": "View the weekly XP leaderboard",
+        "type": 1
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/leaderboard.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "leveling",
+    "name": "rank",
+    "description": "Show your or another user's rank card",
+    "usage": "/rank [@user]  |  j rank [@user]",
+    "aliases": [
+      "level",
+      "xp"
+    ],
+    "details": "Displays your (or another user's) rank card with level, XP bar, and server position.",
+    "options": [
+      {
+        "name": "user",
+        "description": "The user to check",
+        "type": 6,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/rank.js"
+  },
+  {
+    "plugin": "leveling",
+    "category": "leveling",
+    "name": "rankbackground",
+    "description": "Set your custom rank card background",
+    "usage": "/rankbackground  |  j rankbackground",
+    "aliases": [
+      "rankbg",
+      "setbg"
+    ],
+    "details": "Set a custom background image for your personal rank card.",
+    "options": [
+      {
+        "name": "set",
+        "description": "Set a custom background image via URL",
+        "type": 1
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/leveling/commands/rankbackground.js"
+  },
+  {
+    "plugin": "market",
+    "category": "market",
+    "name": "cancelpop",
+    "description": "Cancel your active POP market listing",
+    "usage": "/cancelpop  |  j pop cancel",
+    "aliases": [
+      "popcancel",
+      "unsell"
+    ],
+    "details": "Cancels your active POP listing from the marketplace.",
+    "options": [
+      {
+        "name": "listing_id",
+        "description": "The ID of the listing (Admins only)",
+        "type": 3,
+        "required": false
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/market/commands/cancelpop.js"
+  },
+  {
+    "plugin": "market",
+    "category": "market",
+    "name": "popmarket",
+    "description": "Force refresh the POP marketplace panel",
+    "usage": "/popmarket  |  j pop market",
+    "aliases": [
+      "market",
+      "marketplace"
+    ],
+    "details": "Force-refreshes the POP marketplace panel in the designated channel.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/market/commands/popmarket.js"
+  },
+  {
+    "plugin": "market",
+    "category": "market",
+    "name": "sell",
+    "description": "List your POP for sale on the marketplace",
+    "usage": "/sell  |  j sell pop",
+    "aliases": [
+      "sellpop",
+      "listpop"
+    ],
+    "details": "Lists your POP for sale on the server marketplace.",
+    "options": [
+      {
+        "name": "item",
+        "description": "What are you selling? (Type 'pop')",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "amount",
+        "description": "Amount of POP (e.g., 1000, 1k, 2.5k)",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "price",
+        "description": "Price (e.g., ₹1000, 1000, 1k, ₹1k)",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/market/commands/sellpop.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "addrole",
+    "description": "Add a role to a user",
+    "usage": "/addrole @user @role  |  j addrole @user @role",
+    "aliases": [
+      "ar",
+      "giverole",
+      "roleadd"
+    ],
+    "details": "Assigns a role to a member.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "role",
+        "description": "Role to add",
+        "type": 8,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/addrole.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "ban",
+    "description": "Ban a member from the server",
+    "usage": "/ban @user [reason]  |  j ban @user [reason]",
+    "aliases": [
+      "banish"
+    ],
+    "details": "Permanently bans a member from the server with an optional reason.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to ban",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "reason",
+        "description": "Reason for ban",
+        "type": 3,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/ban.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "clear",
+    "description": "Delete multiple messages from a channel",
+    "usage": "/clear <amount>  |  j clear <amount>",
+    "aliases": [
+      "purge",
+      "delete",
+      "clean"
+    ],
+    "details": "Bulk-deletes up to 100 messages in the current channel.",
+    "options": [
+      {
+        "name": "amount",
+        "description": "Number of messages (1-100)",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/clear.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "clearall",
+    "description": "Delete all messages in the channel",
+    "usage": "/clearall  |  j clearall",
+    "aliases": [
+      "nuke",
+      "clearall"
+    ],
+    "details": "Deletes ALL messages in the channel by cloning and deleting it.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/clearall.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "clearwarns",
+    "description": "Clear all warnings from a user",
+    "usage": "/clearwarns @user  |  j clearwarns @user",
+    "aliases": [
+      "warnsclear",
+      "clearwarnings"
+    ],
+    "details": "Clears all warnings from a user's record.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User",
+        "type": 6,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/clearwarns.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "kick",
+    "description": "Kick a member from the server",
+    "usage": "/kick @user [reason]  |  j kick @user [reason]",
+    "aliases": [
+      "boot",
+      "remove"
+    ],
+    "details": "Kicks a member from the server.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to kick",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "reason",
+        "description": "Reason",
+        "type": 3,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/kick.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "lock",
+    "description": "Lock the current channel",
+    "usage": "/lock  |  j lock",
+    "aliases": [
+      "lockdown",
+      "lockchannel"
+    ],
+    "details": "Locks the current channel so members cannot send messages.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/lock.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "mute",
+    "description": "Timeout a member for a specified duration",
+    "usage": "/mute @user <duration> [reason]  |  j mute @user <duration> [reason]",
+    "aliases": [
+      "timeout",
+      "silence",
+      "shutup"
+    ],
+    "details": "Times out a member for a specified duration (e.g. 10m, 1h, 1d).",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to mute",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "minutes",
+        "description": "Duration in minutes",
+        "type": 4,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/mute.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "nickname",
+    "description": "Change a user's nickname",
+    "usage": "/nickname @user <name>  |  j nickname @user <name>",
+    "aliases": [
+      "nick",
+      "setnick",
+      "rename"
+    ],
+    "details": "Changes a member's displayed server nickname.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User whose nickname will be changed",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "nickname",
+        "description": "New nickname",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/nickname.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "removerole",
+    "description": "Remove a role from a user",
+    "usage": "/removerole @user @role  |  j removerole @user @role",
+    "aliases": [
+      "rr-role",
+      "takerole",
+      "roledel"
+    ],
+    "details": "Removes a role from a member.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "role",
+        "description": "Role to remove",
+        "type": 8,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/removerole.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "unban",
+    "description": "Unban a user from the server",
+    "usage": "/unban <userId>  |  j unban <userId>",
+    "aliases": [
+      "pardon",
+      "forgive"
+    ],
+    "details": "Unbans a user by their Discord ID.",
+    "options": [
+      {
+        "name": "userid",
+        "description": "User ID to unban",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/unban.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "unlock",
+    "description": "Unlock the current channel",
+    "usage": "/unlock  |  j unlock",
+    "aliases": [
+      "unlockchannel",
+      "open"
+    ],
+    "details": "Unlocks a previously locked channel so members can speak again.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/unlock.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "unmute",
+    "description": "Remove timeout from a member",
+    "usage": "/unmute @user  |  j unmute @user",
+    "aliases": [
+      "untimeout",
+      "unsilence"
+    ],
+    "details": "Removes a timeout from a member early.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to unmute",
+        "type": 6,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/unmute.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "unwarn",
+    "description": "Remove a warning from a user",
+    "usage": "/unwarn @user <warnId>  |  j unwarn @user <warnId>",
+    "aliases": [
+      "removewarn",
+      "warnremove"
+    ],
+    "details": "Removes a specific warning from a user's record by warn ID.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to remove warning from",
+        "type": 6,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/unwarn.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "warn",
+    "description": "Warn a user with a reason",
+    "usage": "/warn @user <reason>  |  j warn @user <reason>",
+    "aliases": [
+      "strike",
+      "warning"
+    ],
+    "details": "Issues a formal warning to a member and stores it in the database.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to warn",
+        "type": 6,
+        "required": true
+      },
+      {
+        "name": "reason",
+        "description": "Reason",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/warn.js"
+  },
+  {
+    "plugin": "moderation",
+    "category": "moderation",
+    "name": "warnings",
+    "description": "View warnings for a user",
+    "usage": "/warnings @user  |  j warnings @user",
+    "aliases": [
+      "warns",
+      "checkwarns"
+    ],
+    "details": "Shows all recorded warnings for a member.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User",
+        "type": 6,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/moderation/commands/warnings.js"
+  },
+  {
+    "plugin": "packs",
+    "category": "packs",
+    "name": "packadd",
+    "description": "Add an existing global emoji to an Emoji Pack",
+    "usage": "/packadd <packName> <emojiName>  |  j pack add <packName> <emojiName>",
+    "aliases": [
+      "addpack",
+      "packemoji"
+    ],
+    "details": "Adds an existing Global Vault emoji to an emoji pack.",
+    "options": [
+      {
+        "name": "emojiname",
+        "description": "Name of the emoji",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "packname",
+        "description": "Name of the destination pack",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/packs/commands/packAdd.js"
+  },
+  {
+    "plugin": "packs",
+    "category": "packs",
+    "name": "packcreate",
+    "description": "Create an empty Emoji Pack in the Global Vault",
+    "usage": "/packcreate <name>  |  j pack create <name>",
+    "aliases": [
+      "newpack",
+      "createpack"
+    ],
+    "details": "Creates a new empty Emoji Pack in the Global Vault.",
+    "options": [
+      {
+        "name": "packname",
+        "description": "Name of the pack",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/packs/commands/packCreate.js"
+  },
+  {
+    "plugin": "packs",
+    "category": "packs",
+    "name": "packimport",
+    "description": "Download a full Global Emoji Pack into your server automatically.",
+    "usage": "/packimport <packName>  |  j pack import <packName>",
+    "aliases": [
+      "importpack",
+      "downloadpack"
+    ],
+    "details": "Downloads a full emoji pack into your server, filling available emoji slots.",
+    "options": [
+      {
+        "name": "packname",
+        "description": "Exact name of the pack to download",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/packs/commands/packImport.js"
+  },
+  {
+    "plugin": "packs",
+    "category": "packs",
+    "name": "packremove",
+    "description": "Remove an emoji from its Emoji Pack",
+    "usage": "/packremove <packName> <emojiName>  |  j pack remove <packName> <emojiName>",
+    "aliases": [
+      "removepack",
+      "packdelete"
+    ],
+    "details": "Removes an emoji from an emoji pack.",
+    "options": [
+      {
+        "name": "emojiname",
+        "description": "Name of the emoji",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/packs/commands/packRemove.js"
+  },
+  {
+    "plugin": "roles",
+    "category": "roles",
+    "name": "rradd",
+    "description": "Add a Role option to a Reaction Role Panel",
+    "usage": "/rradd  |  j rr add",
+    "aliases": [
+      "addreactionrole",
+      "rr-add"
+    ],
+    "details": "Adds a new role option button to an existing Reaction Role Panel.",
+    "options": [
+      {
+        "name": "panel_id",
+        "description": "The Panel ID",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "role",
+        "description": "The role to give",
+        "type": 8,
+        "required": true
+      },
+      {
+        "name": "label",
+        "description": "Text label for the button",
+        "type": 3,
+        "required": false
+      },
+      {
+        "name": "emoji",
+        "description": "Emoji for the button",
+        "type": 3,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/roles/commands/rrAdd.js"
+  },
+  {
+    "plugin": "roles",
+    "category": "roles",
+    "name": "rrcreate",
+    "description": "Create a new Reaction Role Custom Panel",
+    "usage": "/rrcreate  |  j rr create",
+    "aliases": [
+      "createreactionrole",
+      "rr-create",
+      "newrr"
+    ],
+    "details": "Creates a new custom Reaction Role panel with buttons in the channel.",
+    "options": [
+      {
+        "name": "title",
+        "description": "Panel title",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "description",
+        "description": "Panel description",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "channel",
+        "description": "Channel to send the panel to",
+        "type": 7,
+        "required": true
+      },
+      {
+        "name": "color",
+        "description": "Embed HEX color (e.g. #ff0000)",
+        "type": 3,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/roles/commands/rrCreate.js"
+  },
+  {
+    "plugin": "roles",
+    "category": "roles",
+    "name": "rrdelete",
+    "description": "Delete an active Reaction Role Panel permanently",
+    "usage": "/rrdelete  |  j rr delete",
+    "aliases": [
+      "deletereactionrole",
+      "rr-delete",
+      "delrr"
+    ],
+    "details": "Permanently deletes an existing Reaction Role Panel.",
+    "options": [
+      {
+        "name": "panel_id",
+        "description": "The Panel ID",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/roles/commands/rrDelete.js"
+  },
+  {
+    "plugin": "roles",
+    "category": "roles",
+    "name": "rrremove",
+    "description": "Remove a Role option from a Reaction Role Panel",
+    "usage": "/rrremove  |  j rr remove",
+    "aliases": [
+      "removereactionrole",
+      "rr-remove"
+    ],
+    "details": "Removes a specific role button from a Reaction Role Panel.",
+    "options": [
+      {
+        "name": "panel_id",
+        "description": "The Panel ID",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "role",
+        "description": "The role to remove",
+        "type": 8,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/roles/commands/rrRemove.js"
+  },
+  {
+    "plugin": "sticker",
+    "category": "sticker",
+    "name": "stickeradd",
+    "description": "Summon a specific sticker from the Global Vault to your server.",
+    "usage": "/stickeradd <name>  |  j sticker add <name>",
+    "aliases": [
+      "stickerget",
+      "getsticker"
+    ],
+    "details": "Copies a sticker from the Global Vault into your server.",
+    "options": [
+      {
+        "name": "stickername",
+        "description": "Exact name of the sticker to download",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/sticker/commands/stickerAdd.js"
+  },
+  {
+    "plugin": "sticker",
+    "category": "sticker",
+    "name": "stickerbank",
+    "description": "View the Global Sticker Bank list.",
+    "usage": "/stickerbank  |  j sticker bank",
+    "aliases": [
+      "stickerlist",
+      "stickers"
+    ],
+    "details": "Shows a text list of all stickers in the Global Vault.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/sticker/commands/stickerBank.js"
+  },
+  {
+    "plugin": "sticker",
+    "category": "sticker",
+    "name": "stickerbrowse",
+    "description": "Browse the visual interface of the Global Sticker Vault.",
+    "usage": "/stickerbrowse  |  j sticker browse",
+    "aliases": [
+      "stickervault",
+      "browsesticker"
+    ],
+    "details": "Opens a visual paginated browser for the Global Sticker Vault.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/sticker/commands/stickerBrowse.js"
+  },
+  {
+    "plugin": "sticker",
+    "category": "sticker",
+    "name": "stickerremove",
+    "description": "Remove a sticker from the global vault.",
+    "usage": "/stickerremove <name>  |  j sticker remove <name>",
+    "aliases": [
+      "stickerdel",
+      "delsticker"
+    ],
+    "details": "Removes a sticker from the Global Vault permanently.",
+    "options": [
+      {
+        "name": "stickername",
+        "description": "Name of the sticker to delete",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/sticker/commands/stickerRemove.js"
+  },
+  {
+    "plugin": "sticker",
+    "category": "sticker",
+    "name": "sticker",
+    "description": "Summon a sticker from the global CDN directly into chat (Bypasses server slots).",
+    "usage": "/sticker <name>  |  j sticker <name>",
+    "aliases": [
+      "sendsticker",
+      "getstick"
+    ],
+    "details": "Sends a sticker from the Global CDN directly into chat (bypasses server sticker slots).",
+    "options": [
+      {
+        "name": "query",
+        "description": "The sticker name to search",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/sticker/commands/stickerSend.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "afk",
+    "description": "Set yourself as AFK",
+    "usage": "/afk [reason]  |  j afk [reason]",
+    "aliases": [
+      "away",
+      "setafk"
+    ],
+    "details": "Marks you as AFK. Bot will mention others when they ping you.",
+    "options": [
+      {
+        "name": "reason",
+        "description": "Reason",
+        "type": 3,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/afk.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "avatar",
+    "description": "Show a user's avatar",
+    "usage": "/avatar [@user]  |  j avatar [@user]",
+    "aliases": [
+      "av",
+      "pfp",
+      "icon"
+    ],
+    "details": "Displays the full-size avatar of yourself or another user.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User whose avatar you want",
+        "type": 6,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/avatar.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "help",
+    "description": "Show all commands, grouped by plugin, with usage and aliases",
+    "usage": "/help [category]  |  j help [category]",
+    "aliases": [
+      "h",
+      "commands",
+      "cmds"
+    ],
+    "details": "Categories: admin, clan, emoji, events, fun, leveling, market, moderation, packs, roles, sticker, utility",
+    "options": [
+      {
+        "name": "category",
+        "description": "Filter by plugin category",
+        "type": 3,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/help.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "ping",
+    "description": "Check bot latency",
+    "usage": "/ping  |  j ping",
+    "aliases": [
+      "latency",
+      "pong"
+    ],
+    "details": "Shows the bot's current latency to the Discord API.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/ping.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "poll",
+    "description": "Create a Yes/No poll",
+    "usage": "/poll <question>  |  j poll <question>",
+    "aliases": [
+      "vote",
+      "yesno"
+    ],
+    "details": "Creates a Yes/No poll embed with reaction buttons.",
+    "options": [
+      {
+        "name": "question",
+        "description": "Poll question",
+        "type": 3,
+        "required": true
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/poll.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "prefixtest",
+    "description": "Test prefix system",
+    "usage": "/prefixtest  |  j prefixtest",
+    "aliases": [
+      "testprefix",
+      "prefix"
+    ],
+    "details": "Tests that the prefix system is working correctly.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/prefixTest.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "serverinfo",
+    "description": "Show information about the server",
+    "usage": "/serverinfo  |  j serverinfo",
+    "aliases": [
+      "si",
+      "server",
+      "guildinfo"
+    ],
+    "details": "Shows detailed info about the server: owner, member count, channels, boosts, etc.",
+    "options": [],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/serverinfo.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "steal",
+    "description": "Steal an emoji or sticker by replying to a message and store it globally.",
+    "usage": "/steal (reply to a message with emoji/sticker)  |  j steal",
+    "aliases": [
+      "snatch",
+      "stealemoji"
+    ],
+    "details": "Steals an emoji or sticker from a replied message and stores it in the Global Vault.",
+    "options": [],
+    "permission": "Admin/Moderator",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/steal.js"
+  },
+  {
+    "plugin": "utility",
+    "category": "utility",
+    "name": "userinfo",
+    "description": "Get information about a user",
+    "usage": "/userinfo [@user]  |  j userinfo [@user]",
+    "aliases": [
+      "ui",
+      "whois",
+      "user"
+    ],
+    "details": "Shows detailed info about a user: roles, join date, creation date, etc.",
+    "options": [
+      {
+        "name": "user",
+        "description": "User to check",
+        "type": 6,
+        "required": false
+      }
+    ],
+    "permission": "Everyone",
+    "isSlash": true,
+    "filepath": "/plugins/utility/commands/userinfo.js"
+  }
+]
