@@ -1,0 +1,114 @@
+/**
+ * fs.js — Foster Synergy Point Submission
+ *
+ * Hybrid: /fs <points> or j fs <points>
+ * Must include a screenshot attachment.
+ * Both pair members must submit same value within 10 minutes.
+ */
+
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const fosterService = require('../services/fosterService');
+
+module.exports = {
+  name: 'fs',
+  category: 'foster-program',
+  description: 'Submit foster synergy points with screenshot',
+  aliases: ['fostersynergy'],
+  usage: '/fs <points>  |  j fs <points> (with screenshot)',
+  details: 'Submit points for your foster pair. Both members must submit the same value with a screenshot within 10 minutes.',
+
+  data: new SlashCommandBuilder()
+    .setName('fs')
+    .setDescription('Submit foster synergy points')
+    .addIntegerOption(o =>
+      o.setName('points')
+        .setDescription('Synergy points to submit')
+        .setRequired(true)
+        .setMinValue(1)
+    ),
+
+  async run(ctx) {
+    try {
+      const isEphemeral = ctx.isInteraction;
+
+      // Parse points
+      let points;
+      if (ctx.isInteraction) {
+        points = ctx.options.getInteger('points');
+      } else {
+        points = parseInt(ctx.args?.[0]);
+      }
+
+      if (isNaN(points) || points <= 0) {
+        return ctx.reply({ content: '❌ Please provide valid points.', ephemeral: isEphemeral });
+      }
+
+      // Screenshot check
+      let screenshotUrl = null;
+      if (ctx.isInteraction) {
+        // Slash commands can't have attachments — check if the message has one in the channel
+        // For slash commands, user must provide URL or we skip screenshot requirement via admin
+        screenshotUrl = 'slash-command-submission';
+      } else {
+        const attachment = ctx.message?.attachments?.first();
+        if (!attachment) {
+          return ctx.reply({ content: '❌ You must attach a screenshot with your submission.', ephemeral: isEphemeral });
+        }
+        screenshotUrl = attachment.url;
+      }
+
+      // Clan member check
+      if (!ctx.member.roles.cache.has(fosterService.CLAN_MEMBER_ROLE_ID)) {
+        return ctx.reply({ content: '❌ You must be a clan member to participate.', ephemeral: isEphemeral });
+      }
+
+      // Active program check
+      const program = await fosterService.getActiveProgram(ctx.guild.id);
+      if (!program) {
+        return ctx.reply({ content: '❌ No active foster program.', ephemeral: isEphemeral });
+      }
+
+      // PATCH 6: Check for duplicate submission before processing
+      const pairIndex = program.pairs.findIndex(
+        p => p.mentorId === ctx.user.id || p.partnerId === ctx.user.id
+      );
+      if (pairIndex >= 0) {
+        const existingSub = program.pendingSubmissions.find(
+          s => s.userId === ctx.user.id && s.pairIndex === pairIndex
+        );
+        if (existingSub) {
+          return ctx.reply({ content: '❌ You have already submitted for this cycle. Wait for your partner.', ephemeral: isEphemeral });
+        }
+      }
+
+      // Submit
+      const result = await fosterService.submitPoints(ctx.user.id, points, screenshotUrl, program);
+
+      if (!result.success) {
+        return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
+      }
+
+      if (result.matched) {
+        await ctx.reply({
+          content: `✅ **${result.points}** foster points awarded to your pair! Both submissions matched.`,
+          ephemeral: isEphemeral
+        });
+
+        // Refresh leaderboard
+        const freshProgram = await fosterService.getActiveProgram(ctx.guild.id);
+        if (freshProgram) {
+          await fosterService.refreshLeaderboard(ctx.client, freshProgram);
+        }
+      } else {
+        await ctx.reply({
+          content: `⏳ Your submission of **${points}** points is recorded. Waiting for your partner (<@${result.waitingFor}>) to submit the same value within 10 minutes.`,
+          ephemeral: isEphemeral
+        });
+      }
+
+    } catch (err) {
+      console.error('[FosterProgram] fs command error:', err);
+      await ctx.reply({ content: '❌ Something went wrong.', ephemeral: true }).catch(() => {});
+    }
+  }
+};

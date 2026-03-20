@@ -1,0 +1,7 @@
+{
+  "name": "seasonal-synergy",
+  "version": "1.0.0",
+  "description": "Long-term Seasonal Energy tracking system with weekly/season leaderboards and automated role rewards",
+  "main": "index.js",
+  "author": "Jack Dev"
+}

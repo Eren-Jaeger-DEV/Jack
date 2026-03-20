@@ -1,0 +1,7 @@
+{
+  "name": "member-classification",
+  "version": "1.0.0",
+  "description": "Classify new members as Clan Member or Discord Member with automated Newbie role lifecycle",
+  "main": "index.js",
+  "author": "Jack Dev"
+}

@@ -1,0 +1,7 @@
+{
+  "name": "foster-program",
+  "version": "1.0.0",
+  "description": "30-day Foster Program with mentor-rookie pairing, rotation, and dual-validation points",
+  "main": "index.js",
+  "author": "Jack Dev"
+}

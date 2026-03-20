@@ -18,7 +18,10 @@ const guildConfigSchema = new mongoose.Schema({
     sticker: { type: Boolean, default: true },
     utility: { type: Boolean, default: true },
     'intra-match': { type: Boolean, default: true },
-    'clan-battle': { type: Boolean, default: true }
+    'clan-battle': { type: Boolean, default: true },
+    'seasonal-synergy': { type: Boolean, default: true },
+    'member-classification': { type: Boolean, default: true },
+    'foster-program': { type: Boolean, default: true }
   },
   pluginSettings: {
     type: Map,

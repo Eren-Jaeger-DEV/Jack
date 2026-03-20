@@ -10,10 +10,20 @@
 
 const { PermissionFlagsBits } = require('discord.js');
 const battleService = require('../services/battleService');
+const profileService = require('../../clan/services/profileService');
 
 /* ── Constants ── */
 const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
 const WINNER_ROLE_ID         = '1477872032644599892';
+
+/* ── PATCH 3: Duplicate event protection ── */
+const processedEvents = new Set();
+function isDuplicate(eventId) {
+  if (processedEvents.has(eventId)) return true;
+  processedEvents.add(eventId);
+  setTimeout(() => processedEvents.delete(eventId), 600000);
+  return false;
+}
 
 module.exports = {
   name: 'messageCreate',
@@ -21,6 +31,7 @@ module.exports = {
   async execute(message, client) {
     if (!message.guild) return;
     if (message.author.bot) return;
+    if (isDuplicate(message.id)) return;
     const content = message.content.toLowerCase().trim();
     const isUserAdmin = message.member && message.member.permissions.has(PermissionFlagsBits.ManageGuild);
 
@@ -113,6 +124,13 @@ module.exports = {
         }
 
         await message.react('🏆');
+
+        // Achievement tracking: increment clanBattleWins + update bestClanBattleRank
+        for (let i = 0; i < top6.length; i++) {
+          const rank = i + 1;
+          await profileService.incrementAchievement(top6[i].userId, 'achievements.clanBattleWins');
+          await profileService.setAchievementIfBetter(top6[i].userId, 'achievements.bestClanBattleRank', rank);
+        }
 
       } catch (err) {
         console.error('[ClanBattle] End error:', err);

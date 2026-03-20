@@ -29,6 +29,21 @@ const playerSchema = new mongoose.Schema({
     default: 0
   },
 
+  lastWeeklySubmission: {
+    type: String,
+    default: ''
+  },
+
+  achievements: {
+    intraWins:           { type: Number, default: 0 },
+    clanBattleWins:      { type: Number, default: 0 },
+    bestClanBattleRank:  { type: Number, default: null },
+    fosterWins:          { type: Number, default: 0 },
+    fosterParticipation: { type: Number, default: 0 },
+    weeklyMVPCount:      { type: Number, default: 0 },
+    highestSeasonRank:   { type: Number, default: null }
+  },
+
   screenshot: String
 
 }, { timestamps: true });

@@ -1,0 +1,328 @@
+/**
+ * synergyService.js — Core business logic for the Seasonal Synergy system
+ *
+ * ALL database operations and leaderboard rendering go through here.
+ * Commands and events call these functions — they never touch the DB directly.
+ */
+
+const Season = require('../models/Season');
+const Player = require('../../../bot/database/models/Player');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+/* ── Constants ── */
+const SYNERGY_CHANNEL_ID    = '1477984930909786134';
+const CLAN_ROLE_ID          = '1477856665817714699';
+const WEEKLY_MVP_ROLE_ID    = '1479876704901009508';
+const SEASON_WINNER_ROLE_ID = '1477872708925788201';
+const MAX_WEEKLY_ENERGY     = 1000;
+const PLAYERS_PER_PAGE      = 10;
+
+/* ═══════════════════════════════════════════
+ *  SEASON LIFECYCLE
+ * ═══════════════════════════════════════════ */
+
+async function createSeason(guildId, channelId) {
+  return Season.create({ guildId, channelId, active: true });
+}
+
+async function getActiveSeason(guildId) {
+  return Season.findOne({ guildId, active: true });
+}
+
+async function endSeason(guildId) {
+  return Season.findOneAndUpdate(
+    { guildId, active: true },
+    { active: false },
+    { new: true }
+  );
+}
+
+/* ═══════════════════════════════════════════
+ *  WEEKLY ENERGY
+ * ═══════════════════════════════════════════ */
+
+/**
+ * Check if today is a weekend (Saturday or Sunday) in IST.
+ */
+function isWeekend() {
+  const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day = ist.getDay();
+  return day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
+}
+
+/**
+ * Get today's date as a string (YYYY-MM-DD) in IST.
+ */
+function getTodayString() {
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Add weekly energy for a player.
+ * - Validates weekend, daily limit, points range.
+ * - Also adds to seasonEnergy.
+ *
+ * @param {string} userId
+ * @param {number} points
+ * @param {boolean} isAdmin — if true, bypass weekend + daily restrictions
+ * @returns {{ success: boolean, error?: string }}
+ */
+async function addWeeklyEnergy(userId, points, isAdmin = false) {
+  if (points <= 0 || points > MAX_WEEKLY_ENERGY) {
+    return { success: false, error: `Points must be between 1 and ${MAX_WEEKLY_ENERGY}.` };
+  }
+
+  if (!isAdmin && !isWeekend()) {
+    return { success: false, error: 'You can only submit weekly energy on Saturday and Sunday.' };
+  }
+
+  const player = await Player.findOne({ discordId: userId });
+  if (!player) {
+    return { success: false, error: 'Player not found in database.' };
+  }
+
+  const today = getTodayString();
+
+  if (!isAdmin && player.lastWeeklySubmission === today) {
+    return { success: false, error: 'You have already submitted your energy today.' };
+  }
+
+  player.weeklySynergy = (player.weeklySynergy || 0) + points;
+  player.seasonSynergy = (player.seasonSynergy || 0) + points;
+  player.lastWeeklySubmission = today;
+  await player.save();
+
+  return { success: true, player };
+}
+
+/**
+ * Admin: directly set season energy for a player.
+ */
+async function setSeasonEnergy(userId, points) {
+  const player = await Player.findOne({ discordId: userId });
+  if (!player) return { success: false, error: 'Player not found in database.' };
+
+  player.seasonSynergy = points;
+  await player.save();
+
+  return { success: true, player };
+}
+
+/**
+ * Reset weekly energy for ALL registered players.
+ * Returns the top 3 players (by weekly energy) before resetting.
+ */
+async function resetWeeklyEnergy() {
+  const players = await Player.find({ weeklySynergy: { $gt: 0 } }).sort({ weeklySynergy: -1 });
+  const top3 = players.slice(0, 3);
+
+  // Reset all
+  await Player.updateMany(
+    {},
+    { $set: { weeklySynergy: 0, lastWeeklySubmission: '' } }
+  );
+
+  console.log(`[SeasonalSynergy] Weekly energy reset. Top 3: ${top3.map(p => p.ign || p.discordId).join(', ')}`);
+  return top3;
+}
+
+/**
+ * Full season reset: zero weekly + season energy, clear submissions.
+ */
+async function resetAllEnergy() {
+  await Player.updateMany(
+    {},
+    { $set: { weeklySynergy: 0, seasonSynergy: 0, lastWeeklySubmission: '' } }
+  );
+  console.log('[SeasonalSynergy] All energy reset (season end).');
+}
+
+/**
+ * Get top N players by season energy.
+ */
+async function getTopPlayers(field = 'seasonSynergy', limit = 3) {
+  return Player.find({ [field]: { $gt: 0 } }).sort({ [field]: -1 }).limit(limit);
+}
+
+/* ═══════════════════════════════════════════
+ *  LEADERBOARD
+ * ═══════════════════════════════════════════ */
+
+/**
+ * Build leaderboard embed for a specific page.
+ */
+async function getLeaderboardPage(page = 0) {
+  const allPlayers = await Player.find({
+    $or: [
+      { weeklySynergy: { $gt: 0 } },
+      { seasonSynergy: { $gt: 0 } },
+      { ign: { $exists: true, $ne: '' } }
+    ]
+  }).sort({ seasonSynergy: -1 });
+
+  const totalPages = Math.max(1, Math.ceil(allPlayers.length / PLAYERS_PER_PAGE));
+  const safePage = Math.max(0, Math.min(page, totalPages - 1));
+
+  const start = safePage * PLAYERS_PER_PAGE;
+  const slice = allPlayers.slice(start, start + PLAYERS_PER_PAGE);
+
+  let board = '```md\n';
+  board += padRight('Name', 18) + padRight('Weekly', 10) + padRight('Season', 10) + 'Status\n';
+  board += '─'.repeat(48) + '\n';
+
+  if (slice.length === 0) {
+    board += 'No players registered yet.\n';
+  } else {
+    for (let i = 0; i < slice.length; i++) {
+      const rank = start + i + 1;
+      const p = slice[i];
+      const nameStr = `${rank}. ${truncate(p.ign || p.discordId, 14)}`;
+      board += padRight(nameStr, 18) +
+               padRight(String(p.weeklySynergy || 0), 10) +
+               padRight(String(p.seasonSynergy || 0), 10) +
+               'Offline\n';
+    }
+  }
+
+  board += '```';
+
+  const embed = new EmbedBuilder()
+    .setTitle('⚡ Seasonal Energy Rankings')
+    .setDescription(board)
+    .setFooter({ text: `Page ${safePage + 1} / ${totalPages}` })
+    .setColor('#00BFFF');
+
+  return { embed, page: safePage, totalPages };
+}
+
+/**
+ * Build pagination buttons.
+ */
+function buildButtons(page, totalPages) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`synergy_lb_prev_${page}`)
+      .setLabel('◀ Previous')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(page <= 0),
+    new ButtonBuilder()
+      .setCustomId(`synergy_lb_next_${page}`)
+      .setLabel('Next ▶')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(page >= totalPages - 1)
+  );
+}
+
+/**
+ * Delete old leaderboard message and send a new one.
+ * ALWAYS sends to SYNERGY_CHANNEL_ID.
+ */
+async function refreshLeaderboard(client, season, page = 0) {
+  try {
+    const channel = await client.channels.fetch(SYNERGY_CHANNEL_ID).catch(() => null);
+    if (!channel) return null;
+
+    // Delete old message
+    await deleteOldLeaderboardMessage(client, season);
+
+    // Build & send
+    const lb = await getLeaderboardPage(page);
+    const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
+
+    const msg = await channel.send({ embeds: [lb.embed], components });
+
+    // Save new message ID
+    season.leaderboardMessageId = msg.id;
+    await season.save();
+
+    return msg;
+  } catch (err) {
+    console.error('[SeasonalSynergy] Failed to refresh leaderboard:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Delete old leaderboard message safely.
+ * Clears stored messageId if message is missing.
+ */
+async function deleteOldLeaderboardMessage(client, season) {
+  if (!season.leaderboardMessageId) return;
+  try {
+    const channel = await client.channels.fetch(SYNERGY_CHANNEL_ID).catch(() => null);
+    if (!channel) return;
+
+    const oldMsg = await channel.messages.fetch(season.leaderboardMessageId).catch(() => null);
+    if (oldMsg) {
+      await oldMsg.delete().catch(() => {});
+    } else {
+      // Message was manually deleted — clear stored ID
+      season.leaderboardMessageId = null;
+      await season.save();
+    }
+  } catch (err) {
+    // Message gone — clear stored ID
+    season.leaderboardMessageId = null;
+    await season.save().catch(() => {});
+  }
+}
+
+/**
+ * Build final season results for top 3.
+ */
+async function buildFinalResults() {
+  const top3 = await getTopPlayers('seasonSynergy', 3);
+
+  let results = '```\n🏆 Season Final Results\n\n';
+  results += padRight('', 4) + padRight('Name', 20) + 'Season Energy\n';
+  results += '─'.repeat(40) + '\n';
+
+  for (let i = 0; i < top3.length; i++) {
+    results += padRight(String(i + 1), 4) +
+               padRight(truncate(top3[i].ign || top3[i].discordId, 18), 20) +
+               String(top3[i].seasonSynergy || 0) + '\n';
+  }
+
+  results += '```';
+  return { results, top3 };
+}
+
+/* ═══════════════════════════════════════════
+ *  HELPERS
+ * ═══════════════════════════════════════════ */
+
+function padRight(str, len) {
+  return str.length >= len ? str.substring(0, len) : str + ' '.repeat(len - str.length);
+}
+
+function truncate(str, max) {
+  if (!str) return 'Unknown';
+  return str.length > max ? str.substring(0, max - 1) + '…' : str;
+}
+
+/* ═══════════════════════════════════════════
+ *  EXPORTS
+ * ═══════════════════════════════════════════ */
+
+module.exports = {
+  createSeason,
+  getActiveSeason,
+  endSeason,
+  addWeeklyEnergy,
+  setSeasonEnergy,
+  resetWeeklyEnergy,
+  resetAllEnergy,
+  getTopPlayers,
+  getLeaderboardPage,
+  buildButtons,
+  refreshLeaderboard,
+  deleteOldLeaderboardMessage,
+  buildFinalResults,
+  isWeekend,
+  MAX_WEEKLY_ENERGY,
+  SYNERGY_CHANNEL_ID,
+  CLAN_ROLE_ID,
+  WEEKLY_MVP_ROLE_ID,
+  SEASON_WINNER_ROLE_ID
+};
