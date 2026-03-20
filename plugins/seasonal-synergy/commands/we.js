@@ -15,6 +15,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const Player = require('../../../bot/database/models/Player');
 const synergyService = require('../services/synergyService');
+const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 module.exports = {
   name: 'we',
@@ -111,7 +112,8 @@ module.exports = {
         return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
       }
 
-      const displayName = player.ign || userId;
+      const name = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
+      const displayName = name;
       console.log(`[SeasonalSynergy] ${targetUser ? `Admin ${ctx.user.tag} submitted` : `${ctx.user.tag} submitted`} ${points} weekly energy for ${displayName}`);
 
       await ctx.reply({ content: `✅ **${points}** weekly energy recorded for **${displayName}**!`, ephemeral: isEphemeral });

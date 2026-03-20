@@ -104,8 +104,9 @@ module.exports = {
         // Delete old leaderboard
         await synergyService.deleteOldLeaderboardMessage(client, finalSeason);
 
-        // Get final results (top 3)
-        const { results, top3 } = await synergyService.buildFinalResults();
+        // Build final results
+        const guild = await client.guilds.fetch(finalSeason.guildId).catch(() => null);
+        const { results, top3 } = await synergyService.buildFinalResults(guild);
 
         // Send results
         await message.channel.send(results);

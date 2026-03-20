@@ -7,6 +7,7 @@
 
 const Battle = require('../models/Battle');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 const PLAYERS_PER_PAGE       = 10;
 const MAX_POINTS             = 100;
@@ -137,7 +138,7 @@ async function resetDailyPoints(guildId) {
 /**
  * Build a leaderboard string for a specific page.
  */
-function getLeaderboardPage(battle, page = 0) {
+async function getLeaderboardPage(guild, battle, page = 0) {
   const sorted = [...battle.players].sort((a, b) => b.totalPoints - a.totalPoints);
   const totalPages = Math.max(1, Math.ceil(sorted.length / PLAYERS_PER_PAGE));
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
@@ -155,8 +156,10 @@ function getLeaderboardPage(battle, page = 0) {
     for (let i = 0; i < slice.length; i++) {
       const rank = start + i + 1;
       const p = slice[i];
+      
+      const displayName = await resolveDisplayName(guild, p.userId, p.ign);
       // Format: "1 PlayerA" in the 20-char column
-      const memberStr = `${rank} ${truncate(p.ign, 16)}`;
+      const memberStr = `${rank} ${truncate(displayName, 16)}`;
       board += padRight(memberStr, 20) +
                padRight(String(p.todayPoints), 8) +
                String(p.totalPoints) + '\n';
@@ -205,8 +208,11 @@ async function refreshLeaderboard(client, battle, page = 0) {
     // 1. Delete old message
     await deleteOldLeaderboardMessage(client, battle);
 
+    // Fetch guild for display names
+    const guild = await client.guilds.fetch(battle.guildId).catch(() => null);
+
     // 2. Build & send new one
-    const lb = getLeaderboardPage(battle, page);
+    const lb = await getLeaderboardPage(guild, battle, page);
     const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
 
     const msg = await channel.send({ embeds: [lb.embed], components });
@@ -241,7 +247,7 @@ async function deleteOldLeaderboardMessage(client, battle) {
 /**
  * Build the final results embed for top 6 winners.
  */
-function buildFinalResults(battle) {
+async function buildFinalResults(guild, battle) {
   const sorted = [...battle.players].sort((a, b) => b.totalPoints - a.totalPoints);
   const top6 = sorted.slice(0, 6);
 
@@ -250,9 +256,11 @@ function buildFinalResults(battle) {
   results += '─'.repeat(35) + '\n';
 
   for (let i = 0; i < top6.length; i++) {
+    const p = top6[i];
+    const displayName = await resolveDisplayName(guild, p.userId, p.ign);
     results += padRight(String(i + 1), 4) +
-               padRight(truncate(top6[i].ign, 18), 20) +
-               String(top6[i].totalPoints) + '\n';
+               padRight(truncate(displayName, 18), 20) +
+               String(p.totalPoints) + '\n';
   }
 
   results += '```';

@@ -164,7 +164,9 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
        if (interactionOrCtx.deferred) {
           return await interactionOrCtx.editReply(payload);
        } else if (interactionOrCtx.reply) {
-          return await interactionOrCtx.reply({ ...payload, fetchReply: true });
+          // Robust reply-then-fetch to avoid fetchReply deprecation warning
+          await interactionOrCtx.reply(payload);
+          return (interactionOrCtx.fetchReply) ? await interactionOrCtx.fetchReply() : null;
        } else {
           return await interactionOrCtx.channel.send(payload);
        }

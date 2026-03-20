@@ -12,6 +12,8 @@ const CommandUsage = require("../database/models/CommandUsage");
 /* Server Overview button embeds */
 const overview = require("../systems/panels/serverOverview");
 
+const { setTemporaryPresence, getPresenceText } = require("../utils/presenceManager");
+
 module.exports = {
 
   name: "interactionCreate",
@@ -24,6 +26,9 @@ module.exports = {
 
       const command = client.commands.get(interaction.commandName);
       if (!command) return;
+
+      const presenceText = getPresenceText(interaction.commandName);
+      setTemporaryPresence(client, presenceText);
 
       const ctx = new Context(client, interaction);
 

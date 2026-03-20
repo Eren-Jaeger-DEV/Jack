@@ -7,6 +7,7 @@
 const FosterProgram = require('../models/FosterProgram');
 const Player = require('../../../bot/database/models/Player');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 /* ── Constants ── */
 const FOSTER_CHANNEL_ID   = '1477984930909786134';
@@ -391,20 +392,16 @@ async function checkRotationAndPhase(client) {
  *  LEADERBOARD
  * ═══════════════════════════════════════════ */
 
-async function getLeaderboardPage(program, page = 0) {
+/**
+ * Build a leaderboard string for a specific page.
+ */
+async function getLeaderboardPage(guild, program, page = 0) {
   const sorted = [...program.pairs].sort((a, b) => b.points - a.points);
   const totalPages = Math.max(1, Math.ceil(sorted.length / PLAYERS_PER_PAGE));
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
 
   const start = safePage * PLAYERS_PER_PAGE;
   const slice = sorted.slice(start, start + PLAYERS_PER_PAGE);
-
-  // Resolve IGNs
-  const allIds = [];
-  for (const p of slice) { allIds.push(p.mentorId, p.partnerId); }
-  const players = await Player.find({ discordId: { $in: allIds } });
-  const nameMap = {};
-  for (const p of players) { nameMap[p.discordId] = p.ign || p.discordId; }
 
   let board = '```md\n';
   board += padRight('Pairs', 30) + padRight('Combined Synergy', 16) + '\n';
@@ -416,9 +413,13 @@ async function getLeaderboardPage(program, page = 0) {
     for (let i = 0; i < slice.length; i++) {
       const rank = start + i + 1;
       const p = slice[i];
-      const mentorName = truncate(nameMap[p.mentorId] || p.mentorId, 12);
-      const partnerName = truncate(nameMap[p.partnerId] || p.partnerId, 12);
-      const pairStr = `${rank}. ${mentorName} - ${partnerName}`;
+      
+      const mentorName = await resolveDisplayName(guild, p.mentorId, 'Unknown');
+      const partnerName = await resolveDisplayName(guild, p.partnerId, 'Unknown');
+      
+      const mentorTrunc = truncate(mentorName, 12);
+      const partnerTrunc = truncate(partnerName, 12);
+      const pairStr = `${rank}. ${mentorTrunc} - ${partnerTrunc}`;
       board += padRight(pairStr, 30) + padRight(String(p.points), 16) + '\n';
     }
   }
@@ -456,7 +457,8 @@ async function refreshLeaderboard(client, program, page = 0) {
 
     await deleteOldLeaderboardMessage(client, program);
 
-    const lb = await getLeaderboardPage(program, page);
+    const guild = await client.guilds.fetch(program.guildId).catch(() => null);
+    const lb = await getLeaderboardPage(guild, program, page);
     const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
 
     const msg = await channel.send({ embeds: [lb.embed], components });
@@ -493,13 +495,8 @@ async function deleteOldLeaderboardMessage(client, program) {
 /**
  * Build final results for program end.
  */
-async function buildFinalResults(program) {
+async function buildFinalResults(guild, program) {
   const sorted = [...program.pairs].sort((a, b) => b.points - a.points);
-  const allIds = [];
-  for (const p of sorted) { allIds.push(p.mentorId, p.partnerId); }
-  const players = await Player.find({ discordId: { $in: allIds } });
-  const nameMap = {};
-  for (const p of players) { nameMap[p.discordId] = p.ign || p.discordId; }
 
   let results = '```\n🏆 Foster Program Final Results\n\n';
   results += padRight('', 4) + padRight('Pair', 30) + 'Points\n';
@@ -507,7 +504,10 @@ async function buildFinalResults(program) {
 
   for (let i = 0; i < sorted.length; i++) {
     const p = sorted[i];
-    const pairStr = `${truncate(nameMap[p.mentorId] || '?', 12)} - ${truncate(nameMap[p.partnerId] || '?', 12)}`;
+    const mentorName = await resolveDisplayName(guild, p.mentorId, 'Unknown');
+    const partnerName = await resolveDisplayName(guild, p.partnerId, 'Unknown');
+    
+    const pairStr = `${truncate(mentorName, 12)} - ${truncate(partnerName, 12)}`;
     results += padRight(String(i + 1), 4) + padRight(pairStr, 30) + String(p.points) + '\n';
   }
 

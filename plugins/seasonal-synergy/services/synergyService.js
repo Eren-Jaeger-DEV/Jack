@@ -8,6 +8,7 @@
 const Season = require('../models/Season');
 const Player = require('../../../bot/database/models/Player');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 /* ── Constants ── */
 const SYNERGY_CHANNEL_ID    = '1477984930909786134';
@@ -117,13 +118,20 @@ async function resetWeeklyEnergy() {
   const players = await Player.find({ weeklySynergy: { $gt: 0 } }).sort({ weeklySynergy: -1 });
   const top3 = players.slice(0, 3);
 
+  // Get names for logging before reset
+  const topNames = [];
+  for (const p of top3) {
+    const name = p.ign || p.discordId; // Basic log fallback
+    topNames.push(name);
+  }
+
   // Reset all
   await Player.updateMany(
     {},
     { $set: { weeklySynergy: 0, lastWeeklySubmission: '' } }
   );
 
-  console.log(`[SeasonalSynergy] Weekly energy reset. Top 3: ${top3.map(p => p.ign || p.discordId).join(', ')}`);
+  console.log(`[SeasonalSynergy] Weekly energy reset. Top 3: ${topNames.join(', ')}`);
   return top3;
 }
 
@@ -152,7 +160,7 @@ async function getTopPlayers(field = 'seasonSynergy', limit = 3) {
 /**
  * Build leaderboard embed for a specific page.
  */
-async function getLeaderboardPage(page = 0) {
+async function getLeaderboardPage(guild, page = 0) {
   const allPlayers = await Player.find({
     $or: [
       { weeklySynergy: { $gt: 0 } },
@@ -167,31 +175,36 @@ async function getLeaderboardPage(page = 0) {
   const start = safePage * PLAYERS_PER_PAGE;
   const slice = allPlayers.slice(start, start + PLAYERS_PER_PAGE);
 
-  let board = '```md\n';
-  board += padRight('Name', 18) + padRight('Weekly', 10) + padRight('Season', 10) + 'Status\n';
-  board += '─'.repeat(48) + '\n';
+  let description = '';
 
   if (slice.length === 0) {
-    board += 'No players registered yet.\n';
+    description = 'No players registered yet.';
   } else {
     for (let i = 0; i < slice.length; i++) {
       const rank = start + i + 1;
       const p = slice[i];
-      const nameStr = `${rank}. ${truncate(p.ign || p.discordId, 14)}`;
-      board += padRight(nameStr, 18) +
-               padRight(String(p.weeklySynergy || 0), 10) +
-               padRight(String(p.seasonSynergy || 0), 10) +
-               'Offline\n';
+      
+      const displayName = await resolveDisplayName(guild, p.discordId, p.ign);
+      const name = displayName;
+
+      if (rank <= 3) {
+        const emoji = rank === 1 ? '🏆 ' : rank === 2 ? '🥈 ' : '🥉 ';
+        description += `${emoji}#${rank} **${name}**\n⚡ Weekly: ${p.weeklySynergy || 0}\n🔥 Season: ${p.seasonSynergy || 0}\n\n`;
+
+        if (rank === 3 && slice.length > 3) {
+          description += '━━━━━━━━━━━━━━\n\n';
+        }
+      } else {
+        description += `${rank}. **${name}**\n⚡ Weekly: ${p.weeklySynergy || 0}\n🔥 Season: ${p.seasonSynergy || 0}\n\n`;
+      }
     }
   }
 
-  board += '```';
-
   const embed = new EmbedBuilder()
-    .setTitle('⚡ Seasonal Energy Rankings')
-    .setDescription(board)
-    .setFooter({ text: `Page ${safePage + 1} / ${totalPages}` })
-    .setColor('#00BFFF');
+    .setTitle('🔥 SEASON RANKINGS')
+    .setDescription(description.trim())
+    .setFooter({ text: `Page ${safePage + 1} • Showing ${slice.length} players` })
+    .setColor('#FF4500');
 
   return { embed, page: safePage, totalPages };
 }
@@ -225,9 +238,12 @@ async function refreshLeaderboard(client, season, page = 0) {
 
     // Delete old message
     await deleteOldLeaderboardMessage(client, season);
+    
+    // Fetch guild for display names
+    const guild = await client.guilds.fetch(season.guildId).catch(() => null);
 
     // Build & send
-    const lb = await getLeaderboardPage(page);
+    const lb = await getLeaderboardPage(guild, page);
     const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
 
     const msg = await channel.send({ embeds: [lb.embed], components });
@@ -271,7 +287,7 @@ async function deleteOldLeaderboardMessage(client, season) {
 /**
  * Build final season results for top 3.
  */
-async function buildFinalResults() {
+async function buildFinalResults(guild) {
   const top3 = await getTopPlayers('seasonSynergy', 3);
 
   let results = '```\n🏆 Season Final Results\n\n';
@@ -279,9 +295,11 @@ async function buildFinalResults() {
   results += '─'.repeat(40) + '\n';
 
   for (let i = 0; i < top3.length; i++) {
+    const p = top3[i];
+    const displayName = await resolveDisplayName(guild, p.discordId, p.ign);
     results += padRight(String(i + 1), 4) +
-               padRight(truncate(top3[i].ign || top3[i].discordId, 18), 20) +
-               String(top3[i].seasonSynergy || 0) + '\n';
+               padRight(truncate(displayName.toUpperCase(), 18), 20) +
+               String(p.seasonSynergy || 0) + '\n';
   }
 
   results += '```';
@@ -294,6 +312,10 @@ async function buildFinalResults() {
 
 function padRight(str, len) {
   return str.length >= len ? str.substring(0, len) : str + ' '.repeat(len - str.length);
+}
+
+function padLeft(str, len) {
+  return str.length >= len ? str.substring(0, len) : ' '.repeat(len - str.length) + str;
 }
 
 function truncate(str, max) {

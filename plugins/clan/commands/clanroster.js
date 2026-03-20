@@ -1,5 +1,5 @@
-const Player = require("../../../bot/database/models/Player");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { resolveDisplayName } = require("../../../bot/utils/nameResolver");
 
 module.exports = {
 
@@ -23,9 +23,12 @@ module.exports = {
       return ctx.reply("❌ No players registered yet.");
     }
 
-    const list = players
-      .map((p, i) => `${i + 1}. **${p.ign}** — UID: ${p.uid}`)
-      .join("\n");
+    let list = "";
+    for (let i = 0; i < players.length; i++) {
+        const p = players[i];
+        const name = await resolveDisplayName(ctx.guild, p.discordId, p.ign);
+        list += `${i + 1}. **${name}** — UID: ${p.uid}\n`;
+    }
 
     const embed = new EmbedBuilder()
       .setTitle("🎮 Clan Player Roster")

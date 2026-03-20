@@ -15,6 +15,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const Player = require('../../../bot/database/models/Player');
 const battleService = require('../services/battleService');
+const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 const CLAN_ROLE_ID           = '1477856665817714699';
 const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
@@ -83,7 +84,8 @@ module.exports = {
 
       console.log(`[ClanBattle] ${ctx.user.tag} submitted ${points} points`);
 
-      await ctx.reply({ content: `✅ **${points}** battle points recorded for **${player.ign}**!`, ephemeral: isEphemeral });
+      const displayName = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
+      await ctx.reply({ content: `✅ **${points}** battle points recorded for **${displayName}**!`, ephemeral: isEphemeral });
 
       // Refresh leaderboard (delete old, send new in BATTLE channel)
       const freshBattle = await battleService.getActiveBattle(ctx.guild.id);

@@ -1,5 +1,6 @@
 const Player = require("../../../bot/database/models/Player");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { resolveDisplayName } = require("../../../bot/utils/nameResolver");
 
 module.exports = {
 
@@ -36,12 +37,7 @@ module.exports = {
       const above = seasonList[seasonRank - 1];
       const diff = above.seasonSynergy - player.seasonSynergy + 1;
 
-      let name = above.discordName;
-
-      try {
-        const member = await ctx.guild.members.fetch(above.discordId);
-        name = member.user.username;
-      } catch {}
+      const name = await resolveDisplayName(ctx.guild, above.discordId, above.ign || above.discordId);
 
       seasonMsg = `Need **${diff}** synergy to pass **${name}**`;
     }
@@ -59,12 +55,7 @@ module.exports = {
       const above = weeklyList[weeklyRank - 1];
       const diff = above.weeklySynergy - player.weeklySynergy + 1;
 
-      let name = above.discordName;
-
-      try {
-        const member = await ctx.guild.members.fetch(above.discordId);
-        name = member.user.username;
-      } catch {}
+      const name = await resolveDisplayName(ctx.guild, above.discordId, above.ign || above.discordId);
 
       weeklyMsg = `Need **${diff}** synergy to pass **${name}**`;
     }

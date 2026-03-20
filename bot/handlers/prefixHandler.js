@@ -1,6 +1,7 @@
 const { prefixes } = require("../../config/prefixes");
 const Context = require("../structures/Context");
 const CommandUsage = require("../database/models/CommandUsage");
+const { setTemporaryPresence, getPresenceText } = require("../utils/presenceManager");
 
 module.exports = async (message, client) => {
 
@@ -85,6 +86,9 @@ module.exports = async (message, client) => {
   }
 
   if (!command) return;
+
+  const presenceText = getPresenceText(commandName);
+  setTemporaryPresence(client, presenceText);
 
   const ctx = new Context(client, message, args);
 

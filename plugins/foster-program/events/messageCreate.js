@@ -86,8 +86,9 @@ module.exports = {
           return message.reply('⚠️ No active foster program to end.');
         }
 
-        // Build final results before ending
-        const { results, sorted } = await fosterService.buildFinalResults(program);
+        // Build final results
+        const guild = await client.guilds.fetch(program.guildId).catch(() => null);
+        const { results, sorted } = await fosterService.buildFinalResults(guild, program);
         await fosterService.endProgram(message.guild, client);
 
         await message.channel.send(results);

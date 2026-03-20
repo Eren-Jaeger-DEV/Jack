@@ -95,8 +95,9 @@ module.exports = {
         // Delete old leaderboard
         await battleService.deleteOldLeaderboardMessage(client, finalBattle);
 
-        // Get final results (top 6)
-        const { results, top6 } = battleService.buildFinalResults(finalBattle);
+        // Build final results
+        const guild = await client.guilds.fetch(finalBattle.guildId).catch(() => null);
+        const { results, top6 } = await battleService.buildFinalResults(guild, finalBattle);
 
         // Send results
         await message.channel.send(results);

@@ -1,6 +1,7 @@
 const Player = require("../../../bot/database/models/Player");
 const profileService = require("../services/profileService");
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
+const { resolveDisplayName } = require("../../../bot/utils/nameResolver");
 
 module.exports = {
 
@@ -34,14 +35,9 @@ module.exports = {
     if (!player)
       return ctx.reply("❌ Player not registered. Use `/register` first.");
 
-    /* GET CURRENT USERNAME */
+    /* RESOLVE DISPLAY NAME */
 
-    let name = player.discordName;
-
-    try {
-      const member = await ctx.guild.members.fetch(player.discordId);
-      name = member.user.username;
-    } catch {}
+    const displayName = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
 
     /* SEASON RANK */
 
@@ -64,9 +60,9 @@ module.exports = {
 
     /* ── BUILD PROFILE EMBED ── */
 
-    const buildProfileEmbed = () => {
+    const buildProfileEmbed = async () => {
       const embed = new EmbedBuilder()
-        .setTitle(`🎮 ${name}'s BGMI Profile`)
+        .setTitle(`🎮 ${displayName}'s BGMI Profile`)
         .setColor("Blue")
         .addFields(
           { name: "IGN", value: player.ign || "N/A", inline: true },
@@ -101,7 +97,7 @@ module.exports = {
       const highestRank = a.highestSeasonRank ?? 'N/A';
 
       const embed = new EmbedBuilder()
-        .setTitle(`🏆 ${name}'s Achievements`)
+        .setTitle(`🏆 ${displayName}'s Achievements`)
         .setColor("Gold")
         .addFields(
           { name: "⚔️ Intra Clan", value: `Wins: **${intraWins}**`, inline: true },
@@ -137,15 +133,14 @@ module.exports = {
 
     /* ── SEND & COLLECT ── */
 
-    const reply = await ctx.reply({
-      embeds: [buildProfileEmbed()],
+    const message = await ctx.reply({
+      embeds: [await buildProfileEmbed()],
       components: [profileRow],
       fetchReply: true
     });
 
-    // Resolve the actual message for collector
-    const message = reply?.id ? reply : await ctx.fetchReply?.().catch(() => null);
     if (!message) return;
+
 
     const collector = message.createMessageComponentCollector({
       componentType: ComponentType.Button,
@@ -161,7 +156,7 @@ module.exports = {
         if (i.customId === `profile_achievements_${user.id}`) {
           await i.update({ embeds: [buildAchievementsEmbed()], components: [achievementsRow] });
         } else if (i.customId === `profile_back_${user.id}`) {
-          await i.update({ embeds: [buildProfileEmbed()], components: [profileRow] });
+          await i.update({ embeds: [await buildProfileEmbed()], components: [profileRow] });
         }
       } catch (err) {
         if (err?.code !== 10062) console.error('[Profile] Button error:', err.message);
