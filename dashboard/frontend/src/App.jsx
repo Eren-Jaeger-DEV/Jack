@@ -7,6 +7,10 @@ import ServerOverview from './pages/ServerOverview'
 import Plugins from './pages/Plugins'
 import PluginSettings from './pages/PluginSettings'
 import LevelingSettings from './pages/LevelingSettings'
+import ClanManagement from './pages/ClanManagement'
+import Players from './pages/Players'
+import AdminLogs from './pages/AdminLogs'
+import DeletedPlayers from './pages/DeletedPlayers'
 import Sidebar from './components/Sidebar'
 import './index.css'
 
@@ -56,6 +60,10 @@ function App() {
               <Route path="/server/:id/plugins" element={user ? <Plugins /> : <Navigate to="/login" />} />
               <Route path="/server/:id/plugins/leveling" element={user ? <LevelingSettings /> : <Navigate to="/login" />} />
               <Route path="/server/:id/plugins/:pluginName" element={user ? <PluginSettings /> : <Navigate to="/login" />} />
+              <Route path="/server/:id/clan" element={user ? <ClanManagement /> : <Navigate to="/login" />} />
+              <Route path="/server/:id/players" element={user ? <Players user={user} /> : <Navigate to="/login" />} />
+              <Route path="/server/:id/logs" element={user ? <AdminLogs user={user} /> : <Navigate to="/login" />} />
+              <Route path="/server/:id/trash" element={user ? <DeletedPlayers user={user} /> : <Navigate to="/login" />} />
             </Routes>
           </main>
         </div>

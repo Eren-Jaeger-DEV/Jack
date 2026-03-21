@@ -9,6 +9,17 @@ const playerSchema = new mongoose.Schema({
     index: true
   },
 
+  role: {
+    type: String,
+    enum: ["owner", "manager", "admin", "contributor", "none"],
+    default: "none"
+  },
+
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+
   isClanMember: {
     type: Boolean,
     default: false
@@ -20,6 +31,8 @@ const playerSchema = new mongoose.Schema({
   },
 
   discordName: String,
+  username: String,
+  avatar: String,
 
   ign: String,
   uid: String,

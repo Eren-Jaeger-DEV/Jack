@@ -14,10 +14,13 @@ module.exports = {
 
       // Trigger tracking only if the role state shifted
       if (!hadRole && hasRole) {
-        // Automatically upsert and activate clan status
         await Player.findOneAndUpdate(
           { discordId: newMember.id },
-          { isClanMember: true },
+          { 
+            isClanMember: true,
+            username: newMember.user.username,
+            avatar: newMember.user.avatar
+          },
           { upsert: true, setDefaultsOnInsert: true }
         ).catch(() => null);
 
@@ -25,7 +28,11 @@ module.exports = {
         // User lost the role
         await Player.findOneAndUpdate(
           { discordId: newMember.id },
-          { isClanMember: false }
+          { 
+            isClanMember: false,
+            username: newMember.user.username,
+            avatar: newMember.user.avatar
+          }
         ).catch(() => null);
       }
     } catch (err) {

@@ -103,7 +103,7 @@ app.get("/api/auth/callback",
 
 /* USER API */
 
-app.get("/api/user", (req, res) => {
+app.get("/api/user", async (req, res) => {
   res.header("Cache-Control", "private, no-cache, no-store, must-revalidate");
   res.header("Expires", "-1");
   res.header("Pragma", "no-cache");
@@ -112,7 +112,73 @@ app.get("/api/user", (req, res) => {
     return res.status(401).json({ error: "Not logged in" });
   }
 
-  res.json(req.user);
+  try {
+    const Player = require("../../bot/database/models/Player");
+    const discordId = req.user.discordId || req.user.id;
+    const OWNER_ID = process.env.OWNER_ID || "771611262022844427";
+    const GUILD_ID = process.env.GUILD_ID || "1407954932623347783";
+
+    console.log("[RBAC Sync] User:", req.user.username, "(", discordId, ")");
+
+    let highestRole = "none";
+
+    // 1. Role Sync from Discord Guild
+    if (discordId === OWNER_ID) {
+      highestRole = "owner";
+    } else if (bot.isReady()) {
+      const guild = bot.guilds.cache.get(GUILD_ID);
+      if (guild) {
+        try {
+          const member = await guild.members.fetch(discordId);
+          if (member) {
+            const r = member.roles.cache;
+            if (r.has("1407978936276746251")) highestRole = "owner";
+            else if (r.has("1477874246972604588")) highestRole = "manager";
+            else if (r.has("1477874711886303263")) highestRole = "admin";
+            else if (r.has("1477874451277287454")) highestRole = "contributor";
+          }
+        } catch (e) {
+          console.warn(`[RBAC Sync] member.fetch fail for ${discordId}`);
+        }
+      }
+    }
+
+    // 2. Database Sync
+    let player = await Player.findOne({ discordId: discordId });
+
+    if (!player) {
+      console.log("[RBAC Sync] New user discovered, creating record with role:", highestRole);
+      player = await Player.create({
+        discordId: discordId,
+        username: req.user.username,
+        avatar: req.user.avatar,
+        role: highestRole
+      });
+    } else {
+      // Update role and identity
+      const updates = { 
+        username: req.user.username, 
+        avatar: req.user.avatar 
+      };
+      
+      // Only upgrade role if discord has a valid high role, or sync it
+      if (highestRole !== "none") {
+        updates.role = highestRole;
+      }
+
+      await Player.updateOne({ discordId: discordId }, updates);
+      player.role = updates.role || player.role;
+    }
+
+    res.json({
+      ...req.user,
+      role: player.role,
+      roleLevel: (require("./middleware/auth").ROLE_LEVELS)[player.role] || 0
+    });
+  } catch (err) {
+    console.error("[RBAC Sync Error]:", err);
+    res.json(req.user);
+  }
 });
 
 /* SERVER INFO API */
@@ -426,6 +492,21 @@ app.post("/api/guilds/:guildId/plugin/:pluginName", express.json(), verifyGuildP
 
 const clanRoute = require("./routes/clan");
 app.use("/api/clan", clanRoute);
+
+/* PLAYER MANAGEMENT ENDPOINTS */
+
+const playersRoute = require("./routes/players");
+app.use("/api", playersRoute);
+
+/* ACTIVITY LOGS ENDPOINT */
+
+const logsRoute = require("./routes/logs");
+app.use("/api", logsRoute);
+
+/* SYSTEM INSIGHTS ENDPOINT */
+
+const insightsRoute = require("./routes/insights");
+app.use("/api", insightsRoute);
 
 /* START SERVER */
 

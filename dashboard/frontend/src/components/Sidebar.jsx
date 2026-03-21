@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
-import { LayoutDashboard, Zap, Shield, TrendingUp, Settings } from 'lucide-react';
+import { LayoutDashboard, Zap, Shield, TrendingUp, Settings, Users, User, Activity, Trash2 } from 'lucide-react';
 
 const Sidebar = () => {
   const { id } = useParams();
@@ -10,6 +10,10 @@ const Sidebar = () => {
     { name: 'Plugins', path: `/server/${id}/plugins`, icon: <Zap size={20} /> },
     { name: 'Moderation', path: `/server/${id}/moderation`, icon: <Shield size={20} />, disabled: true },
     { name: 'Leveling', path: `/server/${id}/plugins/leveling`, icon: <TrendingUp size={20} /> },
+    { name: 'Clan', path: `/server/${id}/clan`, icon: <Users size={20} /> },
+    { name: 'Players', path: `/server/${id}/players`, icon: <User size={20} /> },
+    { name: 'Logs', path: `/server/${id}/logs`, icon: <Activity size={20} /> },
+    { name: 'Trash', path: `/server/${id}/trash`, icon: <Trash2 size={20} /> },
     { name: 'Settings', path: `/server/${id}/settings`, icon: <Settings size={20} />, disabled: true },
   ];
 

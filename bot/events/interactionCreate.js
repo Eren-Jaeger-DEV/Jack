@@ -8,6 +8,7 @@ const reactionRoleButtons = require("../interactions/reactionRoleButtons");
 const emojiBrowserButtons = require("../interactions/emojiBrowserButtons");
 const guideMenuHandler = require("../interactions/guideMenuHandler");
 const CommandUsage = require("../database/models/CommandUsage");
+const Player = require("../database/models/Player");
 
 /* Server Overview button embeds */
 const overview = require("../systems/panels/serverOverview");
@@ -21,6 +22,18 @@ module.exports = {
   async execute(interaction, client) {
 
     /* ---------- SLASH COMMANDS ---------- */
+
+    // Sync user data on any interaction
+    if (interaction.user && !interaction.user.bot) {
+      Player.findOneAndUpdate(
+        { discordId: interaction.user.id },
+        { 
+          username: interaction.user.username,
+          avatar: interaction.user.avatar
+        },
+        { upsert: false } // Only update if they already exist
+      ).catch(() => null);
+    }
 
     if (interaction.isChatInputCommand()) {
 

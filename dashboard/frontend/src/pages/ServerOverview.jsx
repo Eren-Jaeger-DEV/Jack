@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../api/client'
 import { Users, Zap, Terminal, Activity, TrendingUp, Star } from 'lucide-react'
+import SystemInsights from '../components/SystemInsights'
 
 const ServerOverview = () => {
   const { id } = useParams();
@@ -50,6 +51,9 @@ const ServerOverview = () => {
           </div>
         </div>
       )}
+
+      <h2 className="section-title">System Insights</h2>
+      <SystemInsights />
 
       <h2 className="section-title">Today's Analytics</h2>
       {analytics && (
