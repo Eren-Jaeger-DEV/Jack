@@ -422,6 +422,11 @@ app.post("/api/guilds/:guildId/plugin/:pluginName", express.json(), verifyGuildP
   }
 });
 
+/* CLAN ANALYTICS ENDPOINT */
+
+const clanRoute = require("./routes/clan");
+app.use("/api/clan", clanRoute);
+
 /* START SERVER */
 
 app.listen(3000, () => {

@@ -8,6 +8,16 @@ const playerSchema = new mongoose.Schema({
     unique: true
   },
 
+  isClanMember: {
+    type: Boolean,
+    default: false
+  },
+
+  registered: {
+    type: Boolean,
+    default: false
+  },
+
   discordName: String,
 
   ign: String,
