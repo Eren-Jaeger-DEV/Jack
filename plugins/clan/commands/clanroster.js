@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { resolveDisplayName } = require("../../../bot/utils/nameResolver");
+const Player = require("../../../bot/database/models/Player");
 
 module.exports = {
 
