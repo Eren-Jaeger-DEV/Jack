@@ -4,9 +4,25 @@ const playerSchema = new mongoose.Schema({
 
   discordId: {
     type: String,
-    required: true,
+    sparse: true,
     unique: true,
-    index: true
+    default: null
+  },
+
+  status: {
+    type: String,
+    enum: ["linked", "unlinked"],
+    default: "linked"
+  },
+
+  createdBy: {
+    type: String,
+    default: null
+  },
+
+  isManual: {
+    type: Boolean,
+    default: false
   },
 
   role: {

@@ -70,7 +70,7 @@ module.exports = {
       // Refresh leaderboard
       const battle = await battleService.getActiveBattle(ctx.guild.id);
       if (battle && ctx.channel.id === CLAN_BATTLE_CHANNEL_ID) {
-        await battleService.refreshLeaderboard(ctx.channel, battle);
+        await battleService.refreshLeaderboard(ctx.client, battle);
       }
 
     } catch (err) {

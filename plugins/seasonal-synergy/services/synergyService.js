@@ -12,12 +12,12 @@ const { generateLeaderboardImage } = require('../../../utils/leaderboardCanvas')
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 /* ── Constants ── */
-const SYNERGY_CHANNEL_ID    = '1477984930909786134';
-const CLAN_ROLE_ID          = '1477856665817714699';
-const WEEKLY_MVP_ROLE_ID    = '1479876704901009508';
+const SYNERGY_CHANNEL_ID = '1477984930909786134';
+const CLAN_ROLE_ID = '1477856665817714699';
+const WEEKLY_MVP_ROLE_ID = '1479876704901009508';
 const SEASON_WINNER_ROLE_ID = '1477872708925788201';
-const MAX_WEEKLY_ENERGY     = 1000;
-const PLAYERS_PER_PAGE      = 15;
+const MAX_WEEKLY_ENERGY = 15000;
+const PLAYERS_PER_PAGE = 15;
 
 /* ═══════════════════════════════════════════
  *  SEASON LIFECYCLE
@@ -180,7 +180,7 @@ async function getLeaderboardPage(guild, page = 0) {
 
   for (let i = 0; i < slice.length; i++) {
     const p = slice[i];
-    
+
     const displayName = await resolveDisplayName(guild, p.discordId, p.ign);
     const name = displayName;
 
@@ -191,7 +191,7 @@ async function getLeaderboardPage(guild, page = 0) {
         if (member) {
           avatarURL = member.user.displayAvatarURL({ extension: 'png', size: 128 });
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     playersArray.push({
@@ -242,7 +242,7 @@ async function refreshLeaderboard(client, season, page = 0) {
 
     // Delete old message
     await deleteOldLeaderboardMessage(client, season);
-    
+
     // Fetch guild for display names
     const guild = await client.guilds.fetch(season.guildId).catch(() => null);
 
@@ -287,7 +287,7 @@ async function deleteOldLeaderboardMessage(client, season) {
 
     const oldMsg = await channel.messages.fetch(season.leaderboardMessageId).catch(() => null);
     if (oldMsg) {
-      await oldMsg.delete().catch(() => {});
+      await oldMsg.delete().catch(() => { });
     } else {
       // Message was manually deleted — clear stored ID
       season.leaderboardMessageId = null;
@@ -296,7 +296,7 @@ async function deleteOldLeaderboardMessage(client, season) {
   } catch (err) {
     // Message gone — clear stored ID
     season.leaderboardMessageId = null;
-    await season.save().catch(() => {});
+    await season.save().catch(() => { });
   }
 }
 
@@ -314,8 +314,8 @@ async function buildFinalResults(guild) {
     const p = top3[i];
     const displayName = await resolveDisplayName(guild, p.discordId, p.ign);
     results += padRight(String(i + 1), 4) +
-               padRight(truncate(displayName.toUpperCase(), 18), 20) +
-               String(p.seasonSynergy || 0) + '\n';
+      padRight(truncate(displayName.toUpperCase(), 18), 20) +
+      String(p.seasonSynergy || 0) + '\n';
   }
 
   results += '```';

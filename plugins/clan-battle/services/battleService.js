@@ -6,7 +6,9 @@
  */
 
 const Battle = require('../models/Battle');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const Player = require('../../../bot/database/models/Player');
+const { generateContributionImage } = require('../utils/contributionCanvas');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 const PLAYERS_PER_PAGE       = 10;
@@ -90,8 +92,27 @@ async function editTodayPoints(guildId, userId, newPoints) {
   const battle = await getActiveBattle(guildId);
   if (!battle) return { success: false, error: 'No active clan battle.' };
 
-  const player = battle.players.find(p => p.userId === userId);
-  if (!player) return { success: false, error: 'Player not found in this battle.' };
+  let player = battle.players.find(p => p.userId === userId);
+
+  // If player not in battle, try finding them in the global Player DB
+  if (!player) {
+    const globalPlayer = await Player.findOne({ discordId: userId });
+    if (!globalPlayer || !globalPlayer.ign) {
+      return { success: false, error: 'Player not found in this battle or the registration database.' };
+    }
+
+    // Add them to the battle list
+    player = {
+      userId,
+      ign: globalPlayer.ign,
+      todayPoints: 0,
+      totalPoints: 0,
+      lastSubmittedDate: ''
+    };
+    battle.players.push(player);
+    // Find the reference in the array to modify it below
+    player = battle.players[battle.players.length - 1];
+  }
 
   const diff = newPoints - player.todayPoints;
   player.todayPoints = newPoints;
@@ -108,8 +129,27 @@ async function editTotalPoints(guildId, userId, newTotal) {
   const battle = await getActiveBattle(guildId);
   if (!battle) return { success: false, error: 'No active clan battle.' };
 
-  const player = battle.players.find(p => p.userId === userId);
-  if (!player) return { success: false, error: 'Player not found in this battle.' };
+  let player = battle.players.find(p => p.userId === userId);
+
+  // If player not in battle, try finding them in the global Player DB
+  if (!player) {
+    const globalPlayer = await Player.findOne({ discordId: userId });
+    if (!globalPlayer || !globalPlayer.ign) {
+      return { success: false, error: 'Player not found in this battle or the registration database.' };
+    }
+
+    // Add them to the battle list
+    player = {
+      userId,
+      ign: globalPlayer.ign,
+      todayPoints: 0,
+      totalPoints: 0,
+      lastSubmittedDate: ''
+    };
+    battle.players.push(player);
+    // Find the reference in the array to modify it below
+    player = battle.players[battle.players.length - 1];
+  }
 
   player.totalPoints = newTotal;
   await battle.save();
@@ -135,47 +175,6 @@ async function resetDailyPoints(guildId) {
  *  LEADERBOARD
  * ═══════════════════════════════════════════ */
 
-/**
- * Build a leaderboard string for a specific page.
- */
-async function getLeaderboardPage(guild, battle, page = 0) {
-  const sorted = [...battle.players].sort((a, b) => b.totalPoints - a.totalPoints);
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PLAYERS_PER_PAGE));
-  const safePage = Math.max(0, Math.min(page, totalPages - 1));
-
-  const start = safePage * PLAYERS_PER_PAGE;
-  const slice = sorted.slice(start, start + PLAYERS_PER_PAGE);
-
-  let board = '```md\n';
-  board += padRight('Member', 20) + padRight('Today', 8) + 'Total\n';
-  board += '─'.repeat(35) + '\n';
-
-  if (slice.length === 0) {
-    board += 'No players registered yet.\n';
-  } else {
-    for (let i = 0; i < slice.length; i++) {
-      const rank = start + i + 1;
-      const p = slice[i];
-      
-      const displayName = await resolveDisplayName(guild, p.userId, p.ign);
-      // Format: "1 PlayerA" in the 20-char column
-      const memberStr = `${rank} ${truncate(displayName, 16)}`;
-      board += padRight(memberStr, 20) +
-               padRight(String(p.todayPoints), 8) +
-               String(p.totalPoints) + '\n';
-    }
-  }
-
-  board += '```';
-
-  const embed = new EmbedBuilder()
-    .setTitle('🏆 Contribution Point Rankings')
-    .setDescription(board)
-    .setFooter({ text: `Page ${safePage + 1} / ${totalPages}` })
-    .setColor('#FFD700');
-
-  return { embed, page: safePage, totalPages };
-}
 
 /**
  * Build pagination buttons.
@@ -200,26 +199,72 @@ function buildButtons(page, totalPages) {
  * Delete old leaderboard message and send a new one.
  * Returns the new message ID.
  */
-async function refreshLeaderboard(client, battle, page = 0) {
+async function refreshLeaderboard(client, battle, page = 0, interaction = null) {
   try {
     const channel = await client.channels.fetch(CLAN_BATTLE_CHANNEL_ID).catch(() => null);
-    if (!channel) return null;
+    if (!channel) {
+      console.log(`[ClanBattle] Channel not found: ${CLAN_BATTLE_CHANNEL_ID}`);
+      return null;
+    }
 
-    // 1. Delete old message
-    await deleteOldLeaderboardMessage(client, battle);
-
-    // Fetch guild for display names
     const guild = await client.guilds.fetch(battle.guildId).catch(() => null);
+    if (!guild) {
+      console.log(`[ClanBattle] Guild not found: ${battle.guildId}`);
+      return null;
+    }
 
-    // 2. Build & send new one
-    const lb = await getLeaderboardPage(guild, battle, page);
-    const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
+    // 1. Prepare data (10 per page)
+    const sorted = [...battle.players].sort((a, b) => b.totalPoints - a.totalPoints);
+    const totalPages = Math.max(1, Math.ceil(sorted.length / 10));
+    const safePage = Math.max(0, Math.min(page, totalPages - 1));
+    const start = safePage * 10;
+    const slice = sorted.slice(start, start + 10);
 
-    const msg = await channel.send({ embeds: [lb.embed], components });
+    const canvasPlayers = await Promise.all(slice.map(async (p) => {
+      const user = await client.users.fetch(p.userId).catch(() => null);
+      const displayName = await resolveDisplayName(guild, p.userId, p.ign);
+      
+      return {
+        name: displayName,
+        today: p.todayPoints,
+        total: p.totalPoints,
+        avatarURL: user ? user.displayAvatarURL({ extension: 'png', size: 128 }) : 'https://cdn.discordapp.com/embed/avatars/0.png'
+      };
+    }));
 
-    // 3. Save new message ID
-    battle.leaderboardMessageId = msg.id;
-    await battle.save();
+    // 2. Generate Canvas Image
+    const buffer = await generateContributionImage(canvasPlayers, safePage);
+    const attachment = new AttachmentBuilder(buffer, { name: 'contribution-leaderboard.png' });
+
+    // 3. Components
+    const components = totalPages > 1 ? [buildButtons(safePage, totalPages)] : [];
+
+    // 4. Update or Send
+    let msg;
+    if (interaction && (interaction.isButton() || interaction.isStringSelectMenu())) {
+      // Use editReply() because deferUpdate() was called to prevent timeouts
+      await interaction.editReply({
+        content: '',
+        embeds: [],
+        files: [attachment],
+        components
+      }).catch(err => {
+        console.error('[ClanBattle] editReply error:', err.message);
+        throw err; // Re-throw to be caught by the outer try-catch
+      });
+    } else {
+      // Standard refresh: Delete old and send new
+      await deleteOldLeaderboardMessage(client, battle);
+      
+      msg = await channel.send({
+        files: [attachment],
+        components
+      });
+
+      // Save new message ID
+      battle.leaderboardMessageId = msg.id;
+      await battle.save();
+    }
 
     return msg;
   } catch (err) {
@@ -292,7 +337,6 @@ module.exports = {
   editTodayPoints,
   editTotalPoints,
   resetDailyPoints,
-  getLeaderboardPage,
   buildButtons,
   refreshLeaderboard,
   deleteOldLeaderboardMessage,

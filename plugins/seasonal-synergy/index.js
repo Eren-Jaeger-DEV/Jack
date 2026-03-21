@@ -163,7 +163,11 @@ module.exports = {
           files.push(attachment);
         }
 
-        await interaction.editReply({ embeds, components, files });
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply({ embeds, components, files });
+        } else {
+          await interaction.update({ embeds, components, files });
+        }
 
       } catch (err) {
         if (err?.code === 10062) return; // Unknown interaction

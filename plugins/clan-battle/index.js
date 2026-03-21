@@ -74,9 +74,11 @@ module.exports = {
           return interaction.reply({ content: '❌ No active battle.', ephemeral: true });
         }
 
-        // Delete old and send new in battle channel
-        await interaction.deferUpdate().catch(() => {});
-        await battleService.refreshLeaderboard(client, battle, newPage);
+        // Acknowledge the interaction immediately to prevent timeouts
+        await interaction.deferUpdate().catch(err => {
+          console.error('[ClanBattle] deferUpdate error:', err.message);
+        });
+        await battleService.refreshLeaderboard(client, battle, newPage, interaction);
 
       } catch (err) {
         if (err?.code === 10062) return; // Unknown interaction
