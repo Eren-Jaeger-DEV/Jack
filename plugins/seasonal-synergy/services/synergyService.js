@@ -7,7 +7,8 @@
 
 const Season = require('../models/Season');
 const Player = require('../../../bot/database/models/Player');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { generateLeaderboardImage } = require('../../../utils/leaderboardCanvas');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 /* ── Constants ── */
@@ -16,7 +17,7 @@ const CLAN_ROLE_ID          = '1477856665817714699';
 const WEEKLY_MVP_ROLE_ID    = '1479876704901009508';
 const SEASON_WINNER_ROLE_ID = '1477872708925788201';
 const MAX_WEEKLY_ENERGY     = 1000;
-const PLAYERS_PER_PAGE      = 10;
+const PLAYERS_PER_PAGE      = 15;
 
 /* ═══════════════════════════════════════════
  *  SEASON LIFECYCLE
@@ -175,38 +176,55 @@ async function getLeaderboardPage(guild, page = 0) {
   const start = safePage * PLAYERS_PER_PAGE;
   const slice = allPlayers.slice(start, start + PLAYERS_PER_PAGE);
 
-  let description = '';
+  let description = `Page: **${safePage + 1} / ${totalPages}**
 
-  if (slice.length === 0) {
-    description = 'No players registered yet.';
-  } else {
-    for (let i = 0; i < slice.length; i++) {
-      const rank = start + i + 1;
-      const p = slice[i];
-      
-      const displayName = await resolveDisplayName(guild, p.discordId, p.ign);
-      const name = displayName;
+⚡ **Weekly Energy:**
+Earned through activity and events
 
-      if (rank <= 3) {
-        const emoji = rank === 1 ? '🏆 ' : rank === 2 ? '🥈 ' : '🥉 ';
-        description += `${emoji}#${rank} **${name}**\n⚡ Weekly: ${p.weeklySynergy || 0}\n🔥 Season: ${p.seasonSynergy || 0}\n\n`;
+🔥 **Season Energy:**
+Accumulates over the season
 
-        if (rank === 3 && slice.length > 3) {
-          description += '━━━━━━━━━━━━━━\n\n';
+**Commands:**
+\`/clan\`
+\`/synergy\`
+\`/events\``;
+
+  const playersArray = [];
+
+  for (let i = 0; i < slice.length; i++) {
+    const p = slice[i];
+    
+    const displayName = await resolveDisplayName(guild, p.discordId, p.ign);
+    const name = displayName;
+
+    let avatarURL = 'https://cdn.discordapp.com/embed/avatars/0.png';
+    if (guild) {
+      try {
+        const member = await guild.members.fetch(p.discordId).catch(() => null);
+        if (member) {
+          avatarURL = member.user.displayAvatarURL({ extension: 'png', size: 128 });
         }
-      } else {
-        description += `${rank}. **${name}**\n⚡ Weekly: ${p.weeklySynergy || 0}\n🔥 Season: ${p.seasonSynergy || 0}\n\n`;
-      }
+      } catch (e) {}
     }
+
+    playersArray.push({
+      name,
+      weekly: p.weeklySynergy || 0,
+      season: p.seasonSynergy || 0,
+      avatarURL
+    });
+  }
+
+  if (playersArray.length === 0) {
+    description = 'No players registered yet.';
   }
 
   const embed = new EmbedBuilder()
     .setTitle('🔥 SEASON RANKINGS')
-    .setDescription(description.trim())
-    .setFooter({ text: `Page ${safePage + 1} • Showing ${slice.length} players` })
+    .setDescription(description)
     .setColor('#FF4500');
 
-  return { embed, page: safePage, totalPages };
+  return { embed, page: safePage, totalPages, playersArray };
 }
 
 /**
@@ -246,7 +264,14 @@ async function refreshLeaderboard(client, season, page = 0) {
     const lb = await getLeaderboardPage(guild, page);
     const components = lb.totalPages > 1 ? [buildButtons(lb.page, lb.totalPages)] : [];
 
-    const msg = await channel.send({ embeds: [lb.embed], components });
+    const files = [];
+    if (lb.playersArray && lb.playersArray.length > 0) {
+      const buffer = await generateLeaderboardImage(lb.playersArray, lb.page);
+      const attachment = new AttachmentBuilder(buffer, { name: 'leaderboard.png' });
+      files.push(attachment);
+    }
+
+    const msg = await channel.send({ embeds: [lb.embed], components, files });
 
     // Save new message ID
     season.leaderboardMessageId = msg.id;
