@@ -79,7 +79,7 @@ module.exports = async function modalHandler(interaction) {
       });
 
       return interaction.reply({
-        content: `✅ Unlinked profile for **${ign}** created successfully. Use \`/profiletransfer\` to link it later.`,
+        content: `✅ Unlinked profile for **${ign}** created successfully.\n\nUpload the **BGMI Basic Info** screenshot for them now.`,
         flags: 64
       });
     }
