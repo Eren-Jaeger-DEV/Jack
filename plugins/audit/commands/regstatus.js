@@ -67,28 +67,6 @@ module.exports = {
       const pages = [];
       const statsBlock = `**Total:** ${totalMembers}\n**Registered:** ${registeredCount}\n**Unregistered:** ${notRegisteredCount}\n**Completion:** ${completionPercentage}%`;
 
-      // ── BUILD REGISTERED PAGES ──
-      if (regChunks.length === 0) {
-        pages.push(
-          new EmbedBuilder()
-            .setTitle("📋 Audit: Registered Members")
-            .setColor("Green")
-            .setDescription("No members are currently registered.")
-            .addFields({ name: "📊 Statistics", value: statsBlock })
-        );
-      } else {
-        regChunks.forEach((chunk, idx) => {
-          const list = chunk.map(m => `<@${m.id}>`).join('\n') || "None";
-          pages.push(
-             new EmbedBuilder()
-              .setTitle(`📋 Audit: Registered Members ${regChunks.length > 1 ? `(Page ${idx + 1}/${regChunks.length})` : ''}`)
-              .setColor("Green")
-              .setDescription(list)
-              .addFields({ name: "📊 Statistics", value: statsBlock })
-          );
-        });
-      }
-
       // ── BUILD UNREGISTERED PAGES ──
       if (unregChunks.length === 0) {
         pages.push(
@@ -105,6 +83,28 @@ module.exports = {
             new EmbedBuilder()
               .setTitle(`📋 Audit: Unregistered Members ${unregChunks.length > 1 ? `(Page ${idx + 1}/${unregChunks.length})` : ''}`)
               .setColor("Red")
+              .setDescription(list)
+              .addFields({ name: "📊 Statistics", value: statsBlock })
+          );
+        });
+      }
+
+      // ── BUILD REGISTERED PAGES ──
+      if (regChunks.length === 0) {
+        pages.push(
+          new EmbedBuilder()
+            .setTitle("📋 Audit: Registered Members")
+            .setColor("Green")
+            .setDescription("No members are currently registered.")
+            .addFields({ name: "📊 Statistics", value: statsBlock })
+        );
+      } else {
+        regChunks.forEach((chunk, idx) => {
+          const list = chunk.map(m => `<@${m.id}>`).join('\n') || "None";
+          pages.push(
+             new EmbedBuilder()
+              .setTitle(`📋 Audit: Registered Members ${regChunks.length > 1 ? `(Page ${idx + 1}/${regChunks.length})` : ''}`)
+              .setColor("Green")
               .setDescription(list)
               .addFields({ name: "📊 Statistics", value: statsBlock })
           );
