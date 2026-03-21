@@ -20,7 +20,7 @@ router.get("/stats", async (req, res) => {
     // Safety check div-by-zero
     let percentage = 0;
     if (total > 0) {
-      percentage = parseFloat(((registered / total) * 100).toFixed(1));
+      percentage = parseFloat(((registered / total) * 100).toFixed(2));
     }
 
     // 3. Return secure identical JSON structure
@@ -34,6 +34,22 @@ router.get("/stats", async (req, res) => {
   } catch (error) {
     console.error("[Clan Analytics API Error]:", error);
     res.status(500).json({ error: "Internal server error fetching clan statistics." });
+  }
+});
+
+router.get("/unregistered", async (req, res) => {
+  try {
+    const unregisteredMembers = await Player.find({ isClanMember: true, registered: false })
+      .select("discordId -_id")
+      .lean();
+
+    res.json({
+      total: unregisteredMembers.length,
+      members: unregisteredMembers
+    });
+  } catch (error) {
+    console.error("[Clan Unregistered API Error]:", error);
+    res.status(500).json({ error: "Internal server error fetching unregistered members." });
   }
 });
 

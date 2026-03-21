@@ -5,7 +5,8 @@ const playerSchema = new mongoose.Schema({
   discordId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
 
   isClanMember: {
