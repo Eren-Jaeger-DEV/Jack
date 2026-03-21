@@ -66,12 +66,15 @@ module.exports = {
 
         console.log(`[SeasonalSynergy] ⚡ New season started in guild ${message.guild.id} by ${message.author.tag}`);
 
-        // Send registration reminder
+        // Send Season Announcement
         await message.channel.send(
-          '📢 **New Season has started!**\n\n' +
-          'Please register yourself using `/register` in <#1479697157840830524>\n' +
-          'You must be a clan member to participate.\n' +
-          'Otherwise your stats will not appear.'
+          '📢 **New Season Started!**\n\n' +
+          '**Weekly Energy:**\n' +
+          'Earn energy by playing classic matches\n' +
+          'Can also be filled using `/we` command only on Saturday and Sunday\n\n' +
+          '**Season Energy:**\n' +
+          'Shows total energy earned across the entire season\n' +
+          'Rankings are based on this value'
         );
 
         // Send initial leaderboard

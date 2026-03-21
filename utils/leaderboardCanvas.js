@@ -77,6 +77,7 @@ async function generateLeaderboardImage(players, page = 0) {
     const player = players[i];
     const globalRank = startRank + i + 1;
     const isTop3 = globalRank <= 3;
+    const isTop5 = globalRank <= 5;
     const itemHeight = isTop3 ? 85 : 55;
 
     let rowColor = 'rgba(255, 255, 255, 0.04)';
@@ -96,6 +97,9 @@ async function generateLeaderboardImage(players, page = 0) {
       rowColor = 'rgba(205, 127, 50, 0.1)';
       medalColor = '#cd7f32'; // Bronze
       borderColor = 'rgba(205, 127, 50, 0.6)';
+    } else if (globalRank === 4 || globalRank === 5) {
+      rowColor = 'rgba(255, 255, 255, 0.08)'; // Subtle highlight
+      borderColor = 'rgba(255, 255, 255, 0.25)'; // Subtle border
     }
 
     // Shadow
@@ -113,8 +117,8 @@ async function generateLeaderboardImage(players, page = 0) {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    // Optional border for top 3
-    if (isTop3) {
+    // Optional border for top 5
+    if (isTop5) {
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = 1.5;
       ctx.stroke();

@@ -131,16 +131,39 @@ module.exports = {
 
         if (isNaN(currentPage)) return;
 
-        const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
+        // Defer update to handle possible image loading latency
+        await interaction.deferUpdate().catch(() => {});
+
+        let newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
 
         const season = await synergyService.getActiveSeason(interaction.guild.id);
         if (!season) {
           return interaction.reply({ content: '❌ No active season.', ephemeral: true });
         }
 
-        // Delete old, send new in synergy channel
-        await interaction.deferUpdate().catch(() => {});
-        await synergyService.refreshLeaderboard(client, season, newPage);
+        // Generate inline payload
+        const guild = await client.guilds.fetch(season.guildId).catch(() => null);
+        const lb = await synergyService.getLeaderboardPage(guild, newPage);
+
+        // Respect bounds manually
+        if (newPage < 0) newPage = 0;
+        if (newPage >= lb.totalPages) newPage = lb.totalPages - 1;
+
+        const components = lb.totalPages > 1 ? [synergyService.buildButtons(lb.page, lb.totalPages)] : [];
+
+        const files = [];
+        let embeds = [];
+        if (lb.embed) embeds.push(lb.embed);
+
+        if (lb.playersArray && lb.playersArray.length > 0) {
+          const { AttachmentBuilder } = require('discord.js');
+          const { generateLeaderboardImage } = require('../../utils/leaderboardCanvas');
+          const buffer = await generateLeaderboardImage(lb.playersArray, lb.page);
+          const attachment = new AttachmentBuilder(buffer, { name: 'leaderboard.png' });
+          files.push(attachment);
+        }
+
+        await interaction.editReply({ embeds, components, files });
 
       } catch (err) {
         if (err?.code === 10062) return; // Unknown interaction

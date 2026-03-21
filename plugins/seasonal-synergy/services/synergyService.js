@@ -176,19 +176,6 @@ async function getLeaderboardPage(guild, page = 0) {
   const start = safePage * PLAYERS_PER_PAGE;
   const slice = allPlayers.slice(start, start + PLAYERS_PER_PAGE);
 
-  let description = `Page: **${safePage + 1} / ${totalPages}**
-
-⚡ **Weekly Energy:**
-Earned through activity and events
-
-🔥 **Season Energy:**
-Accumulates over the season
-
-**Commands:**
-\`/clan\`
-\`/synergy\`
-\`/events\``;
-
   const playersArray = [];
 
   for (let i = 0; i < slice.length; i++) {
@@ -215,14 +202,13 @@ Accumulates over the season
     });
   }
 
+  let embed = null;
   if (playersArray.length === 0) {
-    description = 'No players registered yet.';
+    embed = new EmbedBuilder()
+      .setTitle('🔥 SEASON RANKINGS')
+      .setDescription('No players registered yet.')
+      .setColor('#FF4500');
   }
-
-  const embed = new EmbedBuilder()
-    .setTitle('🔥 SEASON RANKINGS')
-    .setDescription(description)
-    .setColor('#FF4500');
 
   return { embed, page: safePage, totalPages, playersArray };
 }
@@ -271,7 +257,12 @@ async function refreshLeaderboard(client, season, page = 0) {
       files.push(attachment);
     }
 
-    const msg = await channel.send({ embeds: [lb.embed], components, files });
+    const payload = { components, files };
+    if (lb.embed) {
+      payload.embeds = [lb.embed];
+    }
+
+    const msg = await channel.send(payload);
 
     // Save new message ID
     season.leaderboardMessageId = msg.id;
