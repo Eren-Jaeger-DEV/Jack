@@ -323,6 +323,27 @@ function truncate(str, max) {
   return str.length > max ? str.substring(0, max - 1) + '…' : str;
 }
 
+/**
+ * Get a player's current synergy and rank.
+ */
+async function getPlayerSynergy(userId) {
+  const player = await Player.findOne({ discordId: userId });
+  if (!player) return null;
+
+  const seasonList = await Player.find({ seasonSynergy: { $gt: 0 } }).sort({ seasonSynergy: -1 });
+  const seasonRank = seasonList.findIndex(p => p.discordId === userId) + 1;
+
+  const weeklyList = await Player.find({ weeklySynergy: { $gt: 0 } }).sort({ weeklySynergy: -1 });
+  const weeklyRank = weeklyList.findIndex(p => p.discordId === userId) + 1;
+
+  return {
+    seasonSynergy: player.seasonSynergy || 0,
+    weeklySynergy: player.weeklySynergy || 0,
+    seasonRank: seasonRank > 0 ? seasonRank : 0,
+    weeklyRank: weeklyRank > 0 ? weeklyRank : 0
+  };
+}
+
 /* ═══════════════════════════════════════════
  *  EXPORTS
  * ═══════════════════════════════════════════ */
@@ -336,6 +357,7 @@ module.exports = {
   resetWeeklyEnergy,
   resetAllEnergy,
   getTopPlayers,
+  getPlayerSynergy,
   getLeaderboardPage,
   buildButtons,
   refreshLeaderboard,

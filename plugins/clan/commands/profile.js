@@ -1,5 +1,6 @@
 const Player = require("../../../bot/database/models/Player");
 const profileService = require("../services/profileService");
+const synergyService = require("../../seasonal-synergy/services/synergyService");
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
 const { resolveDisplayName } = require("../../../bot/utils/nameResolver");
 
@@ -39,19 +40,14 @@ module.exports = {
 
     const displayName = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
 
-    /* SEASON RANK */
+    /* GET SYNERGY DATA VIA SERVICE */
 
-    const seasonList = await Player.find().sort({ seasonSynergy: -1 });
-    const seasonRank = seasonList.findIndex(p => p.discordId === user.id) + 1;
-
-    /* WEEKLY RANK */
-
-    const weeklyList = await Player.find().sort({ weeklySynergy: -1 });
-    const weeklyRank = weeklyList.findIndex(p => p.discordId === user.id) + 1;
+    const synergyData = await synergyService.getPlayerSynergy(user.id);
 
     /* MEDAL SYSTEM */
 
     const rankDisplay = (rank) => {
+      if (!rank || rank <= 0) return "Unranked";
       if (rank === 1) return "🥇 #1";
       if (rank === 2) return "🥈 #2";
       if (rank === 3) return "🥉 #3";
@@ -71,11 +67,11 @@ module.exports = {
 
           { name: "Preferred Modes", value: player.preferredModes?.join(", ") || "N/A" },
 
-          { name: "Season Synergy", value: `${player.seasonSynergy || 0}`, inline: true },
-          { name: "Season Rank", value: rankDisplay(seasonRank), inline: true },
+          { name: "Season Synergy", value: `${synergyData?.seasonSynergy || 0}`, inline: true },
+          { name: "Season Rank", value: rankDisplay(synergyData?.seasonRank), inline: true },
 
-          { name: "Weekly Synergy", value: `${player.weeklySynergy || 0}`, inline: true },
-          { name: "Weekly Rank", value: rankDisplay(weeklyRank), inline: true }
+          { name: "Weekly Synergy", value: `${synergyData?.weeklySynergy || 0}`, inline: true },
+          { name: "Weekly Rank", value: rankDisplay(synergyData?.weeklyRank), inline: true }
         )
         .setFooter({ text: "Jack Clan System" });
 
