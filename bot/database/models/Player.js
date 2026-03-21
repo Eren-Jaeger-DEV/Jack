@@ -5,8 +5,7 @@ const playerSchema = new mongoose.Schema({
   discordId: {
     type: String,
     sparse: true,
-    unique: true,
-    default: null
+    unique: true
   },
 
   status: {
