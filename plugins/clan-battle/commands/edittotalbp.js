@@ -37,16 +37,14 @@ module.exports = {
 
   async run(ctx) {
     try {
-      if (ctx.isInteraction) await ctx.deferReply().catch(() => {});
+      if (ctx.isInteraction) await ctx.defer().catch(() => {});
 
       // Permission check
       const hasPerm = ctx.member.permissions.has(PermissionFlagsBits.ModerateMembers) ||
                       ctx.member.permissions.has(PermissionFlagsBits.Administrator);
 
-      const replyFn = (content) => ctx.isInteraction ? ctx.editReply({ content }) : ctx.reply(content);
-
       if (!hasPerm) {
-        return replyFn('❌ Only Moderators or Admins can use this command.');
+        return ctx.reply('❌ Only Moderators or Admins can use this command.');
       }
 
       // Parse args
@@ -70,20 +68,20 @@ module.exports = {
       }
 
       if ((!userArg && !uidArg) || isNaN(points)) {
-        return replyFn('Usage: `/edittotalbp <points> [user] [uid]` or `j edittotalbp @user <points>` or `j edittotalbp uid:<number> <points>`');
+        return ctx.reply('Usage: `j edittotalbp @user <points>` or `j edittotalbp uid:<number> <points>`');
       }
 
       // Edit
       const result = await battleService.editTotalPoints(ctx.guild.id, { user: userArg, uid: uidArg }, points);
 
       if (!result.success) {
-        return replyFn(`❌ ${result.error}`);
+        return ctx.reply(`❌ ${result.error}`);
       }
 
       const targetLabel = userArg ? userArg.tag : (result.player ? result.player.ign : uidArg);
       console.log(`[ClanBattle] Admin ${ctx.user.tag} set total points for ${targetLabel} to ${points}`);
 
-      await replyFn(`✅ Set **${targetLabel}**'s total points to **${points}**`);
+      await ctx.reply(`✅ Set **${targetLabel}**'s total points to **${points}**`);
 
       // Refresh leaderboard
       const battle = await battleService.getActiveBattle(ctx.guild.id);
@@ -93,11 +91,7 @@ module.exports = {
 
     } catch (err) {
       console.error('[ClanBattle] edittotalbp error:', err);
-      if (ctx.isInteraction) {
-        await ctx.editReply('❌ Something went wrong.').catch(() => {});
-      } else {
-        await ctx.reply('❌ Something went wrong.').catch(() => {});
-      }
+      await ctx.reply('❌ Something went wrong.').catch(() => {});
     }
   }
 };
