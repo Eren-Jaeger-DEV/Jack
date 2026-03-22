@@ -44,10 +44,13 @@ module.exports = {
   async run(ctx) {
     try {
       const isEphemeral = ctx.isInteraction;
+      
+      // Acknowledge interaction to prevent 3-second timeout
+      if (ctx.isInteraction) await ctx.deferReply({ ephemeral: isEphemeral }).catch(() => {});
 
       // Admin check
       if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-        return ctx.reply({ content: '❌ You need **Manage Server** permission to use this command.', ephemeral: isEphemeral });
+        return ctx.isInteraction ? ctx.editReply({ content: '❌ You need **Manage Server** permission to use this command.' }) : ctx.reply('❌ You need **Manage Server** permission to use this command.');
       }
 
       // Parse target user and points
@@ -71,24 +74,24 @@ module.exports = {
       }
 
       if ((!targetUser && !targetUid) || isNaN(points)) {
-        return ctx.reply({ content: 'Usage: `j se @user <points>` or `j se uid:<number> <points>`', ephemeral: isEphemeral });
+        return ctx.isInteraction ? ctx.editReply({ content: 'Usage: `/se <points> [user] [uid]` or `j se @user <points>` or `j se uid:<number> <points>`' }) : ctx.reply('Usage: `j se @user <points>` or `j se uid:<number> <points>`');
       }
 
       if (points < 0) {
-        return ctx.reply({ content: '❌ Points must be a valid non-negative number.', ephemeral: isEphemeral });
+        return ctx.isInteraction ? ctx.editReply({ content: '❌ Points must be a valid non-negative number.' }) : ctx.reply('❌ Points must be a valid non-negative number.');
       }
 
       // Active season check
       const season = await synergyService.getActiveSeason(ctx.guild.id);
       if (!season) {
-        return ctx.reply({ content: '❌ No active season is currently running.', ephemeral: isEphemeral });
+        return ctx.isInteraction ? ctx.editReply({ content: '❌ No active season is currently running.' }) : ctx.reply('❌ No active season is currently running.');
       }
 
       // Set season energy
       const result = await synergyService.setSeasonEnergy({ user: targetUser, uid: targetUid }, points);
 
       if (!result.success) {
-        return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
+        return ctx.isInteraction ? ctx.editReply({ content: `❌ ${result.error}` }) : ctx.reply(`❌ ${result.error}`);
       }
 
       const dbPlayer = result.player;
@@ -96,7 +99,11 @@ module.exports = {
       const displayName = name;
       console.log(`[SeasonalSynergy] Admin ${ctx.user.tag} set season energy for ${displayName} to ${points}`);
 
-      await ctx.reply({ content: `✅ Season energy for **${displayName}** set to **${points}**.`, ephemeral: isEphemeral });
+      if (ctx.isInteraction) {
+        await ctx.editReply({ content: `✅ Season energy for **${displayName}** set to **${points}**.` });
+      } else {
+        await ctx.reply(`✅ Season energy for **${displayName}** set to **${points}**.`);
+      }
 
       // Refresh leaderboard
       const freshSeason = await synergyService.getActiveSeason(ctx.guild.id);
@@ -106,7 +113,11 @@ module.exports = {
 
     } catch (err) {
       console.error('[SeasonalSynergy] se command error:', err);
-      await ctx.reply({ content: '❌ Something went wrong.', ephemeral: true }).catch(() => {});
+      if (ctx.isInteraction) {
+        await ctx.editReply({ content: '❌ Something went wrong.' }).catch(() => {});
+      } else {
+        await ctx.reply('❌ Something went wrong.').catch(() => {});
+      }
     }
   }
 };

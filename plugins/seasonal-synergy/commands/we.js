@@ -51,6 +51,8 @@ module.exports = {
       const isEphemeral = ctx.isInteraction;
       const isAdmin = ctx.member.permissions.has(PermissionFlagsBits.ManageGuild);
 
+      if (ctx.isInteraction) await ctx.deferReply({ ephemeral: isEphemeral }).catch(() => {});
+
       // Parse points
       let points;
       if (ctx.isInteraction) {
@@ -67,8 +69,10 @@ module.exports = {
         }
       }
 
+      const replyFn = (content) => ctx.isInteraction ? ctx.editReply({ content }) : ctx.reply(content);
+
       if (isNaN(points) || points <= 0 || points > synergyService.MAX_WEEKLY_ENERGY) {
-        return ctx.reply({ content: `❌ Points must be a number between 1 and ${synergyService.MAX_WEEKLY_ENERGY}.`, ephemeral: isEphemeral });
+        return replyFn(`❌ Points must be a number between 1 and ${synergyService.MAX_WEEKLY_ENERGY}.`);
       }
 
       // Determine target user (admin mode or self)
@@ -90,7 +94,7 @@ module.exports = {
 
       // If targeting another user or uid, must be admin
       if ((targetUser || targetUid) && !isAdmin) {
-        return ctx.reply({ content: '❌ Only admins can submit energy on behalf of other users.', ephemeral: isEphemeral });
+        return replyFn('❌ Only admins can submit energy on behalf of other users.');
       }
 
       const adminBypass = targetUser || targetUid ? true : false;
@@ -103,21 +107,21 @@ module.exports = {
       // Clan role check (for self-submissions only)
       if (!adminBypass) {
         if (!ctx.member.roles.cache.has(synergyService.CLAN_ROLE_ID)) {
-          return ctx.reply({ content: '❌ You must be a clan member to participate.', ephemeral: isEphemeral });
+          return replyFn('❌ You must be a clan member to participate.');
         }
       }
 
       // Active season check
       const season = await synergyService.getActiveSeason(ctx.guild.id);
       if (!season) {
-        return ctx.reply({ content: '❌ No active season is currently running.', ephemeral: isEphemeral });
+        return replyFn('❌ No active season is currently running.');
       }
 
       // Add weekly energy
       const result = await synergyService.addWeeklyEnergy({ user: targetUser, uid: targetUid }, points, adminBypass);
 
       if (!result.success) {
-        return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
+        return replyFn(`❌ ${result.error}`);
       }
 
       const dbPlayer = result.player;
@@ -126,7 +130,7 @@ module.exports = {
       const displayName = name;
       console.log(`[SeasonalSynergy] ${adminBypass ? `Admin ${ctx.user.tag} submitted` : `${ctx.user.tag} submitted`} ${points} weekly energy for ${displayName}`);
 
-      await ctx.reply({ content: `✅ **${points}** weekly energy recorded for **${displayName}**!`, ephemeral: isEphemeral });
+      await replyFn(`✅ **${points}** weekly energy recorded for **${displayName}**!`);
 
       // Refresh leaderboard in SYNERGY channel
       const freshSeason = await synergyService.getActiveSeason(ctx.guild.id);
@@ -136,7 +140,12 @@ module.exports = {
 
     } catch (err) {
       console.error('[SeasonalSynergy] we command error:', err);
-      await ctx.reply({ content: '❌ Something went wrong.', ephemeral: true }).catch(() => {});
+      const isEphemeral = ctx.isInteraction;
+      if (ctx.isInteraction) {
+        await ctx.editReply({ content: '❌ Something went wrong.' }).catch(() => {});
+      } else {
+        await ctx.reply('❌ Something went wrong.').catch(() => {});
+      }
     }
   }
 };

@@ -8,6 +8,7 @@
  * @returns {Promise<string>}
  */
 async function resolveDisplayName(guild, userId, fallbackIgn) {
+  if (!userId) return fallbackIgn || 'Unknown Player';
   if (!guild) return fallbackIgn || userId;
   try {
     // Attempt to fetch member to ensure cache is populated/data is fresh
