@@ -1,0 +1,6 @@
+{
+  "name": "tempvc",
+  "version": "1.0.0",
+  "description": "TempVC-style Personal Voice Channel system",
+  "main": "index.js"
+}
