@@ -1,0 +1,6 @@
+{
+  "name": "counting",
+  "version": "1.0.0",
+  "description": "Sequential numerical counting plugin",
+  "main": "index.js"
+}
