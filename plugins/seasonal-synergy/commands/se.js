@@ -23,16 +23,21 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('se')
     .setDescription('Set season energy for a user (Admin)')
-    .addUserOption(o =>
-      o.setName('user')
-        .setDescription('Target user')
-        .setRequired(true)
-    )
     .addIntegerOption(o =>
       o.setName('points')
         .setDescription('Season energy points to set')
         .setRequired(true)
         .setMinValue(0)
+    )
+    .addUserOption(o =>
+      o.setName('user')
+        .setDescription('Discord target user (provide either user or uid)')
+        .setRequired(false)
+    )
+    .addStringOption(o =>
+      o.setName('uid')
+        .setDescription('Target player by UID (if not on Discord)')
+        .setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
@@ -46,33 +51,31 @@ module.exports = {
       }
 
       // Parse target user and points
-      let targetUser, points;
+      let targetUser, targetUid, points;
 
       if (ctx.isInteraction) {
         targetUser = ctx.options.getUser('user');
+        targetUid = ctx.options.getString('uid');
         points = ctx.options.getInteger('points');
       } else {
         const args = ctx.args || [];
-        const mentionMatch = args[0]?.match(/^<@!?(\d+)>$/);
-        if (!mentionMatch) {
-          return ctx.reply({ content: 'Usage: `j se @user <points>`', ephemeral: isEphemeral });
+        if (args.length >= 2) {
+          const mentionMatch = args[0]?.match(/^<@!?(\d+)>$/);
+          if (mentionMatch) {
+            targetUser = await ctx.client.users.fetch(mentionMatch[1]).catch(() => null);
+          } else {
+            targetUid = args[0];
+          }
+          points = parseInt(args[1]);
         }
-        targetUser = await ctx.client.users.fetch(mentionMatch[1]).catch(() => null);
-        points = parseInt(args[1]);
       }
 
-      if (!targetUser) {
-        return ctx.reply({ content: '❌ You must mention a valid user.', ephemeral: isEphemeral });
+      if ((!targetUser && !targetUid) || isNaN(points)) {
+        return ctx.reply({ content: 'Usage: `j se @user <points>` or `j se uid:<number> <points>`', ephemeral: isEphemeral });
       }
 
-      if (isNaN(points) || points < 0) {
+      if (points < 0) {
         return ctx.reply({ content: '❌ Points must be a valid non-negative number.', ephemeral: isEphemeral });
-      }
-
-      // Registration check
-      const player = await Player.findOne({ discordId: targetUser.id });
-      if (!player) {
-        return ctx.reply({ content: `❌ <@${targetUser.id}> is not registered.`, ephemeral: isEphemeral });
       }
 
       // Active season check
@@ -82,13 +85,14 @@ module.exports = {
       }
 
       // Set season energy
-      const result = await synergyService.setSeasonEnergy(targetUser.id, points);
+      const result = await synergyService.setSeasonEnergy({ user: targetUser, uid: targetUid }, points);
 
       if (!result.success) {
         return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
       }
 
-      const name = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
+      const dbPlayer = result.player;
+      const name = await resolveDisplayName(ctx.guild, dbPlayer.discordId, dbPlayer.ign);
       const displayName = name;
       console.log(`[SeasonalSynergy] Admin ${ctx.user.tag} set season energy for ${displayName} to ${points}`);
 

@@ -60,17 +60,19 @@ function getTodayString() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
+const { resolvePlayer } = require('../../../bot/utils/playerResolver');
+
 /**
  * Add weekly energy for a player.
  * - Validates weekend, daily limit, points range.
  * - Also adds to seasonEnergy.
  *
- * @param {string} userId
+ * @param {Object} target - { user, uid }
  * @param {number} points
- * @param {boolean} isAdmin — if true, bypass weekend + daily restrictions
- * @returns {{ success: boolean, error?: string }}
+ * @param {boolean} isAdmin - if true, bypass weekend + daily restrictions
+ * @returns {{ success: boolean, error?: string, player?: Object }}
  */
-async function addWeeklyEnergy(userId, points, isAdmin = false) {
+async function addWeeklyEnergy(target, points, isAdmin = false) {
   if (points <= 0 || points > MAX_WEEKLY_ENERGY) {
     return { success: false, error: `Points must be between 1 and ${MAX_WEEKLY_ENERGY}.` };
   }
@@ -79,9 +81,9 @@ async function addWeeklyEnergy(userId, points, isAdmin = false) {
     return { success: false, error: 'You can only submit weekly energy on Saturday and Sunday.' };
   }
 
-  const player = await Player.findOne({ discordId: userId });
-  if (!player) {
-    return { success: false, error: 'Player not found in database.' };
+  const { player, error } = await resolvePlayer(target);
+  if (error || !player) {
+    return { success: false, error: error || 'Player not found in database.' };
   }
 
   const today = getTodayString();
@@ -101,9 +103,11 @@ async function addWeeklyEnergy(userId, points, isAdmin = false) {
 /**
  * Admin: directly set season energy for a player.
  */
-async function setSeasonEnergy(userId, points) {
-  const player = await Player.findOne({ discordId: userId });
-  if (!player) return { success: false, error: 'Player not found in database.' };
+async function setSeasonEnergy(target, points) {
+  const { player, error } = await resolvePlayer(target);
+  if (error || !player) {
+    return { success: false, error: error || 'Player not found in database.' };
+  }
 
   player.seasonSynergy = points;
   await player.save();

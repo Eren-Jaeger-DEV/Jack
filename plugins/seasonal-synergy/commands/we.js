@@ -39,6 +39,11 @@ module.exports = {
       o.setName('user')
         .setDescription('(Admin) Target user to submit energy for')
         .setRequired(false)
+    )
+    .addStringOption(o =>
+      o.setName('uid')
+        .setDescription('(Admin) Target player by UID')
+        .setRequired(false)
     ),
 
   async run(ctx) {
@@ -67,36 +72,39 @@ module.exports = {
       }
 
       // Determine target user (admin mode or self)
-      let targetUser;
+      let targetUser, targetUid;
       if (ctx.isInteraction) {
         targetUser = ctx.options.getUser('user');
+        targetUid = ctx.options.getString('uid');
       } else {
         const args = ctx.args || [];
-        const mentionMatch = args[0]?.match(/^<@!?(\d+)>$/);
-        if (mentionMatch) {
-          targetUser = await ctx.client.users.fetch(mentionMatch[1]).catch(() => null);
+        if (args.length >= 2) {
+          const mentionMatch = args[0]?.match(/^<@!?(\d+)>$/);
+          if (mentionMatch) {
+            targetUser = await ctx.client.users.fetch(mentionMatch[1]).catch(() => null);
+          } else {
+            targetUid = args[0];
+          }
         }
       }
 
-      // If targeting another user, must be admin
-      if (targetUser && !isAdmin) {
+      // If targeting another user or uid, must be admin
+      if ((targetUser || targetUid) && !isAdmin) {
         return ctx.reply({ content: '❌ Only admins can submit energy on behalf of other users.', ephemeral: isEphemeral });
       }
 
-      const userId = targetUser ? targetUser.id : ctx.user.id;
-      const adminBypass = targetUser ? true : isAdmin && targetUser !== undefined;
+      const adminBypass = targetUser || targetUid ? true : false;
+      
+      // If no admin arguments provided, assume self-submission
+      if (!targetUser && !targetUid) {
+        targetUser = ctx.user;
+      }
 
       // Clan role check (for self-submissions only)
-      if (!targetUser) {
+      if (!adminBypass) {
         if (!ctx.member.roles.cache.has(synergyService.CLAN_ROLE_ID)) {
           return ctx.reply({ content: '❌ You must be a clan member to participate.', ephemeral: isEphemeral });
         }
-      }
-
-      // Registration check
-      const player = await Player.findOne({ discordId: userId });
-      if (!player || !player.ign) {
-        return ctx.reply({ content: '❌ You must register first using `/register` in <#1479697157840830524>.', ephemeral: isEphemeral });
       }
 
       // Active season check
@@ -106,15 +114,17 @@ module.exports = {
       }
 
       // Add weekly energy
-      const result = await synergyService.addWeeklyEnergy(userId, points, !!targetUser);
+      const result = await synergyService.addWeeklyEnergy({ user: targetUser, uid: targetUid }, points, adminBypass);
 
       if (!result.success) {
         return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
       }
 
-      const name = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
+      const dbPlayer = result.player;
+      
+      const name = await resolveDisplayName(ctx.guild, dbPlayer.discordId, dbPlayer.ign);
       const displayName = name;
-      console.log(`[SeasonalSynergy] ${targetUser ? `Admin ${ctx.user.tag} submitted` : `${ctx.user.tag} submitted`} ${points} weekly energy for ${displayName}`);
+      console.log(`[SeasonalSynergy] ${adminBypass ? `Admin ${ctx.user.tag} submitted` : `${ctx.user.tag} submitted`} ${points} weekly energy for ${displayName}`);
 
       await ctx.reply({ content: `✅ **${points}** weekly energy recorded for **${displayName}**!`, ephemeral: isEphemeral });
 

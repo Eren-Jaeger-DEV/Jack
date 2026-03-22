@@ -85,32 +85,33 @@ async function addPoints(guildId, userId, ign, points) {
   return { success: true };
 }
 
+const { resolvePlayer } = require('../../../bot/utils/playerResolver');
+
 /**
  * Admin: overwrite today's points for a user.
  */
-async function editTodayPoints(guildId, userId, newPoints) {
+async function editTodayPoints(guildId, target, newPoints) {
   const battle = await getActiveBattle(guildId);
   if (!battle) return { success: false, error: 'No active clan battle.' };
 
-  let player = battle.players.find(p => p.userId === userId);
+  const { player: globalPlayer, error } = await resolvePlayer(target);
+  if (error || !globalPlayer || !globalPlayer.ign) {
+    return { success: false, error: error || 'Player not found in the registration database.' };
+  }
 
-  // If player not in battle, try finding them in the global Player DB
+  const identifier = globalPlayer.discordId || globalPlayer.uid;
+  let player = battle.players.find(p => p.userId === identifier);
+
+  // If player not in battle, add them
   if (!player) {
-    const globalPlayer = await Player.findOne({ discordId: userId });
-    if (!globalPlayer || !globalPlayer.ign) {
-      return { success: false, error: 'Player not found in this battle or the registration database.' };
-    }
-
-    // Add them to the battle list
     player = {
-      userId,
+      userId: identifier,
       ign: globalPlayer.ign,
       todayPoints: 0,
       totalPoints: 0,
       lastSubmittedDate: ''
     };
     battle.players.push(player);
-    // Find the reference in the array to modify it below
     player = battle.players[battle.players.length - 1];
   }
 
@@ -125,29 +126,28 @@ async function editTodayPoints(guildId, userId, newPoints) {
 /**
  * Admin: overwrite total points for a user.
  */
-async function editTotalPoints(guildId, userId, newTotal) {
+async function editTotalPoints(guildId, target, newTotal) {
   const battle = await getActiveBattle(guildId);
   if (!battle) return { success: false, error: 'No active clan battle.' };
 
-  let player = battle.players.find(p => p.userId === userId);
+  const { player: globalPlayer, error } = await resolvePlayer(target);
+  if (error || !globalPlayer || !globalPlayer.ign) {
+    return { success: false, error: error || 'Player not found in the registration database.' };
+  }
 
-  // If player not in battle, try finding them in the global Player DB
+  const identifier = globalPlayer.discordId || globalPlayer.uid;
+  let player = battle.players.find(p => p.userId === identifier);
+
+  // If player not in battle, add them
   if (!player) {
-    const globalPlayer = await Player.findOne({ discordId: userId });
-    if (!globalPlayer || !globalPlayer.ign) {
-      return { success: false, error: 'Player not found in this battle or the registration database.' };
-    }
-
-    // Add them to the battle list
     player = {
-      userId,
+      userId: identifier,
       ign: globalPlayer.ign,
       todayPoints: 0,
       totalPoints: 0,
       lastSubmittedDate: ''
     };
     battle.players.push(player);
-    // Find the reference in the array to modify it below
     player = battle.players[battle.players.length - 1];
   }
 
