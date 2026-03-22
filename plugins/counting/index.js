@@ -4,6 +4,28 @@ const CONFIG = {
 
 let lastNumber = 0;
 let lastUserId = null;
+let countingWebhook = null;
+
+async function getWebhook(channel) {
+  if (countingWebhook) return countingWebhook;
+  
+  try {
+    const webhooks = await channel.fetchWebhooks();
+    countingWebhook = webhooks.find(wh => wh.name === 'Jack-Counting');
+    
+    if (!countingWebhook) {
+      countingWebhook = await channel.createWebhook({
+        name: 'Jack-Counting',
+        avatar: channel.guild.iconURL(),
+        reason: 'Counting Plugin Message Replacement'
+      });
+    }
+    return countingWebhook;
+  } catch (err) {
+    console.error('[Counting] Error getting/creating webhook:', err);
+    return null;
+  }
+}
 
 module.exports = {
   load(client) {
@@ -14,12 +36,12 @@ module.exports = {
       if (message.author.bot) return;
       if (message.channelId !== CONFIG.CHANNEL_ID) return;
       
-      // Rule 6: Ignore non-text messages (e.g. attachments only)
+      // Rule 6: Ignore non-text messages
       if (!message.content || message.content.length === 0) return;
 
       const content = message.content.trim();
       
-      // Rule 2: Message must be a valid integer (no text, emojis, spaces)
+      // Rule 2: Message must be a valid integer
       if (!/^\d+$/.test(content)) {
         try { await message.delete(); } catch (e) {}
         return;
@@ -43,8 +65,28 @@ module.exports = {
       lastNumber = currentNumber;
       lastUserId = message.author.id;
       
-      // Successfully updated state (in-memory only as per constraints)
-      console.log(`[Counting] Correct number: ${lastNumber} by ${message.author.username}`);
+      // NEW BEHAVIOR: Webhook Message Replacement
+      try {
+        // Delete user message first to avoid confusion
+        await message.delete().catch(() => {});
+        
+        // Get or create webhook for this channel
+        const webhook = await getWebhook(message.channel);
+        if (webhook) {
+          await webhook.send({
+            content: content,
+            username: message.member?.displayName || message.author.username,
+            avatarURL: message.author.displayAvatarURL({ forceStatic: true })
+          });
+        } else {
+          // Fallback if webhook fails: notify channel maybe? 
+          // For now, fail silently as per requirements.
+        }
+      } catch (err) {
+        console.error('[Counting] Webhook replacement error:', err);
+      }
+      
+      console.log(`[Counting] Correct number: ${lastNumber} by ${message.author.username} (Webhook Replacement)`);
     });
   }
 };
