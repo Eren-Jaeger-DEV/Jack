@@ -68,15 +68,18 @@ module.exports = {
     const collector = msg.createMessageComponentCollector({ filter, time: 60000 });
 
     collector.on('collect', async i => {
+      // Acknowledge immediately to prevent timeout
+      await i.deferUpdate().catch(() => {});
+
       const selectedId = i.values[0];
       const profile = await Player.findById(selectedId);
       
       if (!profile) {
-        return i.update({ content: "❌ Profile not found, it may have been already linked or deleted.", components: [] });
+        return i.editReply({ content: "❌ Profile not found, it may have been already linked or deleted.", components: [] });
       }
 
       if (profile.status !== "unlinked") {
-        return i.update({ content: "❌ Profile is no longer unlinked.", components: [] });
+        return i.editReply({ content: "❌ Profile is no longer unlinked.", components: [] });
       }
 
       const targetMember = await ctx.guild.members.fetch(targetUser.id).catch(() => null);
@@ -90,7 +93,7 @@ module.exports = {
 
       await profile.save();
 
-      await i.update({ content: `✅ Profile **${profile.ign}** successfully linked to ${targetUser}!`, components: [] });
+      await i.editReply({ content: `✅ Profile **${profile.ign}** successfully linked to ${targetUser}!`, components: [] });
     });
 
     collector.on('end', collected => {

@@ -97,13 +97,16 @@ module.exports = {
         return i.reply({ content: "❌ You cannot use these buttons.", ephemeral: true });
       }
 
+      // Acknowledge immediately to prevent timeout
+      await i.deferUpdate().catch(() => {});
+
       if (i.customId === "unlinked_prev" && currentPage > 0) {
         currentPage--;
       } else if (i.customId === "unlinked_next" && currentPage < pages.length - 1) {
         currentPage++;
       }
 
-      await i.update({
+      await i.editReply({
         embeds: [generateEmbed(currentPage)],
         components: [getRow(currentPage)]
       });
