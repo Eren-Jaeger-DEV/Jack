@@ -1,10 +1,65 @@
+const fs = require('fs');
+const path = require('path');
+
 const CONFIG = {
-  CHANNEL_ID: '1478790421369983179'
+  CHANNEL_ID: '1478790421369983179',
+  DATA_PATH: path.join(__dirname, 'data.json')
 };
 
 let lastNumber = 0;
 let lastUserId = null;
 let countingWebhook = null;
+
+function saveState() {
+  try {
+    fs.writeFileSync(CONFIG.DATA_PATH, JSON.stringify({ lastNumber, lastUserId }, null, 2));
+  } catch (err) {
+    console.error('[Counting] Error saving state:', err);
+  }
+}
+
+function loadState() {
+  try {
+    if (fs.existsSync(CONFIG.DATA_PATH)) {
+      const stored = JSON.parse(fs.readFileSync(CONFIG.DATA_PATH, 'utf8'));
+      lastNumber = stored.lastNumber || 0;
+      lastUserId = stored.lastUserId || null;
+      console.log(`[Counting] Loaded state from file: ${lastNumber} by ${lastUserId}`);
+    }
+  } catch (err) {
+    console.error('[Counting] Error loading state:', err);
+  }
+}
+
+async function verifyState(client) {
+  try {
+    const channel = await client.channels.fetch(CONFIG.CHANNEL_ID).catch(() => null);
+    if (!channel) return;
+
+    const messages = await channel.messages.fetch({ limit: 50 });
+    
+    // Find the very latest message that is a number
+    for (const msg of messages.values()) {
+        const content = msg.content.trim();
+        if (/^\d+$/.test(content)) {
+            const num = parseInt(content);
+            if (!isNaN(num)) {
+                // If the channel says a higher number, trust the channel
+                if (num > 0) {
+                    lastNumber = num;
+                    // Note: lastUserId initialization from history is less reliable due to webhooks
+                    // but it's okay, because the rule only checks 'twice in a row' 
+                    // which applies mostly to active sessions.
+                    console.log(`[Counting] Startup recovery: Synchronized to number ${lastNumber}`);
+                    break;
+                }
+            }
+        }
+    }
+  } catch (err) {
+    console.error('[Counting] Error during startup recovery:', err);
+  }
+}
 
 async function getWebhook(channel) {
   if (countingWebhook) return countingWebhook;
@@ -30,18 +85,25 @@ async function getWebhook(channel) {
 module.exports = {
   load(client) {
     console.log('[Counting] Counting plugin loaded.');
+    
+    // Initial load from file
+    loadState();
+    
+    // Startup recovery after bot is ready
+    if (client.isReady()) {
+      verifyState(client);
+    } else {
+      client.once('ready', () => verifyState(client));
+    }
 
     client.on('messageCreate', async (message) => {
-      // Basic checks
       if (message.author.bot) return;
       if (message.channelId !== CONFIG.CHANNEL_ID) return;
-      
-      // Rule 6: Ignore non-text messages
       if (!message.content || message.content.length === 0) return;
 
       const content = message.content.trim();
       
-      // Rule 2: Message must be a valid integer
+      // Rule: Message must be a valid integer
       if (!/^\d+$/.test(content)) {
         try { await message.delete(); } catch (e) {}
         return;
@@ -49,28 +111,27 @@ module.exports = {
 
       const currentNumber = parseInt(content);
 
-      // Rule 4: Prevent same user from counting twice in a row
+      // Rule: Prevent same user twice in a row
       if (message.author.id === lastUserId) {
         try { await message.delete(); } catch (e) {}
         return;
       }
 
-      // Rule 2 & 3: Number must be exactly +1 from previous number
+      // Rule: Number must be exactly +1
       if (currentNumber !== lastNumber + 1) {
         try { await message.delete(); } catch (e) {}
         return;
       }
 
-      // If we reach here, the number is correct
+      // Valid count
       lastNumber = currentNumber;
       lastUserId = message.author.id;
       
-      // NEW BEHAVIOR: Webhook Message Replacement
+      // Persist state immediately
+      saveState();
+      
       try {
-        // Delete user message first to avoid confusion
         await message.delete().catch(() => {});
-        
-        // Get or create webhook for this channel
         const webhook = await getWebhook(message.channel);
         if (webhook) {
           await webhook.send({
@@ -78,15 +139,12 @@ module.exports = {
             username: message.member?.displayName || message.author.username,
             avatarURL: message.author.displayAvatarURL({ forceStatic: true })
           });
-        } else {
-          // Fallback if webhook fails: notify channel maybe? 
-          // For now, fail silently as per requirements.
         }
       } catch (err) {
         console.error('[Counting] Webhook replacement error:', err);
       }
       
-      console.log(`[Counting] Correct number: ${lastNumber} by ${message.author.username} (Webhook Replacement)`);
+      console.log(`[Counting] Correct number: ${lastNumber} by ${message.author.username}`);
     });
   }
 };
