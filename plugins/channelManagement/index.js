@@ -7,8 +7,10 @@ const CONFIG = {
   BOT_COMMANDS_CHANNEL_ID: '1399825266360057917'
 };
 
-const COMMAND_PREFIXES = ['j', 'J', 'jack', 'Jack', '!', 'A', '/'];
-const URL_REGEX = /https?:\/\/[^\s$.?#].[^\s]*/i;
+// Precise regex for links, including common TLDs and discord.gg
+const LINK_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(discord\.gg\/[^\s]+)|([^\s]+\.(com|net|org|io|me|xyz)([^\s]*)?)/i;
+// Regex for GIF links from Tenor and Giphy
+const GIF_REGEX = /(tenor\.com\/view\/|giphy\.com\/gifs\/|media\.giphy\.com\/media\/)/i;
 
 async function sendWarning(message, text) {
   try {
@@ -45,33 +47,38 @@ module.exports = {
 
       const content = message.content.trim();
       
-      // 4. PRIORITY FEATURE: Strict Bot Command Detection
+      // 4. PRIORITY SYSTEM: Commands > Links > Media (Attachments + GIF links)
+      
       if (content) {
         const lowerContent = content.toLowerCase();
-        const isCommand = COMMAND_PREFIXES.some(prefix => {
-          const p = prefix.toLowerCase();
-          // Precise prefix checking
-          return lowerContent === p || 
-                 lowerContent.startsWith(p + ' ') || 
-                 (p.length === 1 && lowerContent.startsWith(p)); // For !, A, /
-        });
+        
+        // FEATURE 1: Bot Command Detection (Priority 1)
+        // Strict prefixes (!, /) vs Word prefixes (j, jack, a)
+        const isStrictPrefix = lowerContent.startsWith('!') || lowerContent.startsWith('/');
+        const isWordCommand = ['j', 'jack', 'a'].some(p => lowerContent === p || lowerContent.startsWith(p + ' '));
 
-        if (isCommand) {
+        if (isStrictPrefix || isWordCommand) {
           await message.delete().catch(() => {});
           return sendWarning(message, `Use bot commands in <#${CONFIG.BOT_COMMANDS_CHANNEL_ID}>`);
         }
+
+        // FEATURE 2: Link Detection (Priority 2)
+        if (LINK_REGEX.test(content)) {
+          await message.delete().catch(() => {});
+          return sendWarning(message, `Send links in <#${CONFIG.LINKS_CHANNEL_ID}>`);
+        }
+
+        // FEATURE 3.1: GIF Link Detection (Priority 3.1)
+        if (GIF_REGEX.test(content)) {
+          await message.delete().catch(() => {});
+          return sendWarning(message, `Send media in <#${CONFIG.MEDIA_CHANNEL_ID}>`);
+        }
       }
 
-      // 5. FEATURE: Media Restriction
+      // FEATURE 3.2: Media Restriction (Priority 3.2)
       if (message.attachments.size > 0) {
         await message.delete().catch(() => {});
         return sendWarning(message, `Send media in <#${CONFIG.MEDIA_CHANNEL_ID}>`);
-      }
-
-      // 6. FEATURE: Link Restriction
-      if (content && URL_REGEX.test(content)) {
-        await message.delete().catch(() => {});
-        return sendWarning(message, `Send links in <#${CONFIG.LINKS_CHANNEL_ID}>`);
       }
     });
   }
