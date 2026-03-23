@@ -65,6 +65,11 @@ module.exports = async (message, client) => {
     else if (sub === "import") { commandName = "packimport"; args.shift(); }
   }
 
+  // j create team
+  if (commandName === "create" && args[0]?.toLowerCase() === "team") {
+    commandName = "createteam"; args.shift();
+  }
+
   // j pop sell/cancel/market
   if (commandName === "sell" && args[0]?.toLowerCase() === "pop") {
     commandName = "sell";

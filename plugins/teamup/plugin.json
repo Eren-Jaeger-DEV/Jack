@@ -1,0 +1,8 @@
+{
+  "name": "TeamUp",
+  "version": "1.0.0",
+  "description": "Conversational team creation and matchmaking system.",
+  "main": "index.js",
+  "author": "Antigravity",
+  "enabled": true
+}
