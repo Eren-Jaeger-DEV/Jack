@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
+const { printLogs } = require("../utils/logger");
 
 const client = new Client({
   intents: [
@@ -33,6 +34,11 @@ client.once("clientReady", async () => {
   console.log(`Logged in as ${client.user.tag}`);
   // Load all standalone plugins synchronously
   require("../core/pluginLoader")(client);
+
+  // Print centralized startup logs after plugins have initialized (including async ones)
+  setTimeout(() => {
+    printLogs();
+  }, 10000); // 10s buffer for all async recovery logs
 });
 
 /* Login */

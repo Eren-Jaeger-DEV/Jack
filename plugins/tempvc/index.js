@@ -1,4 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { addLog } = require('../../utils/logger');
 
 const CONFIG = {
   CREATE_VC_ID: '1478793326781272096',
@@ -19,7 +20,7 @@ async function initControlPanel(client) {
     const existingPanel = messages.find(m => m.author.id === client.user.id && m.components.length > 0);
     
     if (existingPanel) {
-      console.log('[TempVC] Control panel already exists.');
+      addLog("TempVC", "Control panel ready");
       return;
     }
 
@@ -50,7 +51,7 @@ async function initControlPanel(client) {
     );
 
     await channel.send({ embeds: [embed], components: [row1, row2] });
-    console.log('[TempVC] Control panel initialized.');
+    addLog("TempVC", "Control panel initialized");
   } catch (err) {
     console.error('[TempVC] Error initializing control panel:', err);
   }
@@ -58,7 +59,7 @@ async function initControlPanel(client) {
 
 module.exports = {
   load(client) {
-    console.log('[TempVC] TempVC plugin loaded.');
+    // Hidden to keep startup clean
 
     if (client.isReady()) {
       initControlPanel(client);

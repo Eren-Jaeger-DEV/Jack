@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { addLog } = require('../../utils/logger');
 
 const CONFIG = {
   CHANNEL_ID: '1478790421369983179',
@@ -50,7 +51,7 @@ async function verifyState(client) {
                     // Note: lastUserId initialization from history is less reliable due to webhooks
                     // but it's okay, because the rule only checks 'twice in a row' 
                     // which applies mostly to active sessions.
-                    console.log(`[Counting] Startup recovery: Synchronized to number ${lastNumber}`);
+                    addLog("Counting", `Synced to #${lastNumber}`);
                     break;
                 }
             }
@@ -84,7 +85,7 @@ async function getWebhook(channel) {
 
 module.exports = {
   load(client) {
-    console.log('[Counting] Counting plugin loaded.');
+    // No immediate load log to keep start clean
     
     // Initial load from file
     loadState();

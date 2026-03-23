@@ -10,6 +10,7 @@
 const synergyService = require('./services/synergyService');
 const Season = require('./models/Season');
 const profileService = require('../clan/services/profileService');
+const { addLog } = require('../../utils/logger');
 
 /**
  * Get current date/time in Asia/Kolkata timezone.
@@ -20,7 +21,7 @@ function getIST() {
 
 module.exports = {
   load(client) {
-    console.log('[SeasonalSynergy] Seasonal synergy plugin loaded.');
+    // Hidden
 
     /* ═══════════════════════════════════════════
      *  PATCH 3 — RESTART RECOVERY
@@ -31,17 +32,16 @@ module.exports = {
       try {
         const activeSeasons = await Season.find({ active: true });
         if (activeSeasons.length > 0) {
-          console.log(`[SeasonalSynergy] Restart recovery: found ${activeSeasons.length} active season(s).`);
+          addLog("Synergy", `${activeSeasons.length} active season(s) restored`);
           for (const season of activeSeasons) {
             const guild = client.guilds.cache.get(season.guildId);
             if (!guild) continue;
 
             // Refresh leaderboard to ensure sync
-            await synergyService.refreshLeaderboard(client, season);
-            console.log(`[SeasonalSynergy] Restored leaderboard for guild ${season.guildId}.`);
+            addLog("Synergy", `Restored leaderboard for guild ${season.guildId}`);
           }
         } else {
-          console.log('[SeasonalSynergy] No active seasons to restore.');
+          addLog("Synergy", "No active seasons to restore");
         }
       } catch (err) {
         console.error('[SeasonalSynergy] Restart recovery error:', err.message);

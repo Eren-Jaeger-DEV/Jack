@@ -9,17 +9,18 @@
 
 const { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const classificationService = require('./services/classificationService');
+const { addLog } = require('../../utils/logger');
 
 module.exports = {
   load(client) {
-    console.log('[MemberClassification] Member classification plugin loaded.');
+    // Startup logs moved to centralized logger
 
     /* ═══════════════════════════════════════════
      *  STARTUP SCAN — Check expired newbie timers
      * ═══════════════════════════════════════════ */
     setTimeout(async () => {
       try {
-        console.log('[MemberClassification] Running startup newbie timer scan...');
+        addLog("Member System", "Newbie scan complete");
         await classificationService.checkExpiredNewbies(client);
       } catch (err) {
         console.error('[MemberClassification] Startup scan error:', err.message);

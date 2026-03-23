@@ -8,10 +8,11 @@
  */
 
 const fosterService = require('./services/fosterService');
+const { addLog } = require('../../utils/logger');
 
 module.exports = {
   load(client) {
-    console.log('[FosterProgram] Foster program plugin loaded.');
+    // Hidden
 
     /* ═══════════════════════════════════════════
      *  STARTUP RECOVERY
@@ -21,15 +22,15 @@ module.exports = {
         const FosterProgram = require('./models/FosterProgram');
         const active = await FosterProgram.find({ active: true });
         if (active.length > 0) {
-          console.log(`[FosterProgram] Restart recovery: found ${active.length} active program(s).`);
+          addLog("Foster Program", `${active.length} active program(s) restored`);
           for (const program of active) {
             await fosterService.refreshLeaderboard(client, program);
-            console.log(`[FosterProgram] Restored leaderboard for guild ${program.guildId}.`);
+            addLog("Foster Program", `Restored leaderboard for guild ${program.guildId}`);
           }
           // Run immediate rotation/phase check
           await fosterService.checkRotationAndPhase(client);
         } else {
-          console.log('[FosterProgram] No active programs to restore.');
+          addLog("Foster Program", "No active programs to restore");
         }
       } catch (err) {
         console.error('[FosterProgram] Startup recovery error:', err.message);
