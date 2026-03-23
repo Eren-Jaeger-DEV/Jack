@@ -11,7 +11,7 @@ const Battle = require('./models/Battle');
 
 module.exports = {
   load(client) {
-    console.log('[ClanBattle] Clan battle plugin loaded.');
+    // Silenced
 
     /* ═══════════════════════════════════════════
      *  DAILY RESET — Check every 60 seconds

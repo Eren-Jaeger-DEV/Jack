@@ -1,3 +1,4 @@
+process.env.DOTENV_SILENT = 'true';
 require("dotenv").config({ quiet: true });
 const { addLog } = require("./utils/logger");
 

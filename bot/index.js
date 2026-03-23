@@ -12,14 +12,9 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GatewayIntentBits ? 0 : GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers
   ]
 });
-
-// Fix for potentially undefined intent bit in older discord.js but usually fine
-if (client.options.intents.includes(undefined)) {
-    client.options.intents = client.options.intents.filter(i => i !== undefined);
-}
 
 client.commands = new Collection();
 

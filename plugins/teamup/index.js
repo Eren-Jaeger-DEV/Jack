@@ -2,7 +2,7 @@ const teamService = require("./services/teamService");
 
 module.exports = {
   load(client) {
-    console.log("[TeamUp] TeamUp plugin loaded.");
+    // Silenced
 
     // Scheduler: Check every minute for expired teams and reminders
     setInterval(async () => {

@@ -10,7 +10,7 @@ const registrationManager = require('./services/registrationManager');
 
 module.exports = {
   load(client) {
-    console.log('[IntraMatch] Intra-match plugin loaded.');
+    // Silenced
 
     // Auto-close scheduler: runs every 30 seconds
     setInterval(async () => {

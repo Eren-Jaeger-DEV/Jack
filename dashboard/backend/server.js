@@ -1,4 +1,4 @@
-require("dotenv").config({ path: require("path").join(__dirname, "../../.env") });
+require("dotenv").config({ path: require("path").join(__dirname, "../../.env"), quiet: true });
 const bot = require("../../bot/index");
 const express = require("express");
 const session = require("express-session");
@@ -511,5 +511,5 @@ app.use("/api", insightsRoute);
 /* START SERVER */
 
 app.listen(3000, () => {
-  console.log("Dashboard backend running on port 3000");
+  // Silenced
 });

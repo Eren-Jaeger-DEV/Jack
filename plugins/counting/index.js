@@ -25,7 +25,6 @@ function loadState() {
       const stored = JSON.parse(fs.readFileSync(CONFIG.DATA_PATH, 'utf8'));
       lastNumber = stored.lastNumber || 0;
       lastUserId = stored.lastUserId || null;
-      console.log(`[Counting] Loaded state from file: ${lastNumber} by ${lastUserId}`);
     }
   } catch (err) {
     console.error('[Counting] Error loading state:', err);

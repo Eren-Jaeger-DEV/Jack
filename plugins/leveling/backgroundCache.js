@@ -10,7 +10,7 @@ module.exports = {
     const defaultPath = path.join(__dirname, "../../assets/rank-backgrounds/default.png");
     try {
       cache.default = await loadImage(defaultPath);
-      console.log("✅ Rank card backgrounds preloaded.");
+      // Silenced
     } catch (err) {
       console.log(`⚠ Warning: Missing default background at ${defaultPath}. Creating fallback.`);
       

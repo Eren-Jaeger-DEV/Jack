@@ -25,7 +25,7 @@ async function sendWarning(message, text) {
 
 module.exports = {
   load(client) {
-    console.log('[ChannelManagement] Channel Management plugin loaded.');
+    // Silenced
 
     client.on('messageCreate', async (message) => {
       // 1. SAFETY: Ignore messages from Jack itself
