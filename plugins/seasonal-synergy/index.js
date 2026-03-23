@@ -32,16 +32,16 @@ module.exports = {
       try {
         const activeSeasons = await Season.find({ active: true });
         if (activeSeasons.length > 0) {
-          addLog("Synergy", `${activeSeasons.length} active season(s) restored`);
+          addLog("Synergy", `${activeSeasons.length} season${activeSeasons.length > 1 ? 's' : ''} + leaderboard restored`);
           for (const season of activeSeasons) {
             const guild = client.guilds.cache.get(season.guildId);
             if (!guild) continue;
 
             // Refresh leaderboard to ensure sync
-            addLog("Synergy", `Restored leaderboard for guild ${season.guildId}`);
+            await synergyService.refreshLeaderboard(client, season);
           }
         } else {
-          addLog("Synergy", "No active seasons to restore");
+          addLog("Synergy", "Idle");
         }
       } catch (err) {
         console.error('[SeasonalSynergy] Restart recovery error:', err.message);

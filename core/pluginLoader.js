@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const commandLoader = require('./commandLoader');
 const eventLoader = require('./eventLoader');
+const { addLog } = require('../utils/logger');
 
 module.exports = (client) => {
   const pluginsPath = path.join(__dirname, '../plugins');
@@ -12,25 +13,20 @@ module.exports = (client) => {
     return fs.statSync(path.join(pluginsPath, file)).isDirectory();
   });
 
+  let pluginCount = 0;
+
   for (const folder of pluginFolders) {
     const pluginPath = path.join(pluginsPath, folder);
     const manifestPath = path.join(pluginPath, 'plugin.json');
 
-    if (!fs.existsSync(manifestPath)) {
-      console.log(`[Jack] Skipping plugin folder '${folder}' (missing plugin.json)`);
-      continue;
-    }
+    if (!fs.existsSync(manifestPath)) continue;
 
     const manifest = require(manifestPath);
     const mainFile = manifest.main || 'index.js';
     const indexPath = path.join(pluginPath, mainFile);
 
-    if (!fs.existsSync(indexPath)) {
-      console.log(`[Jack] Skipping plugin '${manifest.name}' (missing main file: ${mainFile})`);
-      continue;
-    }
+    if (!fs.existsSync(indexPath)) continue;
 
-    // We proxy the client so we can inject a check before executing events or commands
     const proxyClient = new Proxy(client, {
       get(target, prop, receiver) {
         if (prop === 'commands') {
@@ -38,15 +34,12 @@ module.exports = (client) => {
             get(cmdsTarget, cmdsProp) {
               if (cmdsProp === 'set') {
                 return function(name, command) {
-                  // Intercept the set call
                   const originalExecute = command.execute;
                   const GuildConfig = require('../bot/database/models/GuildConfig');
                   
                   command.execute = async function(ctx, ...args) {
-                    // Always allow outside guilds (DMs) if any, or owner? We check if guildId exists
                     if (ctx.guildId) {
                       const config = await GuildConfig.findOne({ guildId: ctx.guildId });
-                      // If plugins field exists and this plugin is set to false, block it
                       if (config && config.plugins && config.plugins[folder] === false) {
                         return ctx.reply({ content: `The **${folder}** plugin is disabled in this server.`, ephemeral: true }).catch(() => {});
                       }
@@ -64,9 +57,7 @@ module.exports = (client) => {
         if (prop === 'on') {
           return function(eventName, listener) {
             const GuildConfig = require('../bot/database/models/GuildConfig');
-            
             const wrappedListener = async (...args) => {
-              // Try to find a guildId in the first few arguments
               let guildId;
               for (const arg of args) {
                 if (arg && arg.guildId) { guildId = arg.guildId; break; }
@@ -75,35 +66,30 @@ module.exports = (client) => {
               
               if (guildId) {
                 const config = await GuildConfig.findOne({ guildId: guildId }).catch(() => null);
-                if (config && config.plugins && config.plugins[folder] === false) {
-                  return; // Silently ignore the event for this guild
-                }
+                if (config && config.plugins && config.plugins[folder] === false) return;
               }
-              
               return listener.apply(this, args);
             };
             return target.on(eventName, wrappedListener);
           };
         }
-        
         return Reflect.get(target, prop, receiver);
       }
     });
 
-    // Load commands and events for this plugin using the proxied client
     commandLoader(proxyClient, pluginPath);
     eventLoader(proxyClient, pluginPath);
-
-    // Initialize the plugin with the real client to avoid any initialization side effects
 
     try {
       const plugin = require(indexPath);
       if (typeof plugin.load === 'function') {
         plugin.load(client);
       }
-      console.log(`[Jack] Loaded plugin: ${manifest.name}`);
+      pluginCount++;
     } catch (err) {
-      console.error(`[Jack] Failed to load plugin '${manifest.name}':`, err);
+      console.error(`[Jack] Failed to load plugin '${manifest.name}':`, err.message);
     }
   }
+
+  addLog("Plugins", `${pluginCount} loaded`);
 };

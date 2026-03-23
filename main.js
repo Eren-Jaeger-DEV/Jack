@@ -1,26 +1,29 @@
 require("dotenv").config({ quiet: true });
+const { addLog } = require("./utils/logger");
 
 require("./bot/index");
 require("./dashboard/backend/server");
-console.log("Running on:", process.platform, process.cwd());
+
+addLog("System", `${process.platform} (VM Ready)`);
 
 const { spawn, execSync } = require('child_process');
 const path = require('path');
 
-console.log("Cleaning up lingering background ports...");
 try {
   execSync('npx --yes kill-port 5173 5174 3000', { stdio: 'ignore' });
 } catch (e) {}
 
-console.log("Starting Dashboard Frontend...");
 const frontendDir = path.join(__dirname, 'dashboard', 'frontend');
 const frontendProcess = spawn('npm', ['run', 'dev'], {
   cwd: frontendDir,
-  stdio: ['ignore', 'inherit', 'inherit'],
+  stdio: 'ignore', // Silence VITE/NPM logs
   shell: true
 });
 
+addLog("Dashboard", "Running (3000 + 5173)");
+
 frontendProcess.on('error', (err) => {
+  // Only critical errors remain
   console.error('Failed to start Dashboard Frontend:', err);
 });
 

@@ -22,15 +22,14 @@ module.exports = {
         const FosterProgram = require('./models/FosterProgram');
         const active = await FosterProgram.find({ active: true });
         if (active.length > 0) {
-          addLog("Foster Program", `${active.length} active program(s) restored`);
+          addLog("Foster Program", `${active.length} program${active.length > 1 ? 's' : ''} + leaderboard restored`);
           for (const program of active) {
             await fosterService.refreshLeaderboard(client, program);
-            addLog("Foster Program", `Restored leaderboard for guild ${program.guildId}`);
           }
           // Run immediate rotation/phase check
           await fosterService.checkRotationAndPhase(client);
         } else {
-          addLog("Foster Program", "No active programs to restore");
+          addLog("Foster Program", "Idle");
         }
       } catch (err) {
         console.error('[FosterProgram] Startup recovery error:', err.message);

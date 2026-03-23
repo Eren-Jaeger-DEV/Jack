@@ -1,8 +1,10 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
-const { printLogs } = require("../utils/logger");
+const { addLog, printLogs } = require("../utils/logger");
+
+addLog("Environment", "Loaded");
 
 const client = new Client({
   intents: [
@@ -10,9 +12,14 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GatewayIntentBits ? 0 : GatewayIntentBits.GuildMembers
   ]
 });
+
+// Fix for potentially undefined intent bit in older discord.js but usually fine
+if (client.options.intents.includes(undefined)) {
+    client.options.intents = client.options.intents.filter(i => i !== undefined);
+}
 
 client.commands = new Collection();
 
@@ -25,19 +32,18 @@ require("./handlers/eventHandler")(client);
 
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB Connected Successfully"))
-  .catch(err => console.error("❌ MongoDB Connection Failed:", err));
+  .then(() => addLog("Database", "Connected"))
+  .catch(err => console.error("❌ Database Connection Failed:", err.message));
 
 /* Ready */
 
 client.once("clientReady", async () => {
-  console.log(`Logged in as ${client.user.tag}`);
   // Load all standalone plugins synchronously
   require("../core/pluginLoader")(client);
 
   // Print centralized startup logs after plugins have initialized (including async ones)
   setTimeout(() => {
-    printLogs();
+    printLogs(client.user.tag);
   }, 10000); // 10s buffer for all async recovery logs
 });
 
