@@ -63,22 +63,28 @@ module.exports = {
         }
 
         // FEATURE 2: Link Detection (Priority 2)
+        // Check for links, but whitelist GIFs
         if (LINK_REGEX.test(content)) {
-          await message.delete().catch(() => {});
-          return sendWarning(message, `Send links in <#${CONFIG.LINKS_CHANNEL_ID}>`);
-        }
-
-        // FEATURE 3.1: GIF Link Detection (Priority 3.1)
-        if (GIF_REGEX.test(content)) {
-          await message.delete().catch(() => {});
-          return sendWarning(message, `Send media in <#${CONFIG.MEDIA_CHANNEL_ID}>`);
+          // If it's a GIF link, allow it
+          if (GIF_REGEX.test(content)) {
+             // Allow GIFs
+          } else {
+            await message.delete().catch(() => {});
+            return sendWarning(message, `Send links in <#${CONFIG.LINKS_CHANNEL_ID}>`);
+          }
         }
       }
 
-      // FEATURE 3.2: Media Restriction (Priority 3.2)
+      // FEATURE 3: Media Restriction (Priority 3)
       if (message.attachments.size > 0) {
-        await message.delete().catch(() => {});
-        return sendWarning(message, `Send media in <#${CONFIG.MEDIA_CHANNEL_ID}>`);
+        // Check if all attachments are GIFs
+        const hasNonGif = message.attachments.some(a => !a.contentType || !a.contentType.includes('gif'));
+        
+        if (hasNonGif) {
+          await message.delete().catch(() => {});
+          return sendWarning(message, `Send media in <#${CONFIG.MEDIA_CHANNEL_ID}>`);
+        }
+        // If they are all GIFs, allow it.
       }
     });
   }
