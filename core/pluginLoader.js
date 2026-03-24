@@ -40,7 +40,7 @@ module.exports = (client) => {
                   command.execute = async function(ctx, ...args) {
                     if (ctx.guildId) {
                       const config = await GuildConfig.findOne({ guildId: ctx.guildId });
-                      if (config && config.plugins && config.plugins[folder] === false) {
+                      if (config && config.plugins && config.plugins.get(folder) === false) {
                         return ctx.reply({ content: `The **${folder}** plugin is disabled in this server.`, ephemeral: true }).catch(() => {});
                       }
                     }
@@ -66,7 +66,7 @@ module.exports = (client) => {
               
               if (guildId) {
                 const config = await GuildConfig.findOne({ guildId: guildId }).catch(() => null);
-                if (config && config.plugins && config.plugins[folder] === false) return;
+                if (config && config.plugins && config.plugins.get(folder) === false) return;
               }
               return listener.apply(this, args);
             };

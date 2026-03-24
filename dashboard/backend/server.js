@@ -342,14 +342,8 @@ app.post("/api/plugins/toggle", express.json(), verifyGuildPermission, async (re
       config = new GuildConfig({ guildId });
     }
 
-    // Set the specific plugin toggle
-    if (!config.plugins) {
-      config.plugins = {};
-    }
-    
-    // We cannot just set config.plugins[plugin] = enabled easily if we don't specify it in the model schema as a Map,
-    // but we defined it explicitly, so we can do this.
-    config.plugins[plugin] = enabled;
+    // Set the specific plugin toggle via Mongoose Map .set()
+    config.plugins.set(plugin, enabled);
     
     await config.save();
     
