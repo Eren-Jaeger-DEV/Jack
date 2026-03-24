@@ -59,6 +59,9 @@ module.exports = {
         targetUser = targetUser.user;
       }
 
+      // Fix: Delete the command message so it doesn't get counted in the clear amount
+      await ctx.message.delete().catch(() => {});
+
     }
 
     /* SLASH ARGUMENT PARSING */
