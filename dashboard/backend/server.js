@@ -377,6 +377,48 @@ app.get("/api/guilds/:guildId/config", verifyGuildPermission, async (req, res) =
   }
 });
 
+app.put("/api/guilds/:guildId/config", express.json(), verifyGuildPermission, async (req, res) => {
+  const { guildId } = req.params;
+  const updates = req.body;
+
+  try {
+    const GuildConfig = require("../../bot/database/models/GuildConfig");
+    const config = await GuildConfig.findOneAndUpdate(
+      { guildId },
+      { $set: updates },
+      { new: true, upsert: true }
+    );
+    res.json(config);
+  } catch (err) {
+    console.error("Error updating config:", err);
+    res.status(500).json({ error: "Failed to update configuration" });
+  }
+});
+
+app.get("/api/guilds/:guildId/channels", verifyGuildPermission, (req, res) => {
+  const { guildId } = req.params;
+  const guild = bot.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const channels = guild.channels.cache
+    .filter(c => c.type === 0) // GuildText
+    .map(c => ({ id: c.id, name: c.name }));
+  
+  res.json(channels);
+});
+
+app.get("/api/guilds/:guildId/roles", verifyGuildPermission, (req, res) => {
+  const { guildId } = req.params;
+  const guild = bot.guilds.cache.get(guildId);
+  if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+  const roles = guild.roles.cache
+    .filter(r => r.name !== "@everyone")
+    .map(r => ({ id: r.id, name: r.name, color: r.hexColor }));
+  
+  res.json(roles);
+});
+
 /* STATS API */
 
 app.get("/api/guilds/:guildId/stats", verifyGuildPermission, async (req, res) => {

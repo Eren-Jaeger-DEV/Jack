@@ -11,6 +11,8 @@ import ClanManagement from './pages/ClanManagement'
 import Players from './pages/Players'
 import AdminLogs from './pages/AdminLogs'
 import DeletedPlayers from './pages/DeletedPlayers'
+import GeneralSettings from './pages/GeneralSettings'
+import RoleMapping from './pages/RoleMapping'
 import Sidebar from './components/Sidebar'
 import './index.css'
 
@@ -62,6 +64,8 @@ function App() {
               <Route path="/server/:id/plugins/:pluginName" element={user ? <PluginSettings /> : <Navigate to="/login" />} />
               <Route path="/server/:id/clan" element={user ? <ClanManagement /> : <Navigate to="/login" />} />
               <Route path="/server/:id/players" element={user ? <Players user={user} /> : <Navigate to="/login" />} />
+              <Route path="/server/:id/settings/general" element={user ? <GeneralSettings /> : <Navigate to="/login" />} />
+              <Route path="/server/:id/settings/roles" element={user ? <RoleMapping /> : <Navigate to="/login" />} />
               <Route path="/server/:id/logs" element={user ? <AdminLogs user={user} /> : <Navigate to="/login" />} />
               <Route path="/server/:id/trash" element={user ? <DeletedPlayers user={user} /> : <Navigate to="/login" />} />
             </Routes>

@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const { addLog } = require('../../utils/logger');
+const GuildConfig = require('../../bot/database/models/GuildConfig');
 
 const CONFIG = {
-  CHANNEL_ID: '1478790421369983179',
+  DEFAULT_CHANNEL_ID: '1478790421369983179',
   DATA_PATH: path.join(__dirname, 'data.json')
 };
 
@@ -33,7 +34,12 @@ function loadState() {
 
 async function verifyState(client) {
   try {
-    const channel = await client.channels.fetch(CONFIG.CHANNEL_ID).catch(() => null);
+    // For now, we sync with the default channel or the first one found in configs
+    let channelId = CONFIG.DEFAULT_CHANNEL_ID;
+    const config = await GuildConfig.findOne({ "channels.counting": { $exists: true, $ne: "" } });
+    if (config?.channels?.counting) channelId = config.channels.counting;
+
+    const channel = await client.channels.fetch(channelId).catch(() => null);
     if (!channel) return;
 
     const messages = await channel.messages.fetch({ limit: 50 });
@@ -44,13 +50,9 @@ async function verifyState(client) {
         if (/^\d+$/.test(content)) {
             const num = parseInt(content);
             if (!isNaN(num)) {
-                // If the channel says a higher number, trust the channel
                 if (num > 0) {
                     lastNumber = num;
-                    // Note: lastUserId initialization from history is less reliable due to webhooks
-                    // but it's okay, because the rule only checks 'twice in a row' 
-                    // which applies mostly to active sessions.
-                    addLog("Counting", `Synced to #${lastNumber}`);
+                    addLog("Counting", `Synced to #${lastNumber} in <#${channelId}>`);
                     break;
                 }
             }
@@ -84,12 +86,8 @@ async function getWebhook(channel) {
 
 module.exports = {
   load(client) {
-    // No immediate load log to keep start clean
-    
-    // Initial load from file
     loadState();
     
-    // Startup recovery after bot is ready
     if (client.isReady()) {
       verifyState(client);
     } else {
@@ -98,7 +96,12 @@ module.exports = {
 
     client.on('messageCreate', async (message) => {
       if (message.author.bot) return;
-      if (message.channelId !== CONFIG.CHANNEL_ID) return;
+      if (!message.guild) return;
+
+      const config = await GuildConfig.findOne({ guildId: message.guild.id }).catch(() => null);
+      const CHANNEL_ID = config?.channels?.counting || CONFIG.DEFAULT_CHANNEL_ID;
+
+      if (message.channelId !== CHANNEL_ID) return;
       if (!message.content || message.content.length === 0) return;
 
       const content = message.content.trim();
@@ -143,8 +146,6 @@ module.exports = {
       } catch (err) {
         console.error('[Counting] Webhook replacement error:', err);
       }
-      
-      console.log(`[Counting] Correct number: ${lastNumber} by ${message.author.username}`);
     });
   }
 };

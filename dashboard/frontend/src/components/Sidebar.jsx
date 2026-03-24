@@ -12,9 +12,10 @@ const Sidebar = () => {
     { name: 'Leveling', path: `/server/${id}/plugins/leveling`, icon: <TrendingUp size={20} /> },
     { name: 'Clan', path: `/server/${id}/clan`, icon: <Users size={20} /> },
     { name: 'Players', path: `/server/${id}/players`, icon: <User size={20} /> },
+    { name: 'General Settings', path: `/server/${id}/settings/general`, icon: <Settings size={20} /> },
+    { name: 'Role Mapping', path: `/server/${id}/settings/roles`, icon: <Shield size={20} /> },
     { name: 'Logs', path: `/server/${id}/logs`, icon: <Activity size={20} /> },
     { name: 'Trash', path: `/server/${id}/trash`, icon: <Trash2 size={20} /> },
-    { name: 'Settings', path: `/server/${id}/settings`, icon: <Settings size={20} />, disabled: true },
   ];
 
   return (

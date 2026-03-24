@@ -1,4 +1,5 @@
 const { prefixes } = require("../../config/prefixes");
+const GuildConfig = require("../database/models/GuildConfig");
 const Context = require("../structures/Context");
 const CommandUsage = require("../database/models/CommandUsage");
 const { setTemporaryPresence, getPresenceText } = require("../utils/presenceManager");
@@ -9,7 +10,16 @@ module.exports = async (message, client) => {
   if (message.author.bot) return;
   if (message.interaction) return; // Prevent slash + prefix collision
 
-  const prefix = prefixes.find(p =>
+  // Fetch guild config for custom prefix
+  const config = await GuildConfig.findOne({ guildId: message.guild.id }).catch(() => null);
+  const customPrefix = config?.prefix;
+
+  const allPrefixes = [...prefixes];
+  if (customPrefix && !allPrefixes.includes(customPrefix)) {
+    allPrefixes.unshift(customPrefix);
+  }
+
+  const prefix = allPrefixes.find(p =>
     message.content.toLowerCase().startsWith(p.toLowerCase())
   );
 
