@@ -10,14 +10,6 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
 });
-// Force load sodium for @discordjs/voice
-try { require('libsodium-wrappers'); } catch(e) {}
-try { 
-    globalThis.Davey = require("@snazzah/davey"); 
-    console.log('[DAVE] @snazzah/davey loaded successfully into globalThis');
-} catch(e) { 
-    console.error('[DAVE] Failed to load @snazzah/davey:', e.message); 
-}
 require("./bot/index");
 require("./dashboard/backend/server");
 

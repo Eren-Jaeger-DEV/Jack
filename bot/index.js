@@ -1,10 +1,4 @@
 require("dotenv").config({ quiet: true });
-try { 
-    global.Davey = require("@snazzah/davey").Davey; 
-    console.log('[DAVE] @snazzah/davey loaded successfully into global');
-} catch(e) { 
-    console.error('[DAVE] Failed to load @snazzah/davey:', e.message); 
-}
 
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
@@ -22,16 +16,6 @@ const client = new Client({
     GatewayIntentBits.GuildMembers
   ]
 });
-
-// Infect client with Davey to handle DAVE protocol (Discord Voice Encryption)
-if (global.Davey) {
-    try {
-        global.Davey.infect(client);
-        addLog("DAVE", "Client infected for voice encryption support");
-    } catch (err) {
-        console.error("❌ DAVE Infection Failed:", err.message);
-    }
-}
 
 client.commands = new Collection();
 

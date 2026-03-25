@@ -136,11 +136,6 @@ module.exports = {
         return emojiBrowserButtons(interaction);
       }
 
-      /* Music Buttons */
-      if (interaction.customId.startsWith("music_")) {
-        const controller = require("../../plugins/music/systems/controller");
-        return controller.handleInteraction(interaction);
-      }
 
       /* Ticket & other buttons */
       return buttonHandler(interaction);
