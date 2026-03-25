@@ -84,13 +84,19 @@ module.exports = (client) => {
     // Cache saving interval (30s as requested)
     setInterval(saveCache, 30000);
 
-    client.on(Events.ClientReady, async () => {
+    const init = async () => {
         console.log("[InviteTracker] Initializing invite cache...");
         for (const guild of client.guilds.cache.values()) {
             await cacheGuildInvites(guild);
         }
         console.log("[InviteTracker] Cache initialized.");
-    });
+    };
+
+    if (client.isReady()) {
+        init();
+    } else {
+        client.once(Events.ClientReady, init);
+    }
 
     client.on(Events.InviteCreate, (invite) => {
         if (!inviteCache.has(invite.guild.id)) inviteCache.set(invite.guild.id, new Map());
