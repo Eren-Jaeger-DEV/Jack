@@ -5,3 +5,4 @@ node_modules/
 cloudflared-bin/
 *.deb
 plugins/**/data.json
+data/*.json

@@ -37,6 +37,17 @@ module.exports = {
         // Silently ignore
       }
     }, 60 * 1000);
+    
+    /* ═══════════════════════════════════════════
+     *  REMINDER CHECKER — Every 30 minutes
+     * ═══════════════════════════════════════════ */
+    setInterval(async () => {
+      try {
+        await classificationService.sendClassificationReminders(client);
+      } catch (err) {
+        // Silently ignore
+      }
+    }, 30 * 60 * 1000);
 
     /* ═══════════════════════════════════════════
      *  BUTTON HANDLER — Classification buttons
@@ -100,7 +111,12 @@ module.exports = {
 
         // ── Discord Member ──
         if (type === 'discord') {
-          // No roles assigned
+          const result = await classificationService.classifyAsDiscordMember(guild, targetUserId);
+
+          if (!result.success) {
+            return interaction.reply({ content: `❌ ${result.error}`, ephemeral: true });
+          }
+
           await interaction.channel.send(
             `Welcome to the server, <@${targetUserId}>\nEnjoy your stay.`
           ).catch(() => {});

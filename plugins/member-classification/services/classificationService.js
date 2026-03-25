@@ -5,11 +5,15 @@
  */
 
 const NewbieTimer = require('../models/NewbieTimer');
+const AwaitingClassification = require('../models/AwaitingClassification');
 
 /* ── Constants ── */
 const CLASSIFICATION_CHANNEL_ID = '1341978656096129065';
 const CLAN_MEMBER_ROLE_ID       = '1477856665817714699';
 const NEWBIE_ROLE_ID            = '1484348917079478454';
+const DISCORD_MEMBER_ROLE_ID    = '1486182016415301763';
+const OWNER_ROLE_ID             = '1407978936276746251';
+const MANAGER_ROLE_ID           = '1477874246972604588';
 const NEWBIE_DURATION_DAYS      = 14;
 
 /**
@@ -38,8 +42,32 @@ async function classifyAsClanMember(guild, userId) {
 
   // Store persistent timer (14 days)
   await scheduleNewbieRemoval(guild.id, userId);
+  
+  // Cleanup awaiting list
+  await removeAwaitingClassification(guild.id, userId);
 
   return { success: true };
+}
+
+/**
+ * Classify a member as a Discord Member.
+ * Assigns Discord Member role.
+ */
+async function classifyAsDiscordMember(guild, userId) {
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member) return { success: false, error: 'Member not found in the server.' };
+  
+    const discordRole = guild.roles.cache.get(DISCORD_MEMBER_ROLE_ID);
+    if (discordRole && !member.roles.cache.has(DISCORD_MEMBER_ROLE_ID)) {
+      await member.roles.add(discordRole).catch(err => {
+        console.error(`[MemberClassification] Failed to add discord role to ${member.user.tag}:`, err.message);
+      });
+    }
+
+    // Cleanup awaiting list
+    await removeAwaitingClassification(guild.id, userId);
+  
+    return { success: true };
 }
 
 /**
@@ -59,6 +87,69 @@ async function scheduleNewbieRemoval(guildId, userId) {
   } catch (err) {
     console.error(`[MemberClassification] Failed to store newbie timer for ${userId}:`, err.message);
   }
+}
+
+/**
+ * Tracking for reminders.
+ */
+async function addAwaitingClassification(guildId, userId, messageId) {
+    try {
+        await AwaitingClassification.findOneAndUpdate(
+            { guildId, userId },
+            { guildId, userId, messageId, joinedAt: new Date(), lastRemindedAt: null },
+            { upsert: true, new: true }
+        );
+    } catch (err) {
+        console.error(`[MemberClassification] Failed to track unclassified user ${userId}:`, err.message);
+    }
+}
+
+async function removeAwaitingClassification(guildId, userId) {
+    try {
+        await AwaitingClassification.deleteOne({ guildId, userId });
+    } catch (err) {
+        console.error(`[MemberClassification] Failed to cleanup unclassified user ${userId}:`, err.message);
+    }
+}
+
+/**
+ * Send reminders every 30 mins for unclassified members.
+ */
+async function sendClassificationReminders(client) {
+    try {
+        const threshold = new Date(Date.now() - 30 * 60 * 1000);
+        const unclassified = await AwaitingClassification.find({
+            $or: [
+                { lastRemindedAt: null, joinedAt: { $lte: threshold } },
+                { lastRemindedAt: { $lte: threshold } }
+            ]
+        });
+
+        if (unclassified.length === 0) return;
+
+        console.log(`[MemberClassification] Sending reminders for ${unclassified.length} unclassified members.`);
+
+        for (const entry of unclassified) {
+            const guild = client.guilds.cache.get(entry.guildId);
+            if (!guild) continue;
+
+            const channel = guild.channels.cache.get(CLASSIFICATION_CHANNEL_ID);
+            if (!channel) continue;
+
+            // Ping owner and manager
+            const messageContent = `🚨 **Classification Reminder**\n` +
+                                 `<@${entry.userId}> has joined but has not been classified yet.\n` +
+                                 `Attention: <@&${OWNER_ROLE_ID}> <@&${MANAGER_ROLE_ID}>\n` +
+                                 `[Go to message](https://discord.com/channels/${entry.guildId}/${CLASSIFICATION_CHANNEL_ID}/${entry.messageId})`;
+
+            await channel.send(messageContent).catch(() => {});
+
+            entry.lastRemindedAt = new Date();
+            await entry.save();
+        }
+    } catch (err) {
+        console.error('[MemberClassification] Error sending reminders:', err.message);
+    }
 }
 
 /**
@@ -111,7 +202,11 @@ async function checkExpiredNewbies(client) {
 
 module.exports = {
   classifyAsClanMember,
+  classifyAsDiscordMember,
   scheduleNewbieRemoval,
+  addAwaitingClassification,
+  removeAwaitingClassification,
+  sendClassificationReminders,
   checkExpiredNewbies,
   CLASSIFICATION_CHANNEL_ID,
   CLAN_MEMBER_ROLE_ID,

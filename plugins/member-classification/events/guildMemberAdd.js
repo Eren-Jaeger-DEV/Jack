@@ -47,7 +47,10 @@ module.exports = {
           .setEmoji('👋')
       );
 
-      await channel.send({ embeds: [embed], components: [row] });
+      const message = await channel.send({ embeds: [embed], components: [row] });
+
+      // Track for reminders
+      await classificationService.addAwaitingClassification(member.guild.id, member.id, message.id);
 
       console.log(`[MemberClassification] Classification prompt sent for ${member.user.tag}`);
 

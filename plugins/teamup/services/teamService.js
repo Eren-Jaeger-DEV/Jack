@@ -191,6 +191,63 @@ class TeamService {
       $expr: { $lt: [{ $size: "$members" }, "$maxSize"] }
     }).sort({ createdAt: -1 });
   }
+
+  async deleteTeam(client, guild, team) {
+    try {
+      const channel = guild.channels.cache.get(team.channelId);
+      if (channel) {
+        const message = await channel.messages.fetch(team.messageId).catch(() => null);
+        if (message) await message.delete().catch(() => {});
+      }
+      await roleManager.removeRoleFromMany(guild, team.members);
+      await Team.deleteOne({ _id: team._id });
+      return { success: true };
+    } catch (err) {
+      console.error("[TeamUp] DeleteTeam error:", err.message);
+      return { success: false, message: err.message };
+    }
+  }
+
+  async leaveTeam(client, guild, userId) {
+    const team = await this.isInTeam(userId);
+    if (!team) return { success: false, message: "You are not in a team!" };
+
+    // If they are the leader
+    if (team.leaderId === userId) {
+      // If they are the only member, delete the team
+      if (team.members.length === 1) {
+        return await this.deleteTeam(client, guild, team);
+      } else {
+        // Transfer leadership
+        const newMembers = team.members.filter(m => m !== userId);
+        team.members = newMembers;
+        team.leaderId = newMembers[0]; // New leader is the next person
+        await team.save();
+        
+        await roleManager.removeRole(guild, userId);
+        await this.updateTeamEmbed(client, guild, team);
+
+        const channel = guild.channels.cache.get(team.channelId);
+        if (channel) {
+          channel.send(`🏃 <@${userId}> has left the team. Leadership transferred to <@${team.leaderId}>.`);
+        }
+        return { success: true, message: "Left team and transferred leadership." };
+      }
+    } else {
+      // Just a member
+      team.members = team.members.filter(m => m !== userId);
+      await team.save();
+
+      await roleManager.removeRole(guild, userId);
+      await this.updateTeamEmbed(client, guild, team);
+
+      const channel = guild.channels.cache.get(team.channelId);
+      if (channel) {
+        channel.send(`🏃 <@${userId}> has left the team.`);
+      }
+      return { success: true, message: "Left team successfully." };
+    }
+  }
 }
 
 module.exports = new TeamService();
