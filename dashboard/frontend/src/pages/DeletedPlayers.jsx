@@ -29,7 +29,7 @@ const DeletedPlayers = ({ user }) => {
   };
 
   useEffect(() => {
-    if (user?.isAdmin) {
+    if (user && user.roleLevel >= 2) {
       fetchDeletedPlayers();
     }
   }, [page, user]);

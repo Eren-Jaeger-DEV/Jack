@@ -10,7 +10,10 @@ const Servers = ({ user }) => {
 
   useEffect(() => {
     api.get('/guilds')
-      .then(res => setServers(res.data))
+      .then(res => {
+        console.log('Fetched servers:', res.data);
+        setServers(res.data);
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false))
   }, [])
@@ -29,8 +32,8 @@ const Servers = ({ user }) => {
       ) : (
         <div className="servers-grid">
           {servers.map(server => (
-            <ServerCard 
-              key={server.id} 
+            <ServerCard
+              key={server.id}
               id={server.id}
               name={server.name}
               iconUrl={server.iconUrl}

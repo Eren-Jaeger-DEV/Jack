@@ -21,9 +21,14 @@ app.use(cors({
     "https://devdashboard.mceclipsehub.online"
   ],
   credentials: true,
-  methods: ["GET","POST"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type"]
 }));
+
+app.use((req, res, next) => {
+  console.log(`[Request] ${req.method} ${req.url}`);
+  next();
+});
 
 /* SESSION */
 
@@ -222,27 +227,7 @@ app.get("/api/server", (req, res) => {
 
 /* AUTH MIDDLEWARE */
 
-const verifyGuildPermission = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not logged in" });
-  }
-
-  const guildId = req.params.guildId || req.body.guildId;
-  if (!guildId) return next(); // Skip if no guildId in params/body (let specific routes handle it)
-
-  // Verify user has MANAGE_GUILD (0x20)
-  const userGuild = (req.user.guilds || []).find(g => g.id === guildId);
-  if (!userGuild || (userGuild.permissions & 0x20) !== 0x20) {
-    return res.status(403).json({ error: "You do not have permission to manage this server." });
-  }
-
-  // Verify bot is in the guild
-  if (!bot.guilds.cache.has(guildId)) {
-    return res.status(404).json({ error: "Jack Bot is not present in this server." });
-  }
-
-  next();
-};
+const { verifyGuildPermission } = require("./middleware/guildAuth");
 
 /* GUILDS API */
 
@@ -315,12 +300,60 @@ app.get("/api/plugins", (req, res) => {
     return res.json([]);
   }
 
+  const PLUGIN_METADATA = {
+    admin: { category: "Moderation", icon: "Shield" },
+    audit: { category: "Moderation", icon: "Activity" },
+    moderation: { category: "Moderation", icon: "Gavel" },
+    'member-classification': { category: "Moderation", icon: "UserCheck" },
+    utility: { category: "Utility", icon: "Wrench" },
+    roles: { category: "Utility", icon: "UserPlus" },
+    emoji: { category: "Utility", icon: "Smile" },
+    sticker: { category: "Utility", icon: "Image" },
+    tempvc: { category: "Utility", icon: "Mic" },
+    channelManagement: { category: "Utility", icon: "Hash" },
+    triggers: { category: "Utility", icon: "Zap", hasSettings: true },
+    leveling: { category: "Engagement", icon: "TrendingUp", hasSettings: true },
+    counting: { category: "Engagement", icon: "Hash" },
+    'seasonal-synergy': { category: "Engagement", icon: "BarChart" },
+    clan: { category: "Engagement", icon: "Users", hasSettings: true },
+    'clan-battle': { category: "Engagement", icon: "Sword" },
+    fun: { category: "Fun", icon: "Gamepad" },
+    market: { category: "Fun", icon: "ShoppingCart" },
+    packs: { category: "Fun", icon: "Package" },
+    'foster-program': { category: "Fun", icon: "Heart" },
+    teamup: { category: "Fun", icon: "Users" },
+    'intra-match': { category: "Fun", icon: "Target" }
+  };
+
   const pluginFolders = fs.readdirSync(pluginsPath).filter(file => {
-    return fs.statSync(path.join(pluginsPath, file)).isDirectory();
+    const fullPath = path.join(pluginsPath, file);
+    return fs.statSync(fullPath).isDirectory() && fs.existsSync(path.join(fullPath, "plugin.json"));
   });
 
   const plugins = pluginFolders.map(folder => {
-    return { name: folder };
+    const manifestPath = path.join(pluginsPath, folder, "plugin.json");
+    const meta = PLUGIN_METADATA[folder] || { category: "Miscellaneous", icon: "Package" };
+    try {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+      return {
+        id: folder,
+        name: manifest.name || folder,
+        description: manifest.description || "No description provided.",
+        version: manifest.version || "1.0.0",
+        category: meta.category,
+        icon: meta.icon,
+        hasSettings: meta.hasSettings || false
+      };
+    } catch (e) {
+      return { 
+        id: folder, 
+        name: folder, 
+        description: "Error reading plugin manifest.",
+        category: meta.category,
+        icon: meta.icon,
+        hasSettings: false
+      };
+    }
   });
 
   res.json(plugins);
@@ -389,28 +422,42 @@ app.put("/api/guilds/:guildId/config", express.json(), verifyGuildPermission, as
   }
 });
 
-app.get("/api/guilds/:guildId/channels", verifyGuildPermission, (req, res) => {
+app.get("/api/guilds/:guildId/channels", verifyGuildPermission, async (req, res) => {
   const { guildId } = req.params;
   const guild = bot.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
-  const channels = guild.channels.cache
-    .filter(c => c.type === 0) // GuildText
-    .map(c => ({ id: c.id, name: c.name }));
-  
-  res.json(channels);
+  try {
+    const fetchedChannels = await guild.channels.fetch();
+    const channels = fetchedChannels
+      .filter(c => c.type === 0) // GuildText
+      .map(c => ({ id: c.id, name: c.name }));
+    
+    console.log(`[API] Fetched ${fetchedChannels.size} channels for guild ${guildId}, filtered to ${channels.length} text channels.`);
+    res.json(channels);
+  } catch (err) {
+    console.error("Error fetching channels:", err);
+    res.status(500).json({ error: "Failed to fetch channels from Discord" });
+  }
 });
 
-app.get("/api/guilds/:guildId/roles", verifyGuildPermission, (req, res) => {
+app.get("/api/guilds/:guildId/roles", verifyGuildPermission, async (req, res) => {
   const { guildId } = req.params;
   const guild = bot.guilds.cache.get(guildId);
   if (!guild) return res.status(404).json({ error: "Guild not found" });
 
-  const roles = guild.roles.cache
-    .filter(r => r.name !== "@everyone")
-    .map(r => ({ id: r.id, name: r.name, color: r.hexColor }));
-  
-  res.json(roles);
+  try {
+    const fetchedRoles = await guild.roles.fetch();
+    const roles = fetchedRoles
+      .filter(r => r.name !== "@everyone")
+      .map(r => ({ id: r.id, name: r.name, color: r.hexColor }));
+    
+    console.log(`[API] Fetched ${fetchedRoles.size} roles for guild ${guildId}, filtered to ${roles.length} roles.`);
+    res.json(roles);
+  } catch (err) {
+    console.error("Error fetching roles:", err);
+    res.status(500).json({ error: "Failed to fetch roles from Discord" });
+  }
 });
 
 /* STATS API */
@@ -426,7 +473,8 @@ app.get("/api/guilds/:guildId/stats", verifyGuildPermission, async (req, res) =>
     // Count active plugins
     let activePlugins = 0;
     if (config && config.plugins) {
-      activePlugins = Object.values(config.plugins).filter(v => v === true).length;
+      // config.plugins is a Map, convert to values array
+      activePlugins = Array.from(config.plugins.values()).filter(v => v === true).length;
     }
 
     res.json({
@@ -544,7 +592,14 @@ app.use("/api", logsRoute);
 const insightsRoute = require("./routes/insights");
 app.use("/api", insightsRoute);
 
+/* TRIGGER ENDPOINT */
+
+const triggersRoute = require("./routes/triggers");
+app.use("/api", triggersRoute);
+
 /* START SERVER */
+
+module.exports = { app, verifyGuildPermission };
 
 app.listen(3000, () => {
   // Silenced

@@ -2,8 +2,20 @@ import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import { LayoutDashboard, Zap, Shield, TrendingUp, Settings, Users, User, Activity, Trash2 } from 'lucide-react';
 
-const Sidebar = () => {
-  const { id } = useParams();
+const Sidebar = ({ id: propId }) => {
+  const { id: paramId } = useParams();
+  let id = propId || paramId;
+  
+  // Last resort failsafe: parse from URL
+  if (!id || id === 'undefined') {
+    const parts = window.location.pathname.split('/');
+    const serverIdx = parts.indexOf('server');
+    if (serverIdx !== -1 && parts[serverIdx + 1]) {
+      id = parts[serverIdx + 1];
+    }
+  }
+  
+  console.log('Sidebar ID:', id);
 
   const navItems = [
     { name: 'Overview', path: `/server/${id}`, icon: <LayoutDashboard size={20} /> },
@@ -14,6 +26,7 @@ const Sidebar = () => {
     { name: 'Players', path: `/server/${id}/players`, icon: <User size={20} /> },
     { name: 'General Settings', path: `/server/${id}/settings/general`, icon: <Settings size={20} /> },
     { name: 'Role Mapping', path: `/server/${id}/settings/roles`, icon: <Shield size={20} /> },
+    { name: 'Auto Triggers', path: `/server/${id}/triggers`, icon: <Zap size={20} /> },
     { name: 'Logs', path: `/server/${id}/logs`, icon: <Activity size={20} /> },
     { name: 'Trash', path: `/server/${id}/trash`, icon: <Trash2 size={20} /> },
   ];

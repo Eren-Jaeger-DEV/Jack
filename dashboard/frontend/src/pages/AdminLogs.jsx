@@ -50,12 +50,12 @@ const AdminLogs = ({ user }) => {
   }, [actionFilter, adminFilter]);
 
   useEffect(() => {
-    if (user?.isAdmin) {
+    if (user && user.roleLevel >= 2) {
       fetchLogs();
     }
   }, [page, actionFilter, adminFilter, user]);
 
-  if (!user || !user.isAdmin) {
+  if (!user || user.roleLevel < 2) {
     return (
       <div className="page-container fade-in">
         <h1 className="page-title">Access Denied</h1>

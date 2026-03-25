@@ -38,7 +38,10 @@ module.exports = {
     if (interaction.isChatInputCommand()) {
 
       const command = client.commands.get(interaction.commandName);
-      if (!command) return;
+      if (!command) {
+        console.warn(`[Interaction] Command not found: ${interaction.commandName}`);
+        return;
+      }
 
       const presenceText = getPresenceText(interaction.commandName);
       setTemporaryPresence(client, presenceText);
@@ -131,6 +134,12 @@ module.exports = {
       /* Emoji Vault Buttons */
       if (interaction.customId.startsWith("browser_add_")) {
         return emojiBrowserButtons(interaction);
+      }
+
+      /* Music Buttons */
+      if (interaction.customId.startsWith("music_")) {
+        const controller = require("../../plugins/music/systems/controller");
+        return controller.handleInteraction(interaction);
       }
 
       /* Ticket & other buttons */

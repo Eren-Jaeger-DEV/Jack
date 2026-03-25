@@ -55,12 +55,21 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
 (async () => {
   try {
-    console.log(`\n🚀 Deploying ${commands.length} commands globally...`);
+    const guildId = process.env.GUILD_ID || "1341978655437619250"; // Use default from logic if not in env
 
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands }
-    );
+    if (guildId) {
+      console.log(`🚀 Deploying ${commands.length} commands to guild: ${guildId}`);
+      await rest.put(
+        Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
+        { body: commands }
+      );
+    } else {
+      console.log(`🚀 Deploying ${commands.length} commands globally...`);
+      await rest.put(
+        Routes.applicationCommands(process.env.CLIENT_ID),
+        { body: commands }
+      );
+    }
 
     console.log('✅ All slash commands registered successfully.');
   } catch (error) {

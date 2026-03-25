@@ -13,7 +13,9 @@ import AdminLogs from './pages/AdminLogs'
 import DeletedPlayers from './pages/DeletedPlayers'
 import GeneralSettings from './pages/GeneralSettings'
 import RoleMapping from './pages/RoleMapping'
+import Triggers from './pages/Triggers'
 import Sidebar from './components/Sidebar'
+import ServerLayout from './layouts/ServerLayout'
 import './index.css'
 
 function App() {
@@ -52,24 +54,26 @@ function App() {
         )}
 
         <div className="layout-content">
-          {user && <Sidebar />}
-          <main className="main-content">
-            <Routes>
-              <Route path="/" element={user ? <Navigate to="/servers" /> : <Navigate to="/login" />} />
-              <Route path="/login" element={!user ? <Login /> : <Navigate to="/servers" />} />
-              <Route path="/servers" element={user ? <Servers user={user} /> : <Navigate to="/login" />} />
-              <Route path="/server/:id" element={user ? <ServerOverview /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/plugins" element={user ? <Plugins /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/plugins/leveling" element={user ? <LevelingSettings /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/plugins/:pluginName" element={user ? <PluginSettings /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/clan" element={user ? <ClanManagement /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/players" element={user ? <Players user={user} /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/settings/general" element={user ? <GeneralSettings /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/settings/roles" element={user ? <RoleMapping /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/logs" element={user ? <AdminLogs user={user} /> : <Navigate to="/login" />} />
-              <Route path="/server/:id/trash" element={user ? <DeletedPlayers user={user} /> : <Navigate to="/login" />} />
-            </Routes>
-          </main>
+          <Routes>
+            <Route path="/" element={user ? <Navigate to="/servers" /> : <Navigate to="/login" />} />
+            <Route path="/login" element={!user ? <Login /> : <Navigate to="/servers" />} />
+            <Route path="/servers" element={user ? <Servers user={user} /> : <Navigate to="/login" />} />
+            
+            {/* Server Specific Routes with Sidebar */}
+            <Route path="/server/:id" element={user ? <ServerLayout /> : <Navigate to="/login" />}>
+              <Route index element={<ServerOverview />} />
+              <Route path="plugins" element={<Plugins />} />
+              <Route path="plugins/leveling" element={<LevelingSettings />} />
+              <Route path="plugins/:pluginName" element={<PluginSettings />} />
+              <Route path="clan" element={<ClanManagement />} />
+              <Route path="players" element={<Players user={user} />} />
+              <Route path="triggers" element={<Triggers />} />
+              <Route path="settings/general" element={<GeneralSettings />} />
+              <Route path="settings/roles" element={<RoleMapping />} />
+              <Route path="logs" element={<AdminLogs user={user} />} />
+              <Route path="trash" element={<DeletedPlayers user={user} />} />
+            </Route>
+          </Routes>
         </div>
       </div>
     </Router>

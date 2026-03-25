@@ -1,0 +1,7 @@
+{
+  "name": "music",
+  "version": "1.0.0",
+  "description": "High-quality music playback with autoplay, smart queue, and buttons-based controls",
+  "main": "index.js",
+  "author": "Jack Dev"
+}
