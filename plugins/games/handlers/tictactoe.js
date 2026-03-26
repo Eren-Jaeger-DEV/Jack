@@ -57,7 +57,9 @@ const BTN_PREFIX = 'ttt_';
  *    players : [userId, userId],   // [0] = X, [1] = O
  *    turn    : 0 | 1,              // index into players[]
  *    board   : Array(9),           // null | "X" | "O"
- *    active  : boolean
+ *    active  : boolean,
+ *    timeout : NodeJS.Timeout | null,
+ *    messageId : string | null      // to re-fetch and disable buttons on timeout
  *  }
  * ══════════════════════════════════════════════════════════════════════════ */
 
@@ -167,9 +169,54 @@ function buildEmbed(game, status, winnerId = null) {
     .setColor(
       status === 'win'  ? 0x57F287 :  // green
       status === 'draw' ? 0x95A5A6 :  // grey
+      status === 'timedout' ? 0xED4245 : // red
                           0x5865F2     // blurple (playing)
     )
-    .setFooter({ text: 'Use the buttons below to make your move!' });
+    .setFooter({ text: status === 'timedout' ? 'This game has expired due to inactivity.' : 'Use the buttons below to make your move!' });
+}
+
+/**
+ * Handle game expiration after 10 minutes of inactivity.
+ * @param {string} channelId
+ * @param {import('discord.js').Client} client
+ */
+async function setGameTimeout(channelId, client) {
+  const game = games.get(channelId);
+  if (!game) return;
+
+  // Clear existing timeout if any
+  if (game.timeout) clearTimeout(game.timeout);
+
+  // Set new timeout for 10 minutes
+  game.timeout = setTimeout(async () => {
+    const freshGame = games.get(channelId);
+    if (!freshGame || !freshGame.active) return;
+
+    freshGame.active = false;
+    games.delete(channelId);
+
+    try {
+      const channel = await client.channels.fetch(channelId).catch(() => null);
+      if (!channel) return;
+
+      const message = freshGame.messageId 
+        ? await channel.messages.fetch(freshGame.messageId).catch(() => null)
+        : null;
+
+      const timeoutEmbed = buildEmbed(freshGame, 'timedout');
+      const disabledGrid = buildGrid(channelId, freshGame.board, true);
+
+      if (message && message.editable) {
+        await message.edit({
+          content: '⏰ **Game Timed Out**',
+          embeds: [timeoutEmbed],
+          components: disabledGrid
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.error('[TicTacToe] Timeout cleanup error:', err.message);
+    }
+  }, 10 * 60 * 1000); // 10 minutes
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -183,8 +230,9 @@ function buildEmbed(game, status, winnerId = null) {
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  * @param {import('discord.js').User} challenger — Player 1 (X)
  * @param {import('discord.js').User} opponent   — Player 2 (O)
+ * @param {import('discord.js').Client} client
  */
-async function startGame(interaction, challenger, opponent) {
+async function startGame(interaction, challenger, opponent, client) {
   const channelId = interaction.channelId;
 
   // ── Concurrency guard ──────────────────────────────────────────────────
@@ -201,17 +249,22 @@ async function startGame(interaction, challenger, opponent) {
     players : [challenger.id, opponent.id], // [0]=X, [1]=O
     turn    : 0,
     board   : Array(9).fill(null),
-    active  : true
+    active  : true,
+    timeout : null,
+    messageId : null
   };
 
   games.set(channelId, game);
+  setGameTimeout(channelId, client);
 
   // ── Send initial board ─────────────────────────────────────────────────
   try {
-    await interaction.reply({
+    const msg = await interaction.reply({
       embeds     : [buildEmbed(game, 'playing')],
-      components : buildGrid(channelId, game.board)
+      components : buildGrid(channelId, game.board),
+      fetchReply : true
     });
+    game.messageId = msg.id;
   } catch (err) {
     // If the initial reply fails, clean up so the channel isn't stuck
     games.delete(channelId);
@@ -300,6 +353,7 @@ function registerHandler(client) {
       const winnerId = game.players[game.turn]; // the player who just moved
 
       game.active = false;
+      if (game.timeout) clearTimeout(game.timeout);
       games.delete(channelId); // clean up after game ends
 
       return interaction.update({
@@ -313,6 +367,7 @@ function registerHandler(client) {
     // ── Check for draw ────────────────────────────────────────────────────
     if (isBoardFull(game.board)) {
       game.active = false;
+      if (game.timeout) clearTimeout(game.timeout);
       games.delete(channelId);
 
       return interaction.update({
@@ -325,6 +380,9 @@ function registerHandler(client) {
 
     // ── Advance turn ──────────────────────────────────────────────────────
     game.turn = game.turn === 0 ? 1 : 0;
+
+    // ── Refresh Timeout ───────────────────────────────────────────────────
+    setGameTimeout(channelId, interaction.client);
 
     // ── Update board message ──────────────────────────────────────────────
     return interaction.update({

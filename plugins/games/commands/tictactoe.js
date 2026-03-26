@@ -55,6 +55,6 @@ module.exports = {
     }
 
     // Delegate game creation to the shared handler (which owns the state Map)
-    await startGame(interaction, challenger, opponent);
+    await startGame(interaction, challenger, opponent, ctx.client);
   }
 };
