@@ -1,0 +1,6 @@
+{
+  "name": "games",
+  "version": "1.0.0",
+  "description": "Mini-games plugin — TicTacToe and more",
+  "main": "index.js"
+}
