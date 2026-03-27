@@ -100,7 +100,6 @@ async function runSync(client) {
     const messages = await fetchAllMessages(thread);
 
     for (const msg of messages) {
-      if (msg.author.bot) continue;
       if (msg.system) continue;
 
       const cardData = parseCard(msg);
