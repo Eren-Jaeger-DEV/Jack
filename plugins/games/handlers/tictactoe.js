@@ -297,6 +297,10 @@ async function handleAIMove(channelId, client) {
   const winner = checkWinner(freshGame.board);
   const isDraw = !winner && isBoardFull(freshGame.board);
 
+  let status = 'playing';
+  let winnerId = null;
+  let gifUrl = null;
+
   if (winner || isDraw) {
     freshGame.active = false;
     if (freshGame.timeout) clearTimeout(freshGame.timeout);

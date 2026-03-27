@@ -33,9 +33,9 @@ module.exports = async function screenshotHandler(message) {
   );
 
   if (player.isManual) {
-    message.reply(`✅ Screenshot saved to unlinked profile (**${player.ign}**).`);
+    message.reply(`✅ Screenshot saved to unlinked profile (**${player.ign}**).`).catch(() => {});
   } else {
-    message.reply("✅ Screenshot saved to your player profile.");
+    message.reply("✅ Screenshot saved to your player profile.").catch(() => {});
   }
 
 };
