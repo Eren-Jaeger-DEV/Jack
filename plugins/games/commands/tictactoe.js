@@ -13,6 +13,7 @@ const { startGame } = require('../handlers/tictactoe');
 
 module.exports = {
   name: 'tictactoe',
+  aliases: ['ttt'],
   category: 'games',
   description: 'Challenge another user to a game of TicTacToe',
   usage: '/tictactoe [user]  |  j tictactoe [user]',
