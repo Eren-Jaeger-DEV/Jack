@@ -48,6 +48,27 @@ const SYMBOLS = ['❌', '⭕'];
 // Button prefix — must be unique across all plugins to avoid routing conflicts
 const BTN_PREFIX = 'ttt_';
 
+// Roasts and GIFs for winners
+const ROASTS = [
+  "You play like your internet is powered by a hamster wheel.",
+  "I've seen better moves in a game of Solitaire.",
+  "My AI brain just lost a few neurons watching that.",
+  "You're living proof that even a broken clock is right twice a day.",
+  "Is your monitor even turned on?",
+  "I would roast you, but my mom told me not to burn trash.",
+  "You're the reason the gene pool needs a lifeguard.",
+  "If I wanted to kill myself, I'd climb your ego and jump to your IQ.",
+  "I'm not saying you're bad, but I've seen better moves in a cemetery.",
+  "Your gameplay is like a Windows update: slow, annoying, and nobody asked for it."
+];
+
+const WIN_GIFS = [
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/AJwnLEBLslxg3TPY1o/giphy.gif", // Supa hot fire
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pQmWjYrz39YAg/giphy.gif", // Ohhh
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bu4G19uhzLTfTUs/giphy.gif", // Savage
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/KeM694E2Ollf5V9fU7/giphy.gif"  // L
+];
+
 /* ══════════════════════════════════════════════════════════════════════════
  *  IN-MEMORY STATE
  *  Map<channelId, GameState>
@@ -153,7 +174,19 @@ function buildEmbed(game, status, winnerId = null) {
 
   if (status === 'win') {
     const winSymbol = game.players.indexOf(winnerId) === 0 ? SYMBOLS[0] : SYMBOLS[1];
-    description = `🏆 **<@${winnerId}> wins!** ${winSymbol}\n\n<@${p1Id}> ❌  vs  ⭕ <@${p2Id}>`;
+    const roast = ROASTS[Math.floor(Math.random() * ROASTS.length)];
+    const gif = WIN_GIFS[Math.floor(Math.random() * WIN_GIFS.length)];
+
+    description = `🏆 **<@${winnerId}> wins!** ${winSymbol}\n\n> *"${roast}"*\n\n<@${p1Id}> ❌  vs  ⭕ <@${p2Id}>`;
+    
+    const embed = new EmbedBuilder()
+      .setTitle('🎮 TicTacToe: Game Over!')
+      .setDescription(description)
+      .setImage(gif)
+      .setColor(0x57F287) // green
+      .setFooter({ text: 'Better luck next time!' });
+    
+    return embed;
   } else if (status === 'draw') {
     description = `🤝 **It's a draw!**\n\n<@${p1Id}> ❌  vs  ⭕ <@${p2Id}>`;
   } else {
