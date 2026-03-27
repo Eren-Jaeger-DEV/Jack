@@ -62,12 +62,7 @@ const ROASTS = [
   "Your gameplay is like a Windows update: slow, annoying, and nobody asked for it."
 ];
 
-const WIN_GIFS = [
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/AJwnLEBLslxg3TPY1o/giphy.gif", // Supa hot fire
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pQmWjYrz39YAg/giphy.gif", // Ohhh
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bu4G19uhzLTfTUs/giphy.gif", // Savage
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3N5enZ6emZ5emV6Znp5emZ5emZ5emZ5emZ5emZ5emZ5emZ5emZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/KeM694E2Ollf5V9fU7/giphy.gif"  // L
-];
+const WIN_GIFS = []; // Legacy, replaced by dynamic fetching
 
 /* ══════════════════════════════════════════════════════════════════════════
  *  IN-MEMORY STATE
@@ -163,11 +158,12 @@ function buildGrid(channelId, board, disabled = false) {
  * Build the game embed displaying current status.
  *
  * @param {object} game       — game state object
- * @param {"playing"|"win"|"draw"} status
+ * @param {"playing"|"win"|"draw"|"timedout"} status
  * @param {string} [winnerId] — Discord user ID of winner (if status === "win")
+ * @param {string} [gifUrl]   — Dynamic GIF from nekos.best
  * @returns {EmbedBuilder}
  */
-function buildEmbed(game, status, winnerId = null) {
+function buildEmbed(game, status, winnerId = null, gifUrl = null) {
   const [p1Id, p2Id] = game.players;
 
   let description;
@@ -175,16 +171,16 @@ function buildEmbed(game, status, winnerId = null) {
   if (status === 'win') {
     const winSymbol = game.players.indexOf(winnerId) === 0 ? SYMBOLS[0] : SYMBOLS[1];
     const roast = ROASTS[Math.floor(Math.random() * ROASTS.length)];
-    const gif = WIN_GIFS[Math.floor(Math.random() * WIN_GIFS.length)];
 
     description = `🏆 **<@${winnerId}> wins!** ${winSymbol}\n\n> *"${roast}"*\n\n<@${p1Id}> ❌  vs  ⭕ <@${p2Id}>`;
     
     const embed = new EmbedBuilder()
       .setTitle('🎮 TicTacToe: Game Over!')
       .setDescription(description)
-      .setImage(gif)
       .setColor(0x57F287) // green
       .setFooter({ text: 'Better luck next time!' });
+    
+    if (gifUrl) embed.setImage(gifUrl);
     
     return embed;
   } else if (status === 'draw') {
@@ -301,15 +297,23 @@ async function handleAIMove(channelId, client) {
   const winner = checkWinner(freshGame.board);
   const isDraw = !winner && isBoardFull(freshGame.board);
 
-  let status = 'playing';
-  let winnerId = null;
-
   if (winner || isDraw) {
     freshGame.active = false;
     if (freshGame.timeout) clearTimeout(freshGame.timeout);
     games.delete(channelId);
     status = winner ? 'win' : 'draw';
     winnerId = winner ? freshGame.players[freshGame.turn] : null;
+
+    // Fetch dynamic GIF from nekos.best for winner
+    if (status === 'win') {
+      try {
+        const categories = ['smug', 'happy', 'laugh', 'dance'];
+        const cat = categories[Math.floor(Math.random() * categories.length)];
+        const res = await fetch(`https://nekos.best/api/v2/${cat}`);
+        const data = await res.json();
+        gifUrl = data?.results?.[0]?.url;
+      } catch {}
+    }
   } else {
     freshGame.turn = freshGame.turn === 0 ? 1 : 0;
     setGameTimeout(channelId, client);
@@ -326,7 +330,7 @@ async function handleAIMove(channelId, client) {
 
     if (message && message.editable) {
       await message.edit({
-        embeds: [buildEmbed(freshGame, status, winnerId)],
+        embeds: [buildEmbed(freshGame, status, winnerId, gifUrl)],
         components: buildGrid(channelId, freshGame.board, !freshGame.active)
       }).catch(() => {});
     }
@@ -516,8 +520,18 @@ function registerHandler(client) {
       if (game.timeout) clearTimeout(game.timeout);
       games.delete(channelId); // clean up after game ends
 
+      // Fetch dynamic GIF from nekos.best for winner
+      let gifUrl = null;
+      try {
+        const categories = ['smug', 'happy', 'laugh', 'dance'];
+        const cat = categories[Math.floor(Math.random() * categories.length)];
+        const res = await fetch(`https://nekos.best/api/v2/${cat}`);
+        const data = await res.json();
+        gifUrl = data?.results?.[0]?.url;
+      } catch {}
+
       return interaction.update({
-        embeds     : [buildEmbed(game, 'win', winnerId)],
+        embeds     : [buildEmbed(game, 'win', winnerId, gifUrl)],
         components : buildGrid(channelId, game.board, true) // all disabled
       }).catch(err => {
         if (err?.code !== 10062) console.error('[TicTacToe] Update error (win):', err.message);
