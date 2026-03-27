@@ -107,7 +107,7 @@ router.patch("/player/:id", requireRole("admin"), async (req, res) => {
     const updatedPlayer = await Player.findOneAndUpdate(
       { discordId: req.params.id },
       { $set: updates },
-      { new: true } // Return the updated document
+      { returnDocument: 'after' } // Return the updated document
     ).lean();
 
     // Log the activity
@@ -135,7 +135,7 @@ router.delete("/player/:id", requireRole("manager"), async (req, res) => {
     const deletedPlayer = await Player.findOneAndUpdate(
       { discordId: req.params.id, isDeleted: false },
       { isDeleted: true },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!deletedPlayer) {
@@ -195,7 +195,7 @@ router.post("/player/:id/restore", requireRole("admin"), async (req, res) => {
     const restoredPlayer = await Player.findOneAndUpdate(
       { discordId: req.params.id, isDeleted: true },
       { isDeleted: false },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!restoredPlayer) {

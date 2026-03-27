@@ -81,7 +81,7 @@ async function scheduleNewbieRemoval(guildId, userId) {
     await NewbieTimer.findOneAndUpdate(
       { guildId, userId },
       { guildId, userId, assignedAt: now, expiresAt },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     console.log(`[MemberClassification] Newbie timer set for ${userId}, expires ${expiresAt.toISOString()}`);
   } catch (err) {
@@ -97,7 +97,7 @@ async function addAwaitingClassification(guildId, userId, messageId) {
         await AwaitingClassification.findOneAndUpdate(
             { guildId, userId },
             { guildId, userId, messageId, joinedAt: new Date(), lastRemindedAt: null },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
     } catch (err) {
         console.error(`[MemberClassification] Failed to track unclassified user ${userId}:`, err.message);

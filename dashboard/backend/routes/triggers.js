@@ -31,7 +31,7 @@ router.put('/guilds/:guildId/triggers/:id', express.json(), verifyGuildPermissio
   const { id } = req.params;
   const data = req.body;
   try {
-    const trigger = await Trigger.findByIdAndUpdate(id, data, { new: true });
+    const trigger = await Trigger.findByIdAndUpdate(id, data, { returnDocument: 'after' });
     res.json(trigger);
   } catch (err) {
     console.error('[Triggers API Error]:', err);

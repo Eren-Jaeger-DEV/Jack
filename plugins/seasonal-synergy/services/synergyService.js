@@ -35,7 +35,7 @@ async function endSeason(guildId) {
   return Season.findOneAndUpdate(
     { guildId, active: true },
     { active: false },
-    { new: true }
+    { returnDocument: 'after' }
   );
 }
 

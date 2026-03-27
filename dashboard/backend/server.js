@@ -413,7 +413,7 @@ app.put("/api/guilds/:guildId/config", express.json(), verifyGuildPermission, as
     const config = await GuildConfig.findOneAndUpdate(
       { guildId },
       { $set: updates },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
     res.json(config);
   } catch (err) {

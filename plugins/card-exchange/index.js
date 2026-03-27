@@ -18,6 +18,9 @@ module.exports = {
   name: 'card-exchange',
 
   async load(client) {
+    // Increase max listeners early to prevent memory leak warnings from multiple plugins
+    client.setMaxListeners(25);
+
     // Wait until Discord is ready before touching channels
     if (!client.isReady()) {
       client.once('ready', () => this.setup(client));
@@ -27,9 +30,6 @@ module.exports = {
   },
 
   async setup(client) {
-    // Increase max listeners to prevent memory leak warnings from multiple plugins
-    client.setMaxListeners(25);
-
     // 1. Ensure panel exists on startup
     await ensurePanel(client);
 

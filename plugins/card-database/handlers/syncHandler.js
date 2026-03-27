@@ -113,7 +113,7 @@ async function runSync(client) {
       const doc = await Card.findOneAndUpdate(
         { name: cardData.name, category: categoryName },
         { $set: { rarity: cardData.rarity, image: cardData.image } },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
 
       processedIds.push(doc._id);

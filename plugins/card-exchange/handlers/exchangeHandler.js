@@ -347,8 +347,14 @@ async function handleInterested(interaction) {
 }
 
 /* ─── Main Router ─────────────────────────────────────────────────────────── */
+let _handler = null;
+
 function registerHandler(client) {
-  client.on('interactionCreate', async interaction => {
+  if (_handler) {
+    client.removeListener('interactionCreate', _handler);
+  }
+
+  _handler = async interaction => {
     try {
       if (interaction.isButton()) {
         if (interaction.customId === 'cex_post') return handlePostButton(interaction);
@@ -361,9 +367,15 @@ function registerHandler(client) {
       }
       if (interaction.isModalSubmit() && interaction.customId === 'cex_modal_code') return handleCodeModal(interaction);
     } catch (err) {
-      console.error('[CardExchange] Unhandled interaction error:', err.message);
+      console.error('[CardExchange] Interaction error:', err.message);
+      // Optional: send error to user if they are the reason
+      if (err.message.includes('Invalid Form Body')) {
+        console.error('[CardExchange] Payload details:', JSON.stringify(err.requestBody?.json?.data, null, 2));
+      }
     }
-  });
+  };
+
+  client.on('interactionCreate', _handler);
 }
 
 module.exports = { registerHandler, activeExchanges };

@@ -39,7 +39,7 @@ async function createRegistration(guildId, threadId, announceMessageId) {
  * @param {Date} date
  */
 async function setEndTime(regId, date) {
-  return IntraRegistration.findByIdAndUpdate(regId, { endTime: date }, { new: true });
+  return IntraRegistration.findByIdAndUpdate(regId, { endTime: date }, { returnDocument: 'after' });
 }
 
 /**
@@ -94,7 +94,7 @@ async function addParticipant(regId, discordId, ign) {
  * @param {string} regId
  */
 async function closeRegistration(regId) {
-  return IntraRegistration.findByIdAndUpdate(regId, { active: false }, { new: true });
+  return IntraRegistration.findByIdAndUpdate(regId, { active: false }, { returnDocument: 'after' });
 }
 
 /**
