@@ -55,7 +55,7 @@ async function fetchAllMessages(thread) {
 }
 
 /**
- * Parse a card message → { name, rarity, image } or null.
+ * Parse a card message → { name, image } or null.
  */
 function parseCard(message) {
   const content = message.content || '';

@@ -6,10 +6,10 @@
  * 
  * Flow:
  *  Step 1 → Category select    (wanted card)
- *  Step 2 → Card select        (wanted card — shows rarity in description)
- *  Step 3 → Offer multi-select (max 3 — shows rarity in labels)
+ *  Step 2 → Card select        (wanted card)
+ *  Step 3 → Offer multi-select (max 3)
  *  Step 4 → Optional code modal
- *  Step 5 → Post exchange embed publicly (shows wanted card image preview)
+ *  Step 5 → Post exchange embed publicly
  */
 
 'use strict';
@@ -28,7 +28,7 @@ const {
   ChannelType
 } = require('discord.js');
 
-const { getCards, getCache, getCardRarity, getCardImage } = require('../../../utils/cardManager');
+const { getCards, getCache, getCardImage } = require('../../../utils/cardManager');
 const CardExchange = require('../../../bot/database/models/CardExchange');
 const CardExchangeThread = require('../../../bot/database/models/CardExchangeThread');
 

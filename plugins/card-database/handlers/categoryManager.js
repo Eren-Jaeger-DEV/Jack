@@ -38,7 +38,7 @@ function buildCategoryPanel(categoryName) {
     .setTitle(`📁 ${categoryName}`)
     .setDescription(
       '**Add cards to this category using the button below.**\n\n' +
-      '🃏 Each card requires a **Name**, **Rarity**, and an **image**.\n' +
+      '🃏 Each card requires a **Name** and an **image**.\n' +
       '> After filling in the modal, send your image in this thread.'
     )
     .setColor(0xF1C40F)
