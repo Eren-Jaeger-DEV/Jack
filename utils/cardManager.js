@@ -42,21 +42,6 @@ async function getCache() {
 }
 
 /**
- * Returns rarity for a given card name, or null if not found.
- * @param {string} cardName
- * @returns {Promise<string|null>}
- */
-async function getCardRarity(cardName) {
-  try {
-    const card = await Card.findOne({ name: { $regex: new RegExp(`^${cardName}$`, 'i') } }).lean();
-    return card ? card.rarity : null;
-  } catch (err) {
-    console.error('[CardManager] getCardRarity error:', err.message);
-    return null;
-  }
-}
-
-/**
  * Returns the image URL for a given card name, or null if not found.
  * @param {string} cardName
  * @returns {Promise<string|null>}
@@ -79,4 +64,4 @@ function saveCards() {
   console.warn('[CardManager] saveCards() is deprecated for MongoDB migration.');
 }
 
-module.exports = { getCache, getCards, getCardRarity, getCardImage, saveCards };
+module.exports = { getCache, getCards, getCardImage, saveCards };

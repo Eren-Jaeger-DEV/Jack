@@ -5,7 +5,8 @@ const mongoose = require("mongoose");
  * 
  * category - The thread name where the card resides
  * name     - The card name (unique within a category)
- * rarity   - Card rarity (S, A, B, C, etc.)
+ * category - The thread name where the card resides
+ * name     - The card name (unique within a category)
  * image    - URL to the card image (Discord attachment)
  */
 const cardSchema = new mongoose.Schema({
@@ -15,10 +16,6 @@ const cardSchema = new mongoose.Schema({
     index: true
   },
   name: {
-    type: String,
-    required: true
-  },
-  rarity: {
     type: String,
     required: true
   },

@@ -20,7 +20,7 @@ const Card = require('../../../bot/database/models/Card');
 
 const DB_CHANNEL_ID  = '1486990546672291911';
 const CARD_NAME_RE   = /^Name:\s*(.+)$/im;
-const CARD_RARITY_RE = /^Rarity:\s*(.+)$/im;
+const CARD_NAME_RE   = /^Name:\s*(.+)$/im;
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 function isAdmin(member) {
@@ -62,17 +62,15 @@ function parseCard(message) {
   const content = message.content || '';
 
   const nameMatch   = CARD_NAME_RE.exec(content);
-  const rarityMatch = CARD_RARITY_RE.exec(content);
-  if (!nameMatch || !rarityMatch) return null;
+  if (!nameMatch) return null;
 
   const name   = nameMatch[1].trim();
-  const rarity = rarityMatch[1].trim();
-  if (!name || !rarity) return null;
+  if (!name) return null;
 
   const attachment = message.attachments?.first();
   if (!attachment) return null;
 
-  return { name, rarity, image: attachment.url };
+  return { name, image: attachment.url };
 }
 
 /* ─── Core Sync Engine ─────────────────────────────────────────────────────── */
@@ -112,7 +110,7 @@ async function runSync(client) {
       // MongoDB Upsert
       const doc = await Card.findOneAndUpdate(
         { name: cardData.name, category: categoryName },
-        { $set: { rarity: cardData.rarity, image: cardData.image } },
+        { $set: { image: cardData.image } },
         { upsert: true, returnDocument: 'after' }
       );
 

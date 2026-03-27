@@ -59,17 +59,6 @@ function formatCooldown(ms) {
   return `${Math.floor(secs / 60)}m ${secs % 60}s`;
 }
 
-/** Rarity → emoji badge */
-function rarityBadge(rarity) {
-  if (!rarity) return '';
-  const r = rarity.toUpperCase();
-  if (r === 'S') return '⭐ S';
-  if (r === 'A') return '🔶 A';
-  if (r === 'B') return '🔷 B';
-  if (r === 'C') return '⚪ C';
-  return rarity;
-}
-
 /* ─── UI Builders ─────────────────────────────────────────────────────────── */
 
 /** Step 1: Category select */
@@ -115,11 +104,6 @@ function buildStep2(category, CARDS, allCardsDocs) {
     };
   }
 
-  const rarityMap = {};
-  for (const c of allCardsDocs) {
-    if (c.category === category) rarityMap[c.name] = c.rarity;
-  }
-
   const embed = new EmbedBuilder()
     .setTitle('📋 Post Exchange — Step 2 of 3')
     .setDescription(`**Category:** \`${category}\`\n\nSelect the card you are **looking for:**`)
@@ -127,13 +111,10 @@ function buildStep2(category, CARDS, allCardsDocs) {
     .setFooter({ text: 'Step 2: Choose your wanted card' });
 
   const options = cards.slice(0, 25).map(card => {
-    const rarity = rarityMap[card];
-    const option = new StringSelectMenuOptionBuilder()
+    return new StringSelectMenuOptionBuilder()
       .setLabel(card)
       .setValue(card)
       .setEmoji('🃏');
-    if (rarity) option.setDescription(`Rarity: ${rarityBadge(rarity)}`);
-    return option;
   });
 
   const menu = new StringSelectMenuBuilder()
@@ -147,12 +128,10 @@ function buildStep2(category, CARDS, allCardsDocs) {
 /** Step 3: Offer multi-select */
 function buildStep3(wantedCard, CARDS, allCardsDocs) {
   const allCardsList = [];
-  const rarityMap = Object.fromEntries(allCardsDocs.map(c => [c.name, c.rarity]));
-
   for (const [cat, names] of Object.entries(CARDS)) {
     for (const name of names) {
       if (name !== wantedCard) {
-        allCardsList.push({ name, cat, rarity: rarityMap[name] || null });
+        allCardsList.push({ name, cat });
       }
     }
   }
@@ -173,13 +152,11 @@ function buildStep3(wantedCard, CARDS, allCardsDocs) {
     .setColor(0x2ECC71)
     .setFooter({ text: 'Step 3: Choose your offered cards (max 3)' });
 
-  const options = allCardsList.slice(0, 25).map(({ name, cat, rarity }) => {
-    const option = new StringSelectMenuOptionBuilder()
+  const options = allCardsList.slice(0, 25).map(({ name, cat }) => {
+    return new StringSelectMenuOptionBuilder()
       .setLabel(name)
       .setValue(`${cat}::${name}`)
       .setEmoji('🎁');
-    if (rarity) option.setDescription(`Rarity: ${rarityBadge(rarity)}`);
-    return option;
   });
 
   const menu = new StringSelectMenuBuilder()
@@ -213,18 +190,11 @@ function buildCodeModal() {
 /** Public exchange embed */
 async function buildExchangeEmbed(user, wantedCard, offeredCards, code) {
   const expiresAt = Math.floor((Date.now() + EXPIRE_MS) / 1000);
-  const offeredStrList = await Promise.all(offeredCards.map(async (c, i) => {
-    const rarity = await getCardRarity(c);
-    return `\`${i + 1}.\` ${c}${rarity ? ` — ${rarityBadge(rarity)}` : ''}`;
-  }));
+  const offeredStrList = offeredCards.map((c, i) => `\`${i + 1}.\` ${c}`);
   const offeredStr = offeredStrList.join('\n');
 
-  const wantedRarity = await getCardRarity(wantedCard);
   const wantedImage  = await getCardImage(wantedCard);
-
-  const wantedStr = wantedRarity
-    ? `${wantedCard} — ${rarityBadge(wantedRarity)}`
-    : wantedCard;
+  const wantedStr = wantedCard;
 
   return new EmbedBuilder()
     .setTitle('🔄 Card Exchange Request')

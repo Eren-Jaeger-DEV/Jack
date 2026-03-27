@@ -2,7 +2,7 @@
  * plugins/card-database/handlers/cardManager.js
  *
  * Handles the Add Card flow:
- *  1. Button click  → show modal (Name, Rarity)
+ *  1. Button click  → show modal (Name)
  *  2. Modal submit  → store pending session, prompt admin to send image in thread
  *  3. messageCreate → detect image upload from admin with a pending session
  *                   → post the formatted card message in the thread
@@ -19,7 +19,7 @@ const {
   MessageFlags
 } = require('discord.js');
 
-/* ─── Pending sessions: userId → { name, rarity, threadId } ──────────────── */
+/* ─── Pending sessions: userId → { name, threadId } ──────────────── */
 const pendingSessions = new Map();
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
@@ -56,17 +56,8 @@ async function handleAddCard(interaction) {
     .setRequired(true)
     .setMaxLength(100);
 
-  const rarityInput = new TextInputBuilder()
-    .setCustomId('cdb_card_rarity')
-    .setLabel('Rarity')
-    .setStyle(TextInputStyle.Short)
-    .setPlaceholder('e.g. S, A, B, C')
-    .setRequired(true)
-    .setMaxLength(20);
-
   modal.addComponents(
-    new ActionRowBuilder().addComponents(nameInput),
-    new ActionRowBuilder().addComponents(rarityInput)
+    new ActionRowBuilder().addComponents(nameInput)
   );
 
   return interaction.showModal(modal);
@@ -83,16 +74,13 @@ async function handleCardModal(interaction) {
   }
 
   const name   = interaction.fields.getTextInputValue('cdb_card_name')?.trim();
-  const rarity = interaction.fields.getTextInputValue('cdb_card_rarity')?.trim();
-
-  if (!name || !rarity) {
-    return denyEphemeral(interaction, '❌ Name and Rarity are required.');
+  if (!name) {
+    return denyEphemeral(interaction, '❌ Name is required.');
   }
 
   // Store pending session
   pendingSessions.set(interaction.user.id, {
     name,
-    rarity,
     threadId: interaction.channel.id
   });
 
@@ -102,7 +90,7 @@ async function handleCardModal(interaction) {
   await interaction.reply({
     content:
       `✅ Card info saved!\n\n` +
-      `**Name:** ${name}\n**Rarity:** ${rarity}\n\n` +
+      `**Name:** ${name}\n\n` +
       `📎 Now **send a message with an image attachment** in this thread to complete the card.`,
     flags: MessageFlags.Ephemeral
   }).catch(() => {});
@@ -131,9 +119,7 @@ async function handleImageUpload(message) {
   pendingSessions.delete(message.author.id);
 
   try {
-    const cardContent =
-      `Name: ${session.name}\n` +
-      `Rarity: ${session.rarity}`;
+    const cardContent = `Name: ${session.name}`;
 
     // Re-upload the image to create a permanent bot message first
     const sent = await message.channel.send({
