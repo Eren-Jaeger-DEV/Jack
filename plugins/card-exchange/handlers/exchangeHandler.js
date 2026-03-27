@@ -29,6 +29,7 @@ const {
 } = require('discord.js');
 
 const { getCards, getCache, getCardRarity, getCardImage } = require('../../../utils/cardManager');
+const CardExchange = require('../../../bot/database/models/CardExchange');
 
 /* ─── Config ──────────────────────────────────────────────────────────────── */
 const EXCHANGE_CHANNEL_ID = '1486943351403184169';
@@ -37,8 +38,8 @@ const COOLDOWN_MS         = 5 * 60 * 1000; // 5 minutes
 
 /* ─── State ───────────────────────────────────────────────────────────────── */
 const sessions = new Map();
-const activeExchanges = new Map();
 const cooldowns = new Map();
+const EXPIRE_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 function hasTraderRole(member) {
@@ -209,6 +210,7 @@ function buildCodeModal() {
 
 /** Public exchange embed */
 async function buildExchangeEmbed(user, wantedCard, offeredCards, code) {
+  const expiresAt = Math.floor((Date.now() + EXPIRE_MS) / 1000);
   const offeredStrList = await Promise.all(offeredCards.map(async (c, i) => {
     const rarity = await getCardRarity(c);
     return `\`${i + 1}.\` ${c}${rarity ? ` — ${rarityBadge(rarity)}` : ''}`;
@@ -224,7 +226,10 @@ async function buildExchangeEmbed(user, wantedCard, offeredCards, code) {
 
   return new EmbedBuilder()
     .setTitle('🔄 Card Exchange Request')
-    .setDescription(`<@${user.id}> is looking to exchange cards!`)
+    .setDescription(
+      `<@${user.id}> is looking to exchange cards!\n` +
+      `⏳ **Expires:** <t:${expiresAt}:R>`
+    )
     .addFields(
       { name: '🔍 Looking For', value: wantedStr,  inline: true },
       { name: '🎁 Offering',    value: offeredStr, inline: false },
@@ -241,7 +246,9 @@ async function buildExchangeEmbed(user, wantedCard, offeredCards, code) {
 async function handlePostButton(interaction) {
   if (interaction.channelId !== EXCHANGE_CHANNEL_ID) return denyEphemeral(interaction, '❌ This system only works in the exchange channel.');
   if (!hasTraderRole(interaction.member)) return denyEphemeral(interaction, '❌ You need the **Trader** role to post an exchange.');
-  if (activeExchanges.has(interaction.user.id)) return denyEphemeral(interaction, '❌ You already have an active exchange!');
+  
+  const existing = await CardExchange.findOne({ userId: interaction.user.id });
+  if (existing) return denyEphemeral(interaction, '❌ You already have an active exchange!');
   
   const lastPost = cooldowns.get(interaction.user.id);
   if (lastPost && (Date.now() - lastPost) < COOLDOWN_MS) {
@@ -310,9 +317,19 @@ async function handleCodeModal(interaction) {
     components: [new ActionRowBuilder().addComponents(interestedBtn)]
   }).catch(() => null);
 
+
   if (!msg) return interaction.followUp({ content: '❌ Failed to post exchange.', flags: MessageFlags.Ephemeral });
 
-  activeExchanges.set(interaction.user.id, msg.id);
+  // Save to MongoDB with 4-hour expiration
+  await CardExchange.create({
+    userId: interaction.user.id,
+    messageId: msg.id,
+    channelId: interaction.channelId,
+    wantedCard: session.wantedCard,
+    offeredCards: session.offeredCards,
+    expiresAt: new Date(Date.now() + EXPIRE_MS)
+  }).catch(err => console.error('[CardExchange] DB Save Error:', err));
+
   cooldowns.set(interaction.user.id, Date.now());
   sessions.delete(interaction.user.id);
 
@@ -378,4 +395,23 @@ function registerHandler(client) {
   client.on('interactionCreate', _handler);
 }
 
-module.exports = { registerHandler, activeExchanges };
+/* ─── Cleanup ─────────────────────────────────────────────────────────────── */
+async function cleanupExchanges(client) {
+  try {
+    const expired = await CardExchange.find({ expiresAt: { $lte: new Date() } });
+    if (expired.length === 0) return;
+
+    for (const entry of expired) {
+      const channel = await client.channels.fetch(entry.channelId).catch(() => null);
+      if (channel) {
+        const msg = await channel.messages.fetch(entry.messageId).catch(() => null);
+        if (msg) await msg.delete().catch(() => {});
+      }
+      await CardExchange.deleteOne({ _id: entry._id });
+    }
+  } catch (err) {
+    console.error('[CardExchange] Cleanup Error:', err.message);
+  }
+}
+
+module.exports = { registerHandler, cleanupExchanges };

@@ -10,7 +10,7 @@
 'use strict';
 
 const { ensurePanel, repostPanel, getPanelMessageId } = require('./handlers/panelManager');
-const { registerHandler } = require('./handlers/exchangeHandler');
+const { registerHandler, cleanupExchanges } = require('./handlers/exchangeHandler');
 
 const EXCHANGE_CHANNEL_ID = '1486943351403184169';
 
@@ -50,6 +50,9 @@ module.exports = {
       // Repost panel at bottom
       await repostPanel(client);
     });
+
+    // 4. Periodically cleanup expired exchanges (every 1 minute)
+    setInterval(() => cleanupExchanges(client), 60 * 1000);
 
     console.log('[CardExchange] Plugin loaded ✅');
   }
