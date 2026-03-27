@@ -1,94 +1,82 @@
 /**
  * utils/cardManager.js
  *
- * Shared card cache utility used by both card-database and card-exchange plugins.
- *
- * getCards()  → returns flat { category: ["Card Name", ...] } (for dropdown UI)
- * getCache()  → returns full cache { categories: { cat: { cards: [{name,rarity,image}] } } }
- * saveCache() → atomically writes the full cache to /data/cardsCache.json
+ * Shared card utility used by both card-database and card-exchange plugins.
+ * Now backed by MongoDB instead of a JSON file.
  */
 
 'use strict';
 
-const fs   = require('fs');
-const path = require('path');
-
-const CACHE_PATH       = path.join(__dirname, '../data/cardsCache.json');
-const LEGACY_PATH      = path.join(__dirname, '../plugins/card-exchange/data/cards.json');
-const EMPTY_CACHE      = { categories: {} };
-
-/* ─── Read ──────────────────────────────────────────────────────────────────── */
-
-/**
- * Returns the full cache object.
- * Never throws — returns EMPTY_CACHE on any error.
- * @returns {{ categories: Record<string, { cards: Array<{ name: string, rarity: string, image: string }> }> }}
- */
-function getCache() {
-  try {
-    const raw = fs.readFileSync(CACHE_PATH, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (parsed && parsed.categories) return parsed;
-  } catch (_) { /* fall through */ }
-  return EMPTY_CACHE;
-}
+const Card = require('../bot/database/models/Card');
 
 /**
  * Returns a flat { category: ["Card Name", ...] } map for the exchange dropdown UI.
- * @returns {Record<string, string[]>}
+ * @returns {Promise<Record<string, string[]>>}
  */
-function getCards() {
-  const cache = getCache();
-  const flat = {};
-  for (const [catName, catData] of Object.entries(cache.categories)) {
-    flat[catName] = (catData.cards || []).map(c => c.name);
+async function getCards() {
+  try {
+    const cards = await Card.find({}).lean();
+    const flat = {};
+    for (const card of cards) {
+      if (!flat[card.category]) flat[card.category] = [];
+      flat[card.category].push(card.name);
+    }
+    return flat;
+  } catch (err) {
+    console.error('[CardManager] getCards error:', err.message);
+    return {};
   }
-  return flat;
 }
 
 /**
- * Returns rarity for a given card name from the cache, or null if not found.
- * @param {string} cardName
- * @returns {string|null}
+ * Returns the full list of cards from the database.
+ * @returns {Promise<Array>}
  */
-function getCardRarity(cardName) {
-  const cache = getCache();
-  const lower = cardName.toLowerCase();
-  for (const catData of Object.values(cache.categories)) {
-    const found = (catData.cards || []).find(c => c.name.toLowerCase() === lower);
-    if (found) return found.rarity;
+async function getCache() {
+  try {
+    return await Card.find({}).lean();
+  } catch (err) {
+    console.error('[CardManager] getCache error:', err.message);
+    return [];
   }
-  return null;
+}
+
+/**
+ * Returns rarity for a given card name, or null if not found.
+ * @param {string} cardName
+ * @returns {Promise<string|null>}
+ */
+async function getCardRarity(cardName) {
+  try {
+    const card = await Card.findOne({ name: { $regex: new RegExp(`^${cardName}$`, 'i') } }).lean();
+    return card ? card.rarity : null;
+  } catch (err) {
+    console.error('[CardManager] getCardRarity error:', err.message);
+    return null;
+  }
 }
 
 /**
  * Returns the image URL for a given card name, or null if not found.
  * @param {string} cardName
- * @returns {string|null}
+ * @returns {Promise<string|null>}
  */
-function getCardImage(cardName) {
-  const cache = getCache();
-  const lower = cardName.toLowerCase();
-  for (const catData of Object.values(cache.categories)) {
-    const found = (catData.cards || []).find(c => c.name.toLowerCase() === lower);
-    if (found) return found.image || null;
+async function getCardImage(cardName) {
+  try {
+    const card = await Card.findOne({ name: { $regex: new RegExp(`^${cardName}$`, 'i') } }).lean();
+    return card ? card.image : null;
+  } catch (err) {
+    console.error('[CardManager] getCardImage error:', err.message);
+    return null;
   }
-  return null;
 }
 
-/* ─── Write ─────────────────────────────────────────────────────────────────── */
-
 /**
- * Atomically writes the full cache object to disk.
- * Uses a temp file + rename to prevent corruption on crash.
- * Throws on failure — callers should catch and NOT overwrite existing cache.
- * @param {{ categories: Record<string, { cards: Array<{ name: string, rarity: string, image: string }> }> }} data
+ * saveCards is now deprecated for MongoDB. 
+ * Use direct model operations in syncHandler instead.
  */
-function saveCards(data) {
-  const json = JSON.stringify(data, null, 2);
-  const tmpPath = CACHE_PATH + '.tmp';
-  fs.writeFileSync(tmpPath, json, 'utf8');
-  fs.renameSync(tmpPath, CACHE_PATH);
+function saveCards() {
+  console.warn('[CardManager] saveCards() is deprecated for MongoDB migration.');
 }
 
 module.exports = { getCache, getCards, getCardRarity, getCardImage, saveCards };

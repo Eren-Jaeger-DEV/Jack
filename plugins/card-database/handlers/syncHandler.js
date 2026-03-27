@@ -1,11 +1,11 @@
 /**
  * plugins/card-database/handlers/syncHandler.js
  *
- * Core sync logic shared by:
- *  - The "Sync Database" button / /card sync slash command
- *  - The auto-sync debounce system
- *
- * Reads all threads in the DB channel → parses card messages → saves via cardManager.
+ * Core sync logic for MongoDB:
+ *  - Reads all threads in the DB channel
+ *  - Parses card messages
+ *  - Upserts cards into MongoDB
+ *  - Purges cards that no longer exist in Discord threads
  */
 
 'use strict';
@@ -16,7 +16,7 @@ const {
   MessageFlags
 } = require('discord.js');
 
-const { saveCards } = require('../../../utils/cardManager');
+const Card = require('../../../bot/database/models/Card');
 
 const DB_CHANNEL_ID  = '1486990546672291911';
 const CARD_NAME_RE   = /^Name:\s*(.+)$/im;
@@ -35,8 +35,6 @@ async function denyEphemeral(interaction, msg) {
 
 /**
  * Paginate all messages from a thread (newest first).
- * @param {import('discord.js').ThreadChannel} thread
- * @returns {Promise<import('discord.js').Message[]>}
  */
 async function fetchAllMessages(thread) {
   const all = [];
@@ -59,7 +57,6 @@ async function fetchAllMessages(thread) {
 
 /**
  * Parse a card message → { name, rarity, image } or null.
- * @param {import('discord.js').Message} message
  */
 function parseCard(message) {
   const content = message.content || '';
@@ -79,11 +76,9 @@ function parseCard(message) {
 }
 
 /* ─── Core Sync Engine ─────────────────────────────────────────────────────── */
+
 /**
- * Full sync: fetch all threads, parse all cards, return result object.
- * Does NOT write the cache — callers do that so they can handle errors.
- * @param {import('discord.js').Client} client
- * @returns {Promise<{ categories: object, totalCards: number, skipped: number, threadCount: number }>}
+ * Full sync: fetch all threads, parse all cards, upsert into MongoDB, and purge old data.
  */
 async function runSync(client) {
   const channel = await client.channels.fetch(DB_CHANNEL_ID).catch(() => null);
@@ -92,53 +87,60 @@ async function runSync(client) {
   const fetched = await channel.threads.fetchActive().catch(() => null);
   if (!fetched) throw new Error('Could not fetch active threads.');
 
-  const categories = {};
+  const processedIds = [];
   let totalCards = 0;
   let skipped    = 0;
+  const categoriesFound = new Set();
 
   for (const [, thread] of fetched.threads) {
     const categoryName = thread.name;
-    const cards = [];
-    const seen  = new Set();
+    categoriesFound.add(categoryName);
+    const seenInThread = new Set();
 
     const messages = await fetchAllMessages(thread);
 
     for (const msg of messages) {
-      if (msg.author.bot) continue;  // Skip bot/panel messages
+      if (msg.author.bot) continue;
       if (msg.system) continue;
 
-      const card = parseCard(msg);
-      if (!card) { skipped++; continue; }
+      const cardData = parseCard(msg);
+      if (!cardData) { skipped++; continue; }
 
-      const key = card.name.toLowerCase();
-      if (seen.has(key)) { skipped++; continue; } // duplicate
+      const key = cardData.name.toLowerCase();
+      if (seenInThread.has(key)) { skipped++; continue; } 
+      seenInThread.add(key);
 
-      seen.add(key);
-      cards.push(card);
+      // MongoDB Upsert
+      const doc = await Card.findOneAndUpdate(
+        { name: cardData.name, category: categoryName },
+        { $set: { rarity: cardData.rarity, image: cardData.image } },
+        { upsert: true, new: true }
+      );
+
+      processedIds.push(doc._id);
       totalCards++;
-    }
-
-    if (cards.length > 0) {
-      categories[categoryName] = { cards };
     }
   }
 
-  return { categories, totalCards, skipped, threadCount: fetched.threads.size };
+  // Purge cards missing from threads
+  const purgeResult = await Card.deleteMany({ _id: { $nin: processedIds } });
+
+  return { 
+    categoryCount: categoriesFound.size, 
+    totalCards, 
+    skipped, 
+    purged: purgeResult.deletedCount,
+    threadCount: fetched.threads.size 
+  };
 }
 
-/* ─── Silent Auto-Sync (called by event listeners) ────────────────────────── */
-/**
- * Runs a sync without any interaction — used by the auto-sync debounce system.
- * Only logs errors. Does NOT overwrite cache on failure.
- * @param {import('discord.js').Client} client
- */
+/* ─── Silent Auto-Sync ─────────────────────────────────────────────────────── */
 async function runSilentSync(client) {
   try {
     const result = await runSync(client);
-    saveCards({ categories: result.categories });
-    console.log(`[CardDB] Auto-sync complete: ${result.totalCards} cards across ${Object.keys(result.categories).length} categories.`);
+    console.log(`[CardDB] MongoDB Auto-sync complete: ${result.totalCards} cards, ${result.purged} purged.`);
   } catch (err) {
-    console.error('[CardDB] Auto-sync failed (cache preserved):', err.message);
+    console.error('[CardDB] MongoDB Auto-sync failed:', err.message);
   }
 }
 
@@ -152,25 +154,24 @@ async function handleSync(interaction, client) {
 
   try {
     const result = await runSync(client);
-    saveCards({ categories: result.categories });
 
     const embed = new EmbedBuilder()
-      .setTitle('✅ Database Synced')
+      .setTitle('✅ MongoDB Synced')
       .setColor(0x2ECC71)
       .addFields(
-        { name: '📁 Categories', value: `${Object.keys(result.categories).length}`, inline: true },
-        { name: '🃏 Cards',      value: `${result.totalCards}`,                      inline: true },
-        { name: '⏭️ Skipped',    value: `${result.skipped}`,                         inline: true },
-        { name: '🧵 Threads',    value: `${result.threadCount}`,                     inline: true }
+        { name: '📁 Categories', value: `${result.categoryCount}`, inline: true },
+        { name: '🃏 Cards',      value: `${result.totalCards}`,    inline: true },
+        { name: '🗑️ Purged',     value: `${result.purged}`,        inline: true },
+        { name: '🧵 Threads',    value: `${result.threadCount}`,   inline: true }
       )
-      .setFooter({ text: 'Cache saved to /data/cardsCache.json' })
+      .setFooter({ text: 'Card data stored in MongoDB.' })
       .setTimestamp();
 
     await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
   } catch (err) {
-    console.error('[CardDB] Manual sync error:', err.message);
+    console.error('[CardDB] MongoDB Manual sync error:', err.message);
     await interaction.followUp({
-      content: `❌ Sync failed: ${err.message}\nExisting cache was NOT overwritten.`,
+      content: `❌ Sync failed: ${err.message}`,
       flags: MessageFlags.Ephemeral
     });
   }
