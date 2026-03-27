@@ -175,6 +175,133 @@ function buildEmbed(game, status, winnerId = null) {
     .setFooter({ text: status === 'timedout' ? 'This game has expired due to inactivity.' : 'Use the buttons below to make your move!' });
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+ *  AI LOGIC (MINIMAX)
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Minimax algorithm to find the best move.
+ * @param {Array<null|"X"|"O">} board
+ * @param {number} depth
+ * @param {boolean} isMax
+ * @param {"X"|"O"} aiMark
+ * @param {"X"|"O"} playerMark
+ * @returns {number}
+ */
+function minimax(board, depth, isMax, aiMark, playerMark) {
+  const winner = checkWinner(board);
+  if (winner === aiMark) return 10 - depth;
+  if (winner === playerMark) return depth - 10;
+  if (isBoardFull(board)) return 0;
+
+  if (isMax) {
+    let best = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === null) {
+        board[i] = aiMark;
+        best = Math.max(best, minimax(board, depth + 1, false, aiMark, playerMark));
+        board[i] = null;
+      }
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === null) {
+        board[i] = playerMark;
+        best = Math.min(best, minimax(board, depth + 1, true, aiMark, playerMark));
+        board[i] = null;
+      }
+    }
+    return best;
+  }
+}
+
+/**
+ * Finds the optimal move for the AI.
+ * @param {Array<null|"X"|"O">} board
+ * @param {number} aiTurn — 0 or 1
+ * @returns {number} index [0-8]
+ */
+function getBestMove(board, aiTurn) {
+  const aiMark = aiTurn === 0 ? 'X' : 'O';
+  const playerMark = aiTurn === 0 ? 'O' : 'X';
+  let bestVal = -Infinity;
+  let move = -1;
+
+  for (let i = 0; i < 9; i++) {
+    if (board[i] === null) {
+      board[i] = aiMark;
+      const moveVal = minimax(board, 0, false, aiMark, playerMark);
+      board[i] = null;
+      if (moveVal > bestVal) {
+        move = i;
+        bestVal = moveVal;
+      }
+    }
+  }
+  return move;
+}
+
+/**
+ * Executes a move for the AI.
+ * @param {string} channelId
+ * @param {import('discord.js').Client} client
+ */
+async function handleAIMove(channelId, client) {
+  const game = games.get(channelId);
+  if (!game || !game.active) return;
+
+  // Small delay to simulate "thinking"
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  // Re-fetch to ensure game state hasn't changed (e.g. timeout or manual end)
+  const freshGame = games.get(channelId);
+  if (!freshGame || !freshGame.active) return;
+
+  const aiMove = getBestMove(freshGame.board, freshGame.turn);
+  if (aiMove === -1) return;
+
+  const mark = freshGame.turn === 0 ? 'X' : 'O';
+  freshGame.board[aiMove] = mark;
+
+  const winner = checkWinner(freshGame.board);
+  const isDraw = !winner && isBoardFull(freshGame.board);
+
+  let status = 'playing';
+  let winnerId = null;
+
+  if (winner || isDraw) {
+    freshGame.active = false;
+    if (freshGame.timeout) clearTimeout(freshGame.timeout);
+    games.delete(channelId);
+    status = winner ? 'win' : 'draw';
+    winnerId = winner ? freshGame.players[freshGame.turn] : null;
+  } else {
+    freshGame.turn = freshGame.turn === 0 ? 1 : 0;
+    setGameTimeout(channelId, client);
+  }
+
+  // Update the message
+  try {
+    const channel = await client.channels.fetch(channelId).catch(() => null);
+    if (!channel) return;
+
+    const message = freshGame.messageId 
+      ? await channel.messages.fetch(freshGame.messageId).catch(() => null)
+      : null;
+
+    if (message && message.editable) {
+      await message.edit({
+        embeds: [buildEmbed(freshGame, status, winnerId)],
+        components: buildGrid(channelId, freshGame.board, !freshGame.active)
+      }).catch(() => {});
+    }
+  } catch (err) {
+    console.error('[TicTacToe] AI update error:', err.message);
+  }
+}
+
 /**
  * Handle game expiration after 10 minutes of inactivity.
  * @param {string} channelId
@@ -223,21 +350,16 @@ async function setGameTimeout(channelId, client) {
  *  PUBLIC: startGame
  *  Called by the slash command handler to kick off a new session.
  * ══════════════════════════════════════════════════════════════════════════ */
-
 /**
- * Create and send a new TicTacToe game in the interaction's channel.
- *
- * @param {import('discord.js').ChatInputCommandInteraction} interaction
- * @param {import('discord.js').User} challenger — Player 1 (X)
+ * @param {object} ctx — The command context (slash or prefix)
  * @param {import('discord.js').User} opponent   — Player 2 (O)
- * @param {import('discord.js').Client} client
  */
-async function startGame(interaction, challenger, opponent, client) {
-  const channelId = interaction.channelId;
+async function startGame(ctx, opponent) {
+  const channelId = ctx.channel.id;
 
   // ── Concurrency guard ──────────────────────────────────────────────────
   if (games.has(channelId)) {
-    return interaction.reply({
+    return ctx.reply({
       content: '❌ A game is already running in this channel. Finish it first!',
       flags: MessageFlags.Ephemeral
     });
@@ -246,7 +368,7 @@ async function startGame(interaction, challenger, opponent, client) {
   // ── Initialise state ───────────────────────────────────────────────────
   /** @type {object} */
   const game = {
-    players : [challenger.id, opponent.id], // [0]=X, [1]=O
+    players : [ctx.user.id, opponent.id], // [0]=X, [1]=O
     turn    : 0,
     board   : Array(9).fill(null),
     active  : true,
@@ -255,16 +377,21 @@ async function startGame(interaction, challenger, opponent, client) {
   };
 
   games.set(channelId, game);
-  setGameTimeout(channelId, client);
+  setGameTimeout(channelId, ctx.client);
 
   // ── Send initial board ─────────────────────────────────────────────────
   try {
-    const msg = await interaction.reply({
+    const msg = await ctx.reply({
       embeds     : [buildEmbed(game, 'playing')],
       components : buildGrid(channelId, game.board),
       fetchReply : true
     });
-    game.messageId = msg.id;
+    if (msg) game.messageId = msg.id;
+
+    // ── Trigger AI Move if it's the bot's turn (e.g. if bot starts first) ──
+    if (game.active && game.players[game.turn] === ctx.client.user.id) {
+      handleAIMove(channelId, ctx.client);
+    }
   } catch (err) {
     // If the initial reply fails, clean up so the channel isn't stuck
     games.delete(channelId);
@@ -385,12 +512,17 @@ function registerHandler(client) {
     setGameTimeout(channelId, interaction.client);
 
     // ── Update board message ──────────────────────────────────────────────
-    return interaction.update({
+    await interaction.update({
       embeds     : [buildEmbed(game, 'playing')],
       components : buildGrid(channelId, game.board)
     }).catch(err => {
       if (err?.code !== 10062) console.error('[TicTacToe] Update error (move):', err.message);
     });
+
+    // ── Trigger AI Move if it's the bot's turn ──────────────────────────────
+    if (game.active && game.players[game.turn] === client.user.id) {
+      handleAIMove(channelId, client);
+    }
   });
 }
 
