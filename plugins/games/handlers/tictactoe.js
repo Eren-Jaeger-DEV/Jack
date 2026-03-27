@@ -336,7 +336,7 @@ async function handleAIMove(channelId, client) {
 }
 
 /**
- * Handle game expiration after 10 minutes of inactivity.
+ * Handle game expiration after 5 minutes of inactivity.
  * @param {string} channelId
  * @param {import('discord.js').Client} client
  */
@@ -347,7 +347,7 @@ async function setGameTimeout(channelId, client) {
   // Clear existing timeout if any
   if (game.timeout) clearTimeout(game.timeout);
 
-  // Set new timeout for 10 minutes
+  // Set new timeout for 5 minutes
   game.timeout = setTimeout(async () => {
     const freshGame = games.get(channelId);
     if (!freshGame || !freshGame.active) return;
@@ -376,7 +376,7 @@ async function setGameTimeout(channelId, client) {
     } catch (err) {
       console.error('[TicTacToe] Timeout cleanup error:', err.message);
     }
-  }, 10 * 60 * 1000); // 10 minutes
+  }, 5 * 60 * 1000); // 5 minutes
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
