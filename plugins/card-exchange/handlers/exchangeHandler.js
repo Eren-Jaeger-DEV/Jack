@@ -30,6 +30,7 @@ const {
 
 const { getCards, getCache, getCardRarity, getCardImage } = require('../../../utils/cardManager');
 const CardExchange = require('../../../bot/database/models/CardExchange');
+const CardExchangeThread = require('../../../bot/database/models/CardExchangeThread');
 
 /* ─── Config ──────────────────────────────────────────────────────────────── */
 const EXCHANGE_CHANNEL_ID = '1486943351403184169';
@@ -40,6 +41,7 @@ const COOLDOWN_MS         = 5 * 60 * 1000; // 5 minutes
 const sessions = new Map();
 const cooldowns = new Map();
 const EXPIRE_MS = 4 * 60 * 60 * 1000; // 4 hours
+const THREAD_EXPIRE_MS = 30 * 60 * 1000; // 30 minutes
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 function hasTraderRole(member) {
@@ -355,11 +357,102 @@ async function handleInterested(interaction) {
 
     await thread.members.add(interaction.user.id).catch(() => {});
     await thread.members.add(posterId).catch(() => {});
-    await thread.send(`👋 <@${interaction.user.id}> is interested in your exchange, <@${posterId}>!\n\nDiscuss details here. 🤝`);
+
+    // Save thread to DB for 30-min auto-cleanup
+    const listing = await CardExchange.findOne({ messageId: interaction.message.id });
+    if (listing) {
+      await CardExchangeThread.create({
+        threadId: thread.id,
+        listingId: listing._id,
+        posterId: posterId,
+        interestedId: interaction.user.id,
+        expiresAt: new Date(Date.now() + THREAD_EXPIRE_MS)
+      }).catch(err => console.error('[CardExchange] Thread DB Save Error:', err));
+    }
+
+    const dealFinalBtn = new ButtonBuilder()
+      .setCustomId(`cex_deal_final_${interaction.user.id}`)
+      .setLabel('Deal Final')
+      .setStyle(ButtonStyle.Success)
+      .setEmoji('💎');
+
+    const dealCancelBtn = new ButtonBuilder()
+      .setCustomId(`cex_deal_cancel_${interaction.user.id}`)
+      .setLabel('Cancel Deal')
+      .setStyle(ButtonStyle.Danger)
+      .setEmoji('✖️');
+
+    const row = new ActionRowBuilder().addComponents(dealFinalBtn, dealCancelBtn);
+
+    await thread.send({
+      content: `👋 <@${interaction.user.id}> is interested in your exchange, <@${posterId}>!\n\n` +
+               `Discuss details here. Once agreed, the **Lister** can click **"Deal Final"** to close the trade.\n` +
+               `⏳ *This thread will auto-delete in 30 minutes.*`,
+      components: [row]
+    });
 
     await interaction.followUp({ content: `✅ Private thread created: ${thread}`, flags: MessageFlags.Ephemeral });
   } catch (err) {
+    console.error('[CardExchange] handleInterested Error:', err);
     await interaction.followUp({ content: '❌ Something went wrong.', flags: MessageFlags.Ephemeral });
+  }
+}
+
+/* ─── Deal Handlers ───────────────────────────────────────────────────────── */
+async function handleDealFinal(interaction) {
+  const threadEntry = await CardExchangeThread.findOne({ threadId: interaction.channelId });
+  if (!threadEntry) return interaction.reply({ content: '❌ Thread data not found.', flags: MessageFlags.Ephemeral });
+
+  // Only the Lister (poster) can finalize
+  if (interaction.user.id !== threadEntry.posterId) {
+    return interaction.reply({ content: '❌ Only the Lister can finalize the deal!', flags: MessageFlags.Ephemeral });
+  }
+
+  await interaction.deferReply();
+
+  try {
+    const listing = await CardExchange.findById(threadEntry.listingId);
+    if (listing) {
+      const channel = await interaction.client.channels.fetch(listing.channelId).catch(() => null);
+      if (channel) {
+        const msg = await channel.messages.fetch(listing.messageId).catch(() => null);
+        if (msg) await msg.delete().catch(() => {});
+      }
+      await CardExchange.deleteOne({ _id: listing._id });
+    }
+
+    await interaction.editReply('✅ **Deal Finalized!** The listing has been removed. This thread will now close.');
+    
+    // Cleanup this thread and any other threads for this listing
+    const siblingThreads = await CardExchangeThread.find({ listingId: threadEntry.listingId });
+    for (const st of siblingThreads) {
+      const thread = await interaction.client.channels.fetch(st.threadId).catch(() => null);
+      if (thread) await thread.delete().catch(() => {});
+      await CardExchangeThread.deleteOne({ _id: st._id });
+    }
+  } catch (err) {
+    console.error('[CardExchange] handleDealFinal Error:', err);
+    await interaction.editReply('❌ Failed to finalize deal.');
+  }
+}
+
+async function handleDealCancel(interaction) {
+  const threadEntry = await CardExchangeThread.findOne({ threadId: interaction.channelId });
+  if (!threadEntry) return interaction.reply({ content: '❌ Thread data not found.', flags: MessageFlags.Ephemeral });
+
+  // Lister or Interested person can cancel
+  if (interaction.user.id !== threadEntry.posterId && interaction.user.id !== threadEntry.interestedId) {
+    return interaction.reply({ content: '❌ You are not part of this deal.', flags: MessageFlags.Ephemeral });
+  }
+
+  await interaction.reply('✖️ **Deal Cancelled.** This thread will now close.');
+  
+  try {
+    const thread = await interaction.client.channels.fetch(threadEntry.threadId).catch(() => null);
+    if (thread) await thread.delete().catch(() => {});
+    await CardExchangeThread.deleteOne({ _id: threadEntry._id });
+  } catch (err) {
+    console.error('[CardExchange] handleDealCancel Error:', err);
   }
 }
 
@@ -376,6 +469,8 @@ function registerHandler(client) {
       if (interaction.isButton()) {
         if (interaction.customId === 'cex_post') return handlePostButton(interaction);
         if (interaction.customId.startsWith('cex_interested_')) return handleInterested(interaction);
+        if (interaction.customId.startsWith('cex_deal_final_')) return handleDealFinal(interaction);
+        if (interaction.customId.startsWith('cex_deal_cancel_')) return handleDealCancel(interaction);
       }
       if (interaction.isStringSelectMenu()) {
         if (interaction.customId === 'cex_step1_cat') return handleStep1(interaction);
@@ -398,16 +493,31 @@ function registerHandler(client) {
 /* ─── Cleanup ─────────────────────────────────────────────────────────────── */
 async function cleanupExchanges(client) {
   try {
-    const expired = await CardExchange.find({ expiresAt: { $lte: new Date() } });
-    if (expired.length === 0) return;
-
-    for (const entry of expired) {
+    const expiredListings = await CardExchange.find({ expiresAt: { $lte: new Date() } });
+    for (const entry of expiredListings) {
       const channel = await client.channels.fetch(entry.channelId).catch(() => null);
       if (channel) {
         const msg = await channel.messages.fetch(entry.messageId).catch(() => null);
         if (msg) await msg.delete().catch(() => {});
       }
+      
+      // Also cleanup threads for this expired listing
+      const threads = await CardExchangeThread.find({ listingId: entry._id });
+      for (const t of threads) {
+        const thread = await client.channels.fetch(t.threadId).catch(() => null);
+        if (thread) await thread.delete().catch(() => {});
+        await CardExchangeThread.deleteOne({ _id: t._id });
+      }
+
       await CardExchange.deleteOne({ _id: entry._id });
+    }
+
+    // Cleanup lonely expired threads
+    const expiredThreads = await CardExchangeThread.find({ expiresAt: { $lte: new Date() } });
+    for (const t of expiredThreads) {
+      const thread = await client.channels.fetch(t.threadId).catch(() => null);
+      if (thread) await thread.delete().catch(() => {});
+      await CardExchangeThread.deleteOne({ _id: t._id });
     }
   } catch (err) {
     console.error('[CardExchange] Cleanup Error:', err.message);
