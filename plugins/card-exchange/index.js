@@ -27,6 +27,9 @@ module.exports = {
   },
 
   async setup(client) {
+    // Increase max listeners to prevent memory leak warnings from multiple plugins
+    client.setMaxListeners(25);
+
     // 1. Ensure panel exists on startup
     await ensurePanel(client);
 

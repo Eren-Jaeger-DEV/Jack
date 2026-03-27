@@ -92,7 +92,7 @@ function buildPostModal() {
 
   const offerInput = new TextInputBuilder()
     .setCustomId('cex_offer')
-    .setLabel('Cards you are OFFERING (max 3, comma-separated)')
+    .setLabel('Offering (max 3 cards, comma-separated)')
     .setStyle(TextInputStyle.Short)
     .setPlaceholder('e.g. Fire Sprite, Stone Golem, Wind Elf')
     .setRequired(true)
