@@ -20,7 +20,6 @@ const Card = require('../../../bot/database/models/Card');
 
 const DB_CHANNEL_ID  = '1486990546672291911';
 const CARD_NAME_RE   = /^Name:\s*(.+)$/im;
-const CARD_NAME_RE   = /^Name:\s*(.+)$/im;
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 function isAdmin(member) {
