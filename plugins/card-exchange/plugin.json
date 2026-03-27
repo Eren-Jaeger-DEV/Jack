@@ -1,0 +1,6 @@
+{
+  "name": "card-exchange",
+  "version": "1.0.0",
+  "description": "Card Exchange Panel — persistent panel with role-gated posting and interested threads",
+  "main": "index.js"
+}

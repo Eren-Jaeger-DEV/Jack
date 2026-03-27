@@ -1,0 +1,124 @@
+/**
+ * plugins/card-exchange/handlers/panelManager.js
+ *
+ * Manages the persistent "Card Exchange" panel message.
+ * The panel always remains the latest message in the exchange channel.
+ */
+
+'use strict';
+
+const {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} = require('discord.js');
+
+const EXCHANGE_CHANNEL_ID = '1486943351403184169';
+
+// In-memory storage for the panel message ID
+let panelMessageId = null;
+
+/**
+ * Build the panel embed and button row.
+ * @returns {{ embeds: EmbedBuilder[], components: ActionRowBuilder[] }}
+ */
+function buildPanel() {
+  const embed = new EmbedBuilder()
+    .setTitle('📋 Card Exchange')
+    .setDescription(
+      '**How to use this panel:**\n\n' +
+      '🔍 **Step 1 —** Select the card you are looking for\n' +
+      '🎁 **Step 2 —** Enter up to 3 cards you want to offer\n' +
+      '🔑 **Step 3 —** Enter your exchange code *(optional)*\n' +
+      '✅ **Step 4 —** Others can click **"Interested"** to open a private thread\n\n' +
+      '> Only members with the **Trader** role can post exchanges.'
+    )
+    .setColor(0xF1C40F)
+    .setFooter({ text: 'Card Exchange System' })
+    .setTimestamp();
+
+  const button = new ButtonBuilder()
+    .setCustomId('cex_post')
+    .setLabel('Post Exchange')
+    .setStyle(ButtonStyle.Primary)
+    .setEmoji('📬');
+
+  const row = new ActionRowBuilder().addComponents(button);
+
+  return { embeds: [embed], components: [row] };
+}
+
+/**
+ * Send a fresh panel to the exchange channel and store its message ID.
+ * @param {import('discord.js').TextChannel} channel
+ */
+async function sendPanel(channel) {
+  try {
+    const msg = await channel.send(buildPanel());
+    panelMessageId = msg.id;
+    return msg;
+  } catch (err) {
+    console.error('[CardExchange] Failed to send panel:', err.message);
+  }
+}
+
+/**
+ * On bot start — ensure the panel exists in the exchange channel.
+ * @param {import('discord.js').Client} client
+ */
+async function ensurePanel(client) {
+  try {
+    const channel = await client.channels.fetch(EXCHANGE_CHANNEL_ID).catch(() => null);
+    if (!channel) return console.warn('[CardExchange] Exchange channel not found.');
+
+    // Try to find an existing panel in the last 50 messages
+    const messages = await channel.messages.fetch({ limit: 50 });
+    const existing = messages.find(
+      m => m.author.id === client.user.id &&
+           m.embeds?.[0]?.title === '📋 Card Exchange'
+    );
+
+    if (existing) {
+      panelMessageId = existing.id;
+      console.log('[CardExchange] Panel found, ID stored.');
+    } else {
+      await sendPanel(channel);
+      console.log('[CardExchange] Panel created.');
+    }
+  } catch (err) {
+    console.error('[CardExchange] ensurePanel error:', err.message);
+  }
+}
+
+/**
+ * Re-post the panel to keep it at the bottom of the channel.
+ * Called when a new message is detected in the exchange channel.
+ * @param {import('discord.js').Client} client
+ */
+async function repostPanel(client) {
+  try {
+    const channel = await client.channels.fetch(EXCHANGE_CHANNEL_ID).catch(() => null);
+    if (!channel) return;
+
+    // Delete old panel if it exists
+    if (panelMessageId) {
+      const old = await channel.messages.fetch(panelMessageId).catch(() => null);
+      if (old) await old.delete().catch(() => {});
+    }
+
+    await sendPanel(channel);
+  } catch (err) {
+    console.error('[CardExchange] repostPanel error:', err.message);
+  }
+}
+
+/**
+ * Returns the current panel message ID.
+ * @returns {string|null}
+ */
+function getPanelMessageId() {
+  return panelMessageId;
+}
+
+module.exports = { ensurePanel, repostPanel, getPanelMessageId };
