@@ -80,6 +80,13 @@ function buildStep1() {
   const CARDS = getCards();
   const categories = Object.keys(CARDS);
 
+  if (categories.length === 0) {
+    return {
+      content: '❌ No card categories found in the database. Please contact an admin to sync.',
+      flags: MessageFlags.Ephemeral
+    };
+  }
+
   const embed = new EmbedBuilder()
     .setTitle('📋 Post Exchange — Step 1 of 3')
     .setDescription('**Select the category of the card you are looking for:**')
@@ -90,7 +97,7 @@ function buildStep1() {
     .setCustomId('cex_step1_cat')
     .setPlaceholder('🗂️ Choose a category...')
     .addOptions(
-      categories.map(cat =>
+      categories.slice(0, 25).map(cat =>
         new StringSelectMenuOptionBuilder()
           .setLabel(cat)
           .setValue(cat)
@@ -107,6 +114,13 @@ function buildStep2(category) {
   const cache = getCache();
   const cards = CARDS[category] || [];
 
+  if (cards.length === 0) {
+    return {
+      content: `❌ No cards found in category **${category}**.`,
+      flags: MessageFlags.Ephemeral
+    };
+  }
+
   // Build rarity lookup from full cache for this category
   const rarityMap = {};
   const catData = cache.categories?.[category];
@@ -120,7 +134,7 @@ function buildStep2(category) {
     .setColor(0x3498DB)
     .setFooter({ text: 'Step 2: Choose your wanted card' });
 
-  const options = cards.map(card => {
+  const options = cards.slice(0, 25).map(card => {
     const rarity = rarityMap[card];
     const option = new StringSelectMenuOptionBuilder()
       .setLabel(card)
@@ -154,6 +168,13 @@ function buildStep3(wantedCard) {
         allCards.push({ name, cat, rarity: rarityMap[name] || null });
       }
     }
+  }
+
+  if (allCards.length === 0) {
+    return {
+      content: '❌ No cards available to offer.',
+      flags: MessageFlags.Ephemeral
+    };
   }
 
   const embed = new EmbedBuilder()
