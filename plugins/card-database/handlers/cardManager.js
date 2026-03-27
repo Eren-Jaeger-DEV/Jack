@@ -131,17 +131,20 @@ async function handleImageUpload(message) {
   pendingSessions.delete(message.author.id);
 
   try {
-    // Delete the raw upload so the channel stays clean
-    await message.delete().catch(() => {});
-
     const cardContent =
       `Name: ${session.name}\n` +
       `Rarity: ${session.rarity}`;
 
-    await message.channel.send({
+    // Re-upload the image to create a permanent bot message first
+    const sent = await message.channel.send({
       content: cardContent,
-      files: [attachment.url]
+      files: [{ attachment: attachment.url, name: attachment.name }]
     });
+
+    if (sent) {
+      // Delete the raw upload ONLY after successful re-upload
+      await message.delete().catch(() => {});
+    }
   } catch (err) {
     console.error('[CardDB] handleImageUpload error:', err.message);
     // Restore session so admin can try again
