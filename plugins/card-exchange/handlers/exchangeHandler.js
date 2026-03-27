@@ -2,18 +2,15 @@
  * plugins/card-exchange/handlers/exchangeHandler.js
  *
  * Dropdown-based Card Exchange system.
+ * Data is sourced exclusively from /utils/cardManager.js (cached JSON).
+ * No Discord API calls during any dropdown or button interaction.
  *
- * Multi-step ephemeral UI flow:
- *  Step 1 → Category select  (wanted card)
- *  Step 2 → Card select      (wanted card)
- *  Step 3 → Offer multi-select (max 3)
+ * Flow:
+ *  Step 1 → Category select    (wanted card)
+ *  Step 2 → Card select        (wanted card — shows rarity in description)
+ *  Step 3 → Offer multi-select (max 3 — shows rarity in labels)
  *  Step 4 → Optional code modal
- *  Step 5 → Post exchange embed publicly
- *
- * State:
- *  sessions : Map<userId, { step, wantedCategory, wantedCard, offeredCards }>
- *  activeExchanges : Map<userId, messageId>
- *  cooldowns       : Map<userId, timestamp>
+ *  Step 5 → Post exchange embed publicly (shows wanted card image preview)
  */
 
 'use strict';
@@ -32,14 +29,14 @@ const {
   ChannelType
 } = require('discord.js');
 
-const CARDS = require('../data/cards.json');
+const { getCards, getCache, getCardRarity, getCardImage } = require('../../../utils/cardManager');
 
-/* ─── Config ─────────────────────────────────────────────────────────────── */
+/* ─── Config ──────────────────────────────────────────────────────────────── */
 const EXCHANGE_CHANNEL_ID = '1486943351403184169';
 const TRADER_ROLE_ID      = '1486942697976631326';
 const COOLDOWN_MS         = 5 * 60 * 1000; // 5 minutes
 
-/* ─── State ──────────────────────────────────────────────────────────────── */
+/* ─── State ───────────────────────────────────────────────────────────────── */
 /** @type {Map<string, {step:number, wantedCategory:string, wantedCard:string, offeredCards:string[]}>} */
 const sessions = new Map();
 
@@ -56,9 +53,7 @@ function hasTraderRole(member) {
 
 async function denyEphemeral(interaction, message) {
   const payload = { content: message, flags: MessageFlags.Ephemeral };
-  if (interaction.deferred || interaction.replied) {
-    return interaction.followUp(payload).catch(() => {});
-  }
+  if (interaction.deferred || interaction.replied) return interaction.followUp(payload).catch(() => {});
   return interaction.reply(payload).catch(() => {});
 }
 
@@ -67,19 +62,30 @@ function formatCooldown(ms) {
   return `${Math.floor(secs / 60)}m ${secs % 60}s`;
 }
 
+/** Rarity → emoji badge */
+function rarityBadge(rarity) {
+  if (!rarity) return '';
+  const r = rarity.toUpperCase();
+  if (r === 'S') return '⭐ S';
+  if (r === 'A') return '🔶 A';
+  if (r === 'B') return '🔷 B';
+  if (r === 'C') return '⚪ C';
+  return rarity;
+}
+
 /* ─── UI Builders ─────────────────────────────────────────────────────────── */
 
-/**
- * Step 1: Category select embed + dropdown
- */
+/** Step 1: Category select */
 function buildStep1() {
+  const CARDS = getCards();
+  const categories = Object.keys(CARDS);
+
   const embed = new EmbedBuilder()
     .setTitle('📋 Post Exchange — Step 1 of 3')
     .setDescription('**Select the category of the card you are looking for:**')
     .setColor(0xF1C40F)
     .setFooter({ text: 'Step 1: Choose a category' });
 
-  const categories = Object.keys(CARDS);
   const menu = new StringSelectMenuBuilder()
     .setCustomId('cex_step1_cat')
     .setPlaceholder('🗂️ Choose a category...')
@@ -92,16 +98,21 @@ function buildStep1() {
       )
     );
 
-  const row = new ActionRowBuilder().addComponents(menu);
-  return { embeds: [embed], components: [row], flags: MessageFlags.Ephemeral };
+  return { embeds: [embed], components: [new ActionRowBuilder().addComponents(menu)], flags: MessageFlags.Ephemeral };
 }
 
-/**
- * Step 2: Card select for wanted card (from chosen category)
- * @param {string} category
- */
+/** Step 2: Card select for wanted card, with rarity in description */
 function buildStep2(category) {
+  const CARDS = getCards();
+  const cache = getCache();
   const cards = CARDS[category] || [];
+
+  // Build rarity lookup from full cache for this category
+  const rarityMap = {};
+  const catData = cache.categories?.[category];
+  if (catData?.cards) {
+    for (const c of catData.cards) rarityMap[c.name] = c.rarity;
+  }
 
   const embed = new EmbedBuilder()
     .setTitle('📋 Post Exchange — Step 2 of 3')
@@ -109,33 +120,38 @@ function buildStep2(category) {
     .setColor(0x3498DB)
     .setFooter({ text: 'Step 2: Choose your wanted card' });
 
+  const options = cards.map(card => {
+    const rarity = rarityMap[card];
+    const option = new StringSelectMenuOptionBuilder()
+      .setLabel(card)
+      .setValue(card)
+      .setEmoji('🃏');
+    if (rarity) option.setDescription(`Rarity: ${rarityBadge(rarity)}`);
+    return option;
+  });
+
   const menu = new StringSelectMenuBuilder()
     .setCustomId('cex_step2_card')
     .setPlaceholder('🔍 Select wanted card...')
-    .addOptions(
-      cards.map(card =>
-        new StringSelectMenuOptionBuilder()
-          .setLabel(card)
-          .setValue(card)
-          .setEmoji('🃏')
-      )
-    );
+    .addOptions(options);
 
-  const row = new ActionRowBuilder().addComponents(menu);
-  return { embeds: [embed], components: [row], flags: MessageFlags.Ephemeral };
+  return { embeds: [embed], components: [new ActionRowBuilder().addComponents(menu)], flags: MessageFlags.Ephemeral };
 }
 
-/**
- * Step 3: Offer multi-select (all cards, max 3)
- * @param {string} wantedCard — excluded from offer list
- */
+/** Step 3: Offer multi-select (all cards except wanted), with rarity labels */
 function buildStep3(wantedCard) {
-  // Flatten all cards, excluding the wanted card
+  const CARDS  = getCards();
+  const cache  = getCache();
+
+  // Build flat list with rarity from full cache
   const allCards = [];
-  for (const [cat, cards] of Object.entries(CARDS)) {
-    for (const card of cards) {
-      if (card !== wantedCard) {
-        allCards.push({ label: card, value: `${cat}::${card}` });
+  for (const [cat, names] of Object.entries(CARDS)) {
+    const catCards = cache.categories?.[cat]?.cards || [];
+    const rarityMap = Object.fromEntries(catCards.map(c => [c.name, c.rarity]));
+
+    for (const name of names) {
+      if (name !== wantedCard) {
+        allCards.push({ name, cat, rarity: rarityMap[name] || null });
       }
     }
   }
@@ -149,13 +165,15 @@ function buildStep3(wantedCard) {
     .setColor(0x2ECC71)
     .setFooter({ text: 'Step 3: Choose your offered cards (max 3)' });
 
-  // Discord only allows 25 options per menu; slice to 25
-  const options = allCards.slice(0, 25).map(({ label, value }) =>
-    new StringSelectMenuOptionBuilder()
-      .setLabel(label)
-      .setValue(value)
-      .setEmoji('🎁')
-  );
+  // Discord allows max 25 options per menu
+  const options = allCards.slice(0, 25).map(({ name, cat, rarity }) => {
+    const option = new StringSelectMenuOptionBuilder()
+      .setLabel(name)
+      .setValue(`${cat}::${name}`)
+      .setEmoji('🎁');
+    if (rarity) option.setDescription(`Rarity: ${rarityBadge(rarity)}`);
+    return option;
+  });
 
   const menu = new StringSelectMenuBuilder()
     .setCustomId('cex_step3_offer')
@@ -164,13 +182,10 @@ function buildStep3(wantedCard) {
     .setMaxValues(Math.min(3, options.length))
     .addOptions(options);
 
-  const row = new ActionRowBuilder().addComponents(menu);
-  return { embeds: [embed], components: [row], flags: MessageFlags.Ephemeral };
+  return { embeds: [embed], components: [new ActionRowBuilder().addComponents(menu)], flags: MessageFlags.Ephemeral };
 }
 
-/**
- * Optional code modal (Step 4)
- */
+/** Step 4: Optional code modal */
 function buildCodeModal() {
   const modal = new ModalBuilder()
     .setCustomId('cex_modal_code')
@@ -189,32 +204,39 @@ function buildCodeModal() {
 }
 
 /**
- * Public exchange embed + Interested button
- * @param {import('discord.js').User} user
- * @param {string} wantedCard
- * @param {string[]} offeredCards
- * @param {string|null} code
+ * Public exchange embed — shows rarity for the wanted card and its image as thumbnail.
  */
 function buildExchangeEmbed(user, wantedCard, offeredCards, code) {
-  const offeredStr = offeredCards.map((c, i) => `\`${i + 1}.\` ${c}`).join('\n');
+  const offeredStr = offeredCards.map((c, i) => {
+    const rarity = getCardRarity(c);
+    return `\`${i + 1}.\` ${c}${rarity ? ` — ${rarityBadge(rarity)}` : ''}`;
+  }).join('\n');
 
-  return new EmbedBuilder()
+  const wantedRarity = getCardRarity(wantedCard);
+  const wantedImage  = getCardImage(wantedCard);
+
+  const wantedStr = wantedRarity
+    ? `${wantedCard} — ${rarityBadge(wantedRarity)}`
+    : wantedCard;
+
+  const embed = new EmbedBuilder()
     .setTitle('🔄 Card Exchange Request')
     .setDescription(`<@${user.id}> is looking to exchange cards!`)
     .addFields(
-      { name: '🔍 Looking For',  value: wantedCard,  inline: true },
-      { name: '🎁 Offering',     value: offeredStr,  inline: true },
+      { name: '🔍 Looking For', value: wantedStr,  inline: true },
+      { name: '🎁 Offering',    value: offeredStr, inline: false },
       ...(code ? [{ name: '🔑 Exchange Code', value: `\`${code}\``, inline: false }] : [])
     )
     .setColor(0x2ECC71)
-    .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+    .setThumbnail(wantedImage || user.displayAvatarURL({ dynamic: true }))
     .setFooter({ text: `Posted by ${user.username}` })
     .setTimestamp();
+
+  return embed;
 }
 
-/* ─── Step Handlers ──────────────────────────────────────────────────────── */
+/* ─── Step Handlers ───────────────────────────────────────────────────────── */
 
-/** Step 1 trigger: "Post Exchange" button */
 async function handlePostButton(interaction) {
   if (interaction.channelId !== EXCHANGE_CHANNEL_ID) {
     return denyEphemeral(interaction, '❌ This system only works in the exchange channel.');
@@ -231,57 +253,43 @@ async function handlePostButton(interaction) {
     return denyEphemeral(interaction, `⏳ Cooldown! Wait **${formatCooldown(remaining)}** before posting again.`);
   }
 
-  // Initialize session
   sessions.set(interaction.user.id, { step: 1, wantedCategory: null, wantedCard: null, offeredCards: [] });
-
   return interaction.reply(buildStep1());
 }
 
-/** Step 2 trigger: category selected */
 async function handleStep1(interaction) {
   const session = sessions.get(interaction.user.id);
   if (!session || session.step !== 1) {
     return denyEphemeral(interaction, '❌ Session expired. Click "Post Exchange" again.');
   }
-
   const category = interaction.values[0];
   session.wantedCategory = category;
   session.step = 2;
-
   return interaction.update(buildStep2(category));
 }
 
-/** Step 3 trigger: wanted card selected */
 async function handleStep2(interaction) {
   const session = sessions.get(interaction.user.id);
   if (!session || session.step !== 2) {
     return denyEphemeral(interaction, '❌ Session expired. Click "Post Exchange" again.');
   }
-
   const wantedCard = interaction.values[0];
   session.wantedCard = wantedCard;
   session.step = 3;
-
   return interaction.update(buildStep3(wantedCard));
 }
 
-/** Step 4 trigger: offered cards selected → show code modal */
 async function handleStep3(interaction) {
   const session = sessions.get(interaction.user.id);
   if (!session || session.step !== 3) {
     return denyEphemeral(interaction, '❌ Session expired. Click "Post Exchange" again.');
   }
-
-  // Parse values: "Category::CardName"
   const offeredCards = interaction.values.map(v => v.split('::')[1]);
   session.offeredCards = offeredCards;
   session.step = 4;
-
-  // Show code modal
   return interaction.showModal(buildCodeModal());
 }
 
-/** Step 5 trigger: code modal submitted → post exchange */
 async function handleCodeModal(interaction) {
   if (interaction.channelId !== EXCHANGE_CHANNEL_ID) {
     return denyEphemeral(interaction, '❌ This system only works in the exchange channel.');
@@ -294,14 +302,8 @@ async function handleCodeModal(interaction) {
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const code = interaction.fields.getTextInputValue('cex_code')?.trim() || null;
-
-  const embed = buildExchangeEmbed(
-    interaction.user,
-    session.wantedCard,
-    session.offeredCards,
-    code
-  );
+  const code  = interaction.fields.getTextInputValue('cex_code')?.trim() || null;
+  const embed = buildExchangeEmbed(interaction.user, session.wantedCard, session.offeredCards, code);
 
   const interestedBtn = new ButtonBuilder()
     .setCustomId(`cex_interested_${interaction.user.id}`)
@@ -309,9 +311,10 @@ async function handleCodeModal(interaction) {
     .setStyle(ButtonStyle.Success)
     .setEmoji('🤝');
 
-  const row = new ActionRowBuilder().addComponents(interestedBtn);
-
-  const msg = await interaction.channel.send({ embeds: [embed], components: [row] }).catch(err => {
+  const msg = await interaction.channel.send({
+    embeds: [embed],
+    components: [new ActionRowBuilder().addComponents(interestedBtn)]
+  }).catch(err => {
     console.error('[CardExchange] Failed to post exchange:', err.message);
     return null;
   });
@@ -321,7 +324,6 @@ async function handleCodeModal(interaction) {
     return interaction.followUp({ content: '❌ Failed to post exchange. Please try again.', flags: MessageFlags.Ephemeral });
   }
 
-  // Store active exchange + cooldown, clear session
   activeExchanges.set(interaction.user.id, msg.id);
   cooldowns.set(interaction.user.id, Date.now());
   sessions.delete(interaction.user.id);
@@ -329,14 +331,13 @@ async function handleCodeModal(interaction) {
   await interaction.followUp({ content: '✅ Your exchange has been posted!', flags: MessageFlags.Ephemeral });
 }
 
-/* ─── Interested Handler ─────────────────────────────────────────────────── */
+/* ─── Interested Handler ──────────────────────────────────────────────────── */
 async function handleInterested(interaction) {
   if (interaction.channelId !== EXCHANGE_CHANNEL_ID) {
     return denyEphemeral(interaction, '❌ This action only works in the exchange channel.');
   }
 
   const posterId = interaction.customId.split('_')[2];
-
   if (interaction.user.id === posterId) {
     return denyEphemeral(interaction, '❌ You cannot express interest in your own exchange!');
   }
@@ -344,10 +345,9 @@ async function handleInterested(interaction) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   try {
-    const message = interaction.message;
-    const posterName = message.embeds?.[0]?.footer?.text?.replace('Posted by ', '') || 'Poster';
+    const posterName = interaction.message.embeds?.[0]?.footer?.text?.replace('Posted by ', '') || 'Poster';
 
-    const thread = await message.startThread({
+    const thread = await interaction.message.startThread({
       name: `Exchange — ${interaction.user.username} × ${posterName}`,
       type: ChannelType.PrivateThread,
       reason: 'Card Exchange interest'
@@ -370,7 +370,7 @@ async function handleInterested(interaction) {
   }
 }
 
-/* ─── Main Router ────────────────────────────────────────────────────────── */
+/* ─── Main Router ─────────────────────────────────────────────────────────── */
 function registerHandler(client) {
   client.on('interactionCreate', async interaction => {
     try {

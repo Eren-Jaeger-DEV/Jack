@@ -1,0 +1,6 @@
+{
+  "name": "card-database",
+  "version": "1.0.0",
+  "description": "Card Database CMS — Discord threads as source of truth, sync to cardsCache.json",
+  "main": "index.js"
+}
