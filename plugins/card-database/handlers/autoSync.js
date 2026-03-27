@@ -95,6 +95,12 @@ function registerAutoSync(client) {
     scheduleSyncDebounced(client, `messageDelete in "${channel.name}"`);
   });
 
+  // 5. Thread deleted in DB channel → category removed
+  client.on('threadDelete', thread => {
+    if (thread.parentId !== DB_CHANNEL_ID) return;
+    scheduleSyncDebounced(client, `threadDelete: "${thread.name}"`);
+  });
+
   console.log('[CardDB] Auto-sync event listeners registered.');
 }
 

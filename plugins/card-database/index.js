@@ -11,7 +11,7 @@
 'use strict';
 
 const { ensurePanel }                                      = require('./handlers/panelManager');
-const { handleAddCategory, handleCategoryModal }           = require('./handlers/categoryManager');
+const { handleAddCategory, handleCategoryModal, handleDeleteCategory } = require('./handlers/categoryManager');
 const { handleAddCard, handleCardModal, handleImageUpload } = require('./handlers/cardManager');
 const { handleSync }                                       = require('./handlers/syncHandler');
 const { registerAutoSync }                                 = require('./handlers/autoSync');
@@ -37,9 +37,10 @@ module.exports = {
     client.on('interactionCreate', async interaction => {
       try {
         if (interaction.isButton()) {
-          if (interaction.customId === 'cdb_add_cat')  return handleAddCategory(interaction);
-          if (interaction.customId === 'cdb_sync')     return handleSync(interaction, client);
-          if (interaction.customId === 'cdb_add_card') return handleAddCard(interaction);
+          if (interaction.customId === 'cdb_add_cat')    return handleAddCategory(interaction);
+          if (interaction.customId === 'cdb_sync')       return handleSync(interaction, client);
+          if (interaction.customId === 'cdb_add_card')   return handleAddCard(interaction);
+          if (interaction.customId === 'cdb_delete_cat') return handleDeleteCategory(interaction);
         }
 
         if (interaction.isModalSubmit()) {

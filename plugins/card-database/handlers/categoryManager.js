@@ -51,7 +51,13 @@ function buildCategoryPanel(categoryName) {
     .setStyle(ButtonStyle.Primary)
     .setEmoji('🃏');
 
-  const row = new ActionRowBuilder().addComponents(addCardBtn);
+  const deleteCatBtn = new ButtonBuilder()
+    .setCustomId('cdb_delete_cat')
+    .setLabel('Delete Category')
+    .setStyle(ButtonStyle.Danger)
+    .setEmoji('🗑️');
+
+  const row = new ActionRowBuilder().addComponents(addCardBtn, deleteCatBtn);
   return { embeds: [embed], components: [row] };
 }
 
@@ -118,4 +124,29 @@ async function handleCategoryModal(interaction) {
   }
 }
 
-module.exports = { handleAddCategory, handleCategoryModal };
+/* ─── Delete Category ──────────────────────────────────────────────────────── */
+async function handleDeleteCategory(interaction) {
+  if (!isAdmin(interaction.member)) {
+    return denyEphemeral(interaction, '❌ Only administrators can delete categories.');
+  }
+
+  if (!interaction.channel.isThread()) {
+    return denyEphemeral(interaction, '❌ This button must be used inside a category thread.');
+  }
+
+  const categoryName = interaction.channel.name;
+
+  try {
+    // Delete the thread
+    await interaction.channel.delete(`Card Database — category deleted by ${interaction.user.tag}`);
+    
+    // interaction.reply() will fail because the channel is deleted,
+    // so we don't bother sending a confirmation to the channel itself.
+    console.log(`[CardDB] Category "${categoryName}" deleted by ${interaction.user.tag}.`);
+  } catch (err) {
+    console.error('[CardDB] handleDeleteCategory error:', err.message);
+    await denyEphemeral(interaction, `❌ Failed to delete category: ${err.message}`);
+  }
+}
+
+module.exports = { handleAddCategory, handleCategoryModal, handleDeleteCategory };
