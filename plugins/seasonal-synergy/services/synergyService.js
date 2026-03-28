@@ -10,6 +10,8 @@ const Player = require('../../../bot/database/models/Player');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const { generateLeaderboardImage } = require('../../../utils/leaderboardCanvas');
 const configManager = require('../../../bot/utils/configManager');
+const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
+
 
 /* ── Constants ── */
 const MAX_WEEKLY_ENERGY = 15000;

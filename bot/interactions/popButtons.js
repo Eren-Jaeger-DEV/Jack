@@ -1,21 +1,21 @@
 const { TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, ChannelType } = require("discord.js");
 const PopListing = require("../database/models/PopListing");
 const PopDeal = require("../database/models/PopDeal");
-const { refreshMarketPanel, MARKET_CHANNEL_ID } = require("../utils/marketPanel");
-const { generateTranscript } = require("../utils/transcript");
-
-const ALLOWED_ROLE_ID = "1480600580408742029";
-const LOG_CHANNEL_ID = "1407965645408043119";
-const DEAL_CATEGORY_ID = "1480624145787125830";
+const configManager = require("../utils/configManager");
 
 module.exports = async function popButtons(interaction) {
+  const config = await configManager.getGuildConfig(interaction.guild.id);
+  const allowedRoleId = config?.settings?.marketRoleId;
+  const logChannelId = config?.settings?.marketLogChannelId || config?.settings?.logChannelId;
+  const dealCategoryId = config?.settings?.dealCategoryId;
+
 
   /* ---------- BUY POP LISTING ---------- */
   if (interaction.customId.startsWith("buy_pop_")) {
     const listingID = interaction.customId.replace("buy_pop_", "");
 
     // 1. Check Role Permission
-    if (!interaction.member.roles.cache.has(ALLOWED_ROLE_ID)) {
+    if (allowedRoleId && !interaction.member.roles.cache.has(allowedRoleId)) {
       return interaction.reply({ content: "❌ You don't have permission to buy POP.", flags: 64 });
     }
 
@@ -45,7 +45,7 @@ module.exports = async function popButtons(interaction) {
       const dealChannel = await guild.channels.create({
         name: `pop-deal-${listingID}`,
         type: ChannelType.GuildText,
-        parent: DEAL_CATEGORY_ID,
+        parent: dealCategoryId,
         permissionOverwrites: [
           {
             id: guild.roles.everyone.id,
@@ -146,7 +146,7 @@ module.exports = async function popButtons(interaction) {
 
     // Transcript & Logging
     const transcript = await generateTranscript(interaction.channel);
-    const logChannel = await interaction.client.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
+    const logChannel = logChannelId ? await interaction.client.channels.fetch(logChannelId).catch(() => null) : null;
 
     if (logChannel) {
       const embed = new EmbedBuilder()
@@ -201,7 +201,7 @@ module.exports = async function popButtons(interaction) {
 
     // Transcript & Logging
     const transcript = await generateTranscript(interaction.channel);
-    const logChannel = await interaction.client.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
+    const logChannel = logChannelId ? await interaction.client.channels.fetch(logChannelId).catch(() => null) : null;
 
     if (logChannel) {
       const embed = new EmbedBuilder()

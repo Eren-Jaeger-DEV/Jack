@@ -1,13 +1,21 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const PopListing = require("../database/models/PopListing");
 
-const MARKET_CHANNEL_ID = "1406499745085788220";
+const configManager = require("./configManager");
+
 let cachedMessageId = null;
 
 async function refreshMarketPanel(client) {
   try {
-    const channel = await client.channels.fetch(MARKET_CHANNEL_ID).catch(() => null);
+    const guildId = process.env.GUILD_ID || "1341978655437619250";
+    const config = await configManager.getGuildConfig(guildId);
+    const marketChannelId = config?.settings?.marketChannelId;
+
+    if (!marketChannelId) return;
+
+    const channel = await client.channels.fetch(marketChannelId).catch(() => null);
     if (!channel) return console.error("Market channel not found or accessible.");
+
 
     // Fetch all active listings, sorted lowest price first
     const activeListings = await PopListing.find({ status: "active" }).sort({ price: 1 });
@@ -80,6 +88,6 @@ async function refreshMarketPanel(client) {
 }
 
 module.exports = {
-  refreshMarketPanel,
-  MARKET_CHANNEL_ID
+  refreshMarketPanel
 };
+

@@ -28,8 +28,17 @@ const guildConfigSchema = new mongoose.Schema({
     "foster-program": { type: Boolean, default: true },
     "member-classification": { type: Boolean, default: true },
     utility: { type: Boolean, default: true },
-    "card-exchange": { type: Boolean, default: true }
+    "card-exchange": { type: Boolean, default: true },
+    admin: { type: Boolean, default: true },
+    emoji: { type: Boolean, default: true },
+    fun: { type: Boolean, default: true },
+    games: { type: Boolean, default: true },
+    packs: { type: Boolean, default: true },
+    roles: { type: Boolean, default: true },
+    sticker: { type: Boolean, default: true },
+    triggers: { type: Boolean, default: true }
   },
+
 
   
   settings: {
@@ -37,6 +46,9 @@ const guildConfigSchema = new mongoose.Schema({
     autoRoleId: { type: String },
     modLogChannelId: { type: String },
     inviteLogChannelId: { type: String },
+    marketLogChannelId: { type: String },
+    dealCategoryId: { type: String },
+
     
     // Feature Channels
     classificationChannelId: { type: String },
