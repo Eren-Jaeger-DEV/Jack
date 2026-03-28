@@ -55,14 +55,13 @@ module.exports = {
     /* ═══════════════════════════════════════════
      *  BUTTON HANDLER — Leaderboard Pagination
      * ═══════════════════════════════════════════ */
-    client.on('interactionCreate', async (interaction) => {
+    this._interactionHandler = async (interaction) => {
       if (!interaction.isButton()) return;
       if (!interaction.customId.startsWith('battle_lb_')) return;
 
       try {
         const parts = interaction.customId.split('_');
-        // battle_lb_prev_<page> or battle_lb_next_<page>
-        const direction = parts[2]; // 'prev' or 'next'
+        const direction = parts[2]; 
         const currentPage = parseInt(parts[3]);
 
         if (isNaN(currentPage)) return;
@@ -75,15 +74,24 @@ module.exports = {
         }
 
         // Acknowledge the interaction immediately to prevent timeouts
-        await interaction.deferUpdate().catch(err => {
-          console.error('[ClanBattle] deferUpdate error:', err.message);
-        });
+        await interaction.deferUpdate().catch(() => {});
+        
         await battleService.refreshLeaderboard(client, battle, newPage, interaction);
 
       } catch (err) {
-        if (err?.code === 10062) return; // Unknown interaction
+        if (err?.code === 10062) return;
         console.error('[ClanBattle] Pagination error:', err);
       }
-    });
+    };
+
+    client.on('interactionCreate', this._interactionHandler);
+  },
+
+  unload(client) {
+    if (this._interactionHandler) {
+      client.removeListener('interactionCreate', this._interactionHandler);
+      this._interactionHandler = null;
+    }
   }
 };
+

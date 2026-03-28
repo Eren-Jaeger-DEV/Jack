@@ -1,0 +1,8 @@
+{
+  "id": "server-overview",
+  "name": "Server Overview",
+  "version": "1.0.0",
+  "description": "Interactive server overview and admin control panel system.",
+  "main": "index.js",
+  "enabledByDefault": true
+}

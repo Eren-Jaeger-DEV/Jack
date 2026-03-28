@@ -119,33 +119,30 @@ module.exports = {
     /* ═══════════════════════════════════════════
      *  BUTTON HANDLER — Leaderboard Pagination
      * ═══════════════════════════════════════════ */
-    client.on('interactionCreate', async (interaction) => {
+    this._interactionHandler = async (interaction) => {
       if (!interaction.isButton()) return;
       if (!interaction.customId.startsWith('synergy_lb_')) return;
 
       try {
         const parts = interaction.customId.split('_');
-        // synergy_lb_prev_<page> or synergy_lb_next_<page>
-        const direction = parts[2]; // 'prev' or 'next'
+        const direction = parts[2]; 
         const currentPage = parseInt(parts[3]);
 
         if (isNaN(currentPage)) return;
 
-        // Defer update to handle possible image loading latency
+        // Acknowledge the interaction immediately to prevent timeouts
         await interaction.deferUpdate().catch(() => {});
 
         let newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
 
         const season = await synergyService.getActiveSeason(interaction.guild.id);
         if (!season) {
-          return interaction.reply({ content: '❌ No active season.', ephemeral: true });
+          return interaction.followUp({ content: '❌ No active season.', ephemeral: true });
         }
 
-        // Generate inline payload
         const guild = await client.guilds.fetch(season.guildId).catch(() => null);
-        const lb = await synergyService.getLeaderboardPage(guild, newPage);
+        const lb = await synergyService.getLeaderboardPayload(guild, season, newPage);
 
-        // Respect bounds manually
         if (newPage < 0) newPage = 0;
         if (newPage >= lb.totalPages) newPage = lb.totalPages - 1;
 
@@ -170,9 +167,18 @@ module.exports = {
         }
 
       } catch (err) {
-        if (err?.code === 10062) return; // Unknown interaction
+        if (err?.code === 10062) return;
         console.error('[SeasonalSynergy] Pagination error:', err);
       }
-    });
+    };
+
+    client.on('interactionCreate', this._interactionHandler);
+  },
+
+  unload(client) {
+    if (this._interactionHandler) {
+      client.removeListener('interactionCreate', this._interactionHandler);
+      this._interactionHandler = null;
+    }
   }
 };

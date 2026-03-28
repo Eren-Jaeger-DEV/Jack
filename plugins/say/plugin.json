@@ -1,0 +1,8 @@
+{
+  "id": "say",
+  "name": "Say Utility",
+  "version": "1.0.0",
+  "description": "Allows admins to resend messages through the bot by replying to them.",
+  "main": "index.js",
+  "enabledByDefault": true
+}
