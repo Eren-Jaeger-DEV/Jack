@@ -25,26 +25,42 @@ let panelMessageId = null;
  */
 function buildPanel() {
   const embed = new EmbedBuilder()
-    .setTitle('📋 Card Exchange')
+    .setTitle('🏆 CARD EXCHANGE HUB')
     .setDescription(
-      '**How to use this panel:**\n\n' +
-      '🔍 **Step 1 —** Select the card you are looking for\n' +
-      '🎁 **Step 2 —** Enter up to 3 cards you want to offer\n' +
-      '🔑 **Step 3 —** Enter your exchange code *(optional)*\n' +
-      '✅ **Step 4 —** Others can click **"Interested"** to open a private thread\n\n' +
-      '> Only members with the **Trader** role can post exchanges.'
+      'Welcome to the **Premium Card Exchange Marketplace**!\n' +
+      'Trade your collectible cards with other members efficiently.\n\n' +
+      '🤝 **Interested**\n' +
+      'Browse all active trade requests and find your matches.\n\n' +
+      '📬 **Create Post**\n' +
+      'List your own cards and specify what you are looking for.\n\n' +
+      '🔍 **Search**\n' +
+      'Quickly find a specific card or category in the market.\n\n' +
+      '---'
     )
-    .setColor(0xF1C40F)
-    .setFooter({ text: 'Card Exchange System' })
+    .setColor(0xF1C40F) // Gold
+    .setThumbnail('https://cdn-icons-png.flaticon.com/512/8146/8146767.png') // Trading icon
+    .setFooter({ text: 'CARD EXCHANGE SYSTEM • PREMIUM INTERFACE', iconURL: 'https://cdn-icons-png.flaticon.com/512/2583/2583344.png' })
     .setTimestamp();
 
-  const button = new ButtonBuilder()
+  const btnInterested = new ButtonBuilder()
+    .setCustomId('cex_browse')
+    .setLabel('Interested')
+    .setStyle(ButtonStyle.Success)
+    .setEmoji('🤝');
+
+  const btnPost = new ButtonBuilder()
     .setCustomId('cex_post')
-    .setLabel('Post Exchange')
+    .setLabel('Create Post')
     .setStyle(ButtonStyle.Primary)
     .setEmoji('📬');
 
-  const row = new ActionRowBuilder().addComponents(button);
+  const btnSearch = new ButtonBuilder()
+    .setCustomId('cex_search')
+    .setLabel('Search')
+    .setStyle(ButtonStyle.Secondary)
+    .setEmoji('🔍');
+
+  const row = new ActionRowBuilder().addComponents(btnInterested, btnPost, btnSearch);
 
   return { embeds: [embed], components: [row] };
 }
@@ -76,7 +92,7 @@ async function ensurePanel(client) {
     const messages = await channel.messages.fetch({ limit: 50 });
     const existing = messages.find(
       m => m.author.id === client.user.id &&
-           m.embeds?.[0]?.title === '📋 Card Exchange'
+           m.embeds?.[0]?.title === '🏆 CARD EXCHANGE HUB'
     );
 
     if (existing) {
