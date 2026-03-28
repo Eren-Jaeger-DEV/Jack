@@ -14,9 +14,12 @@ module.exports = {
     .setDescription("Check bot latency"),
 
   async run(ctx) {
+    const ping = ctx.client.ws.ping;
+    const msgLatency = Date.now() - (ctx.interaction?.createdTimestamp || ctx.message?.createdTimestamp || Date.now());
 
-    await ctx.reply("Zinda hu");
+    const response = `**Zinda hu** \n\n🛰️ **API Latency:** \`${ping}ms\`\n⚡ **Heartbeat:** \`${msgLatency}ms\``;
 
+    await ctx.reply(response);
   }
 
 };
