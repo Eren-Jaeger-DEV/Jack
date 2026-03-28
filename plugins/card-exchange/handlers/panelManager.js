@@ -39,14 +39,11 @@ function buildPanel() {
     )
     .setColor(0xF1C40F) // Gold
     .setThumbnail('https://cdn-icons-png.flaticon.com/512/8146/8146767.png') // Trading icon
-    .setFooter({ text: 'CARD EXCHANGE SYSTEM • PREMIUM INTERFACE', iconURL: 'https://cdn-icons-png.flaticon.com/512/2583/2583344.png' })
+    .setFooter({ text: 'CARD EXCHANGE SYSTEM', iconURL: 'https://cdn-icons-png.flaticon.com/512/2583/2583344.png' })
     .setTimestamp();
 
-  const btnInterested = new ButtonBuilder()
-    .setCustomId('cex_browse')
-    .setLabel('Interested')
-    .setStyle(ButtonStyle.Success)
-    .setEmoji('🤝');
+
+
 
   const btnPost = new ButtonBuilder()
     .setCustomId('cex_post')
@@ -92,7 +89,7 @@ async function ensurePanel(client) {
     const messages = await channel.messages.fetch({ limit: 50 });
     const existing = messages.find(
       m => m.author.id === client.user.id &&
-           m.embeds?.[0]?.title === '🏆 CARD EXCHANGE HUB'
+        m.embeds?.[0]?.title === '🏆 CARD EXCHANGE HUB'
     );
 
     if (existing) {
@@ -120,7 +117,7 @@ async function repostPanel(client) {
     // Delete old panel if it exists
     if (panelMessageId) {
       const old = await channel.messages.fetch(panelMessageId).catch(() => null);
-      if (old) await old.delete().catch(() => {});
+      if (old) await old.delete().catch(() => { });
     }
 
     await sendPanel(channel);
