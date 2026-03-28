@@ -98,6 +98,11 @@ module.exports = (client) => {
     });
 
     const GUILD_ID = process.env.GUILD_ID;
+    if (!GUILD_ID) {
+      console.warn("⚠️ [Plugins] GUILD_ID not found in environment. Skipping dynamic plugin loading.");
+      addLog("Plugins", "GUILD_ID missing; skipping dynamic load");
+      return;
+    }
 
     const config = await configManager.getGuildConfig(GUILD_ID);
     const enabledPlugins = config?.plugins || {};

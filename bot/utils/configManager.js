@@ -25,6 +25,11 @@ async function init(client) {
  * @param {string} guildId 
  */
 async function getGuildConfig(guildId) {
+  if (!guildId) {
+    console.error("[ConfigManager] Attempted to fetch config with undefined/null guildId.");
+    return null;
+  }
+
   if (configCache.has(guildId)) {
     return configCache.get(guildId);
   }
