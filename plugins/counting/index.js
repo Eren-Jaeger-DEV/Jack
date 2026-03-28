@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const configManager = require('../../bot/utils/configManager');
-const { addLog } = require('../../bot/utils/logger');
+const { addLog } = require('../../utils/logger');
+
 
 
 const CONFIG = {

@@ -12,7 +12,14 @@ const activeVCs = new Map();
 
 async function initControlPanel(client) {
   try {
-    const GUILD_ID = process.env.GUILD_ID;
+    let GUILD_ID = process.env.GUILD_ID;
+    
+    // Fallback: Use the first guild from config cache if GUILD_ID is not in .env
+    if (!GUILD_ID) {
+      const firstGuildId = Array.from(configManager.configCache.keys())[0];
+      if (firstGuildId) GUILD_ID = firstGuildId;
+    }
+
     if (!GUILD_ID) return;
     const config = await configManager.getGuildConfig(GUILD_ID);
     const panelChannelId = config?.settings?.tempvcPanelChannelId;
@@ -20,6 +27,8 @@ async function initControlPanel(client) {
 
     const channel = await client.channels.fetch(panelChannelId).catch(() => null);
     if (!channel) return;
+
+
 
     // Check if message already exists
     const messages = await channel.messages.fetch({ limit: 10 });
@@ -67,6 +76,8 @@ module.exports = {
   load(client) {
     // Hidden to keep startup clean
 
+
+
     if (client.isReady()) {
       initControlPanel(client);
     } else {
@@ -75,7 +86,11 @@ module.exports = {
 
     // Voice State Tracker
     client.on('voiceStateUpdate', async (oldState, newState) => {
+      // Debug log for every voice state change
+      console.log(`[TempVC Debug] User ${newState.member?.user.tag} moved from ${oldState.channelId} to ${newState.channelId}`);
+
       const config = await configManager.getGuildConfig(newState.guild.id);
+
       const createVcId = config?.settings?.tempvcCreateChannelId;
       const categoryId = config?.settings?.tempvcCategoryId;
 
