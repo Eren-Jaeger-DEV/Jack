@@ -29,8 +29,6 @@ function buildPanel() {
     .setDescription(
       'Welcome to the **Premium Card Exchange Marketplace**!\n' +
       'Trade your collectible cards with other members efficiently.\n\n' +
-      '🤝 **Interested**\n' +
-      'Browse all active trade requests and find your matches.\n\n' +
       '📬 **Create Post**\n' +
       'List your own cards and specify what you are looking for.\n\n' +
       '🔍 **Search**\n' +
