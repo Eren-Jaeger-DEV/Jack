@@ -1,5 +1,6 @@
-const { TEAMUP_CHANNEL_ID, JOIN_KEYWORDS, CHAT_DETECTION_PHRASES } = require("../config");
+const { JOIN_KEYWORDS, CHAT_DETECTION_PHRASES } = require("../config");
 const teamService = require("../services/teamService");
+const configManager = require("../../../bot/utils/configManager");
 
 module.exports = {
   name: "messageCreate",
@@ -8,8 +9,11 @@ module.exports = {
 
     const content = message.content.toLowerCase();
 
+    const config = await configManager.getGuildConfig(message.guild.id);
+    const teamupChannelId = config?.settings?.teamupChannelId;
+
     // 1. Join via Keywords in TeamUp Channel
-    if (message.channel.id === TEAMUP_CHANNEL_ID) {
+    if (teamupChannelId && message.channel.id === teamupChannelId) {
       if (JOIN_KEYWORDS.some(word => content.includes(word))) {
         try {
           const result = await teamService.joinTeam(client, message.guild, message.author.id);
@@ -33,7 +37,7 @@ module.exports = {
       try {
         const team = await teamService.findBestTeam(message.guild.id, content);
         if (team) {
-          await message.reply(`👋 It looks like you're looking for teammates! There's an active team looking for players in <#${TEAMUP_CHANNEL_ID}> for **${team.type}**.`);
+          await message.reply(`👋 It looks like you're looking for teammates! There's an active team looking for players in ${teamupChannelId ? `<#${teamupChannelId}>` : "the teamup channel"} for **${team.type}**.`);
         }
       } catch (err) {
         console.error("[TeamUp] Chat detection error:", err);

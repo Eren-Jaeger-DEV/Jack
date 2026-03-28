@@ -7,8 +7,8 @@
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const classificationService = require('../services/classificationService');
+const configManager = require('../../../bot/utils/configManager');
 
-const CLASSIFICATION_CHANNEL_ID = classificationService.CLASSIFICATION_CHANNEL_ID;
 
 module.exports = {
   name: 'guildMemberAdd',
@@ -18,7 +18,12 @@ module.exports = {
     if (member.user.bot) return;
 
     try {
-      const channel = await client.channels.fetch(CLASSIFICATION_CHANNEL_ID).catch(() => null);
+      const config = await configManager.getGuildConfig(member.guild.id);
+      const classificationChannelId = config?.settings?.classificationChannelId;
+
+      if (!classificationChannelId) return;
+
+      const channel = await client.channels.fetch(classificationChannelId).catch(() => null);
       if (!channel) {
         console.error('[MemberClassification] Classification channel not found.');
         return;

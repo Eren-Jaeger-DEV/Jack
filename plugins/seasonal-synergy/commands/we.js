@@ -15,6 +15,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const Player = require('../../../bot/database/models/Player');
 const synergyService = require('../services/synergyService');
+const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 module.exports = {
@@ -104,7 +105,10 @@ module.exports = {
 
       // Clan role check (for self-submissions only)
       if (!adminBypass) {
-        if (!ctx.member.roles.cache.has(synergyService.CLAN_ROLE_ID)) {
+        const config = await configManager.getGuildConfig(ctx.guild.id);
+        const clanRoleId = config?.settings?.clanMemberRoleId;
+
+        if (clanRoleId && !ctx.member.roles.cache.has(clanRoleId)) {
           return ctx.reply({ content: '❌ You must be a clan member to participate.', ephemeral: isEphemeral });
         }
       }

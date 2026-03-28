@@ -14,7 +14,8 @@ const {
   ButtonStyle
 } = require('discord.js');
 
-const DB_CHANNEL_ID = '1486990546672291911';
+const configManager = require('../../../bot/utils/configManager');
+
 
 let panelMessageId = null;
 
@@ -59,7 +60,13 @@ async function sendPanel(channel) {
 
 async function ensurePanel(client) {
   try {
-    const channel = await client.channels.fetch(DB_CHANNEL_ID).catch(() => null);
+    const GUILD_ID = process.env.GUILD_ID;
+    if (!GUILD_ID) return;
+    const config = await configManager.getGuildConfig(GUILD_ID);
+    const dbChannelId = config?.settings?.cardDatabaseChannelId;
+    if (!dbChannelId) return;
+
+    const channel = await client.channels.fetch(dbChannelId).catch(() => null);
     if (!channel) return console.warn('[CardDB] Database channel not found.');
 
     const messages = await channel.messages.fetch({ limit: 50 });

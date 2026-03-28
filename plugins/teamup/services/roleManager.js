@@ -1,13 +1,17 @@
-const { ROLE_ID } = require("../config");
+const configManager = require("../../../bot/utils/configManager");
 
 async function assignRole(guild, userId) {
   try {
+    const config = await configManager.getGuildConfig(guild.id);
+    const teamupRoleId = config?.settings?.teamupRoleId;
+    if (!teamupRoleId) return false;
+
     const member = await guild.members.fetch(userId).catch(() => null);
     if (!member) return false;
 
-    const role = guild.roles.cache.get(ROLE_ID);
+    const role = guild.roles.cache.get(teamupRoleId);
     if (!role) {
-      console.warn(`[TeamUp] Role ${ROLE_ID} not found in guild ${guild.id}`);
+      console.warn(`[TeamUp] Role ${teamupRoleId} not found in guild ${guild.id}`);
       return false;
     }
 
@@ -21,10 +25,14 @@ async function assignRole(guild, userId) {
 
 async function removeRole(guild, userId) {
   try {
+    const config = await configManager.getGuildConfig(guild.id);
+    const teamupRoleId = config?.settings?.teamupRoleId;
+    if (!teamupRoleId) return false;
+
     const member = await guild.members.fetch(userId).catch(() => null);
     if (!member) return false;
 
-    const role = guild.roles.cache.get(ROLE_ID);
+    const role = guild.roles.cache.get(teamupRoleId);
     if (!role) return false;
 
     await member.roles.remove(role).catch(() => {});

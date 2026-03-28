@@ -1,0 +1,6 @@
+{
+  "name": "inviteTrackerAdvanced",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "Advanced invite tracking with raid detection and fake join protection."
+}

@@ -1,7 +1,9 @@
 const Team = require("../models/Team");
-const { TEAMUP_CHANNEL_ID, EXPIRY_TIME_MS, REMINDER_TIME_MS } = require("../config");
+const { EXPIRY_TIME_MS, REMINDER_TIME_MS } = require("../config");
 const roleManager = require("./roleManager");
+const configManager = require("../../../bot/utils/configManager");
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+
 
 class TeamService {
   async isInTeam(userId) {
@@ -26,10 +28,14 @@ class TeamService {
 
     const row = new ActionRowBuilder().addComponents(joinButton);
 
-    const teamupChannel = guild.channels.cache.get(TEAMUP_CHANNEL_ID) || channel;
+    const config = await configManager.getGuildConfig(guild.id);
+    const teamupChannelId = config?.settings?.teamupChannelId;
+    const teamupRoleId = config?.settings?.teamupRoleId;
+
+    const teamupChannel = (teamupChannelId ? guild.channels.cache.get(teamupChannelId) : null) || channel;
     
     const message = await teamupChannel.send({
-      content: `<@&1477876817099493550>`, // Ping role
+      content: teamupRoleId ? `<@&${teamupRoleId}>` : "", // Ping role
       embeds: [embed],
       components: [row]
     });
@@ -136,9 +142,13 @@ class TeamService {
       try {
         const guild = client.guilds.cache.get(team.guildId);
         if (guild) {
-          const channel = guild.channels.cache.get(team.channelId);
+          const config = await configManager.getGuildConfig(guild.id);
+          const teamupChannelId = config?.settings?.teamupChannelId;
+          const teamupRoleId = config?.settings?.teamupRoleId;
+
+          const channel = teamupChannelId ? guild.channels.cache.get(teamupChannelId) : null;
           if (channel) {
-            await channel.send(`🚨 <@&1477876817099493550> Team still needs players!\nMode: ${team.type} (${team.members.length}/${team.maxSize})`);
+            await channel.send(`🚨 ${teamupRoleId ? `<@&${teamupRoleId}> ` : ""}Team still needs players!\nMode: ${team.type} (${team.members.length}/${team.maxSize})`);
           }
         }
         team.lastReminderAt = new Date();

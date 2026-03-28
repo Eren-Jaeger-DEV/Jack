@@ -8,13 +8,9 @@ const FosterProgram = require('../models/FosterProgram');
 const Player = require('../../../bot/database/models/Player');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
+const configManager = require('../../../bot/utils/configManager');
 
 /* ── Constants ── */
-const FOSTER_CHANNEL_ID   = '1477984930909786134';
-const CLAN_MEMBER_ROLE_ID = '1477856665817714699';
-const MENTOR_ROLE_ID      = '1484354630140821705';
-const ROOKIE_ROLE_ID      = '1484354913671839835';
-const NEWBIE_ROLE_ID      = '1484348917079478454';
 const ROTATION_DAYS       = 5;
 const PHASE_DAYS          = 15;
 const SUBMISSION_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
@@ -48,8 +44,18 @@ async function startProgram(guild, client) {
   // Fetch all registered clan members
   await guild.members.fetch().catch(() => {});
 
+  const config = await configManager.getGuildConfig(guild.id);
+  const clanMemberRoleId = config?.settings?.clanMemberRoleId;
+  const mentorRoleId = config?.settings?.mentorRoleId;
+  const rookieRoleId = config?.settings?.rookieRoleId;
+  const newbieRoleId = config?.settings?.newbieRoleId;
+
+  if (!clanMemberRoleId) {
+    return { success: false, error: 'Clan Member Role ID not configured in GuildConfig settings.' };
+  }
+
   const clanMembers = guild.members.cache.filter(m =>
-    m.roles.cache.has(CLAN_MEMBER_ROLE_ID) && !m.user.bot
+    m.roles.cache.has(clanMemberRoleId) && !m.user.bot
   );
 
   // Get registered players with seasonSynergy, sorted desc
@@ -70,9 +76,9 @@ async function startProgram(guild, client) {
   const rookieCandidates = players.filter(p => !mentorIds.has(p.discordId));
 
   // Also include members with Newbie role who are registered but not already in the list
-  const newbieMembers = clanMembers.filter(m =>
-    m.roles.cache.has(NEWBIE_ROLE_ID) && !mentorIds.has(m.id)
-  );
+  const newbieMembers = newbieRoleId ? clanMembers.filter(m =>
+    m.roles.cache.has(newbieRoleId) && !mentorIds.has(m.id)
+  ) : [];
   const existingRookieIds = new Set(rookieCandidates.map(p => p.discordId));
   for (const [, m] of newbieMembers) {
     if (!existingRookieIds.has(m.id)) {
@@ -92,15 +98,15 @@ async function startProgram(guild, client) {
   for (const p of mentorPlayers) {
     const member = guild.members.cache.get(p.discordId);
     if (member) {
-      await member.roles.add(MENTOR_ROLE_ID).catch(() => {});
-      await member.roles.remove(ROOKIE_ROLE_ID).catch(() => {});
+      if (mentorRoleId) await member.roles.add(mentorRoleId).catch(() => {});
+      if (rookieRoleId) await member.roles.remove(rookieRoleId).catch(() => {});
     }
   }
   for (const p of rookiePlayers) {
     const member = guild.members.cache.get(p.discordId);
     if (member) {
-      await member.roles.add(ROOKIE_ROLE_ID).catch(() => {});
-      await member.roles.remove(MENTOR_ROLE_ID).catch(() => {});
+      if (rookieRoleId) await member.roles.add(rookieRoleId).catch(() => {});
+      if (mentorRoleId) await member.roles.remove(mentorRoleId).catch(() => {});
     }
   }
 
@@ -141,11 +147,15 @@ async function endProgram(guild, client) {
 
   // Remove roles from all participants
   await guild.members.fetch().catch(() => {});
+  const config = await configManager.getGuildConfig(guild.id);
+  const mentorRoleId = config?.settings?.mentorRoleId;
+  const rookieRoleId = config?.settings?.rookieRoleId;
+
   for (const pair of program.pairs) {
     const mentor = guild.members.cache.get(pair.mentorId);
-    if (mentor) await mentor.roles.remove(MENTOR_ROLE_ID).catch(() => {});
+    if (mentor && mentorRoleId) await mentor.roles.remove(mentorRoleId).catch(() => {});
     const partner = guild.members.cache.get(pair.partnerId);
-    if (partner) await partner.roles.remove(ROOKIE_ROLE_ID).catch(() => {});
+    if (partner && rookieRoleId) await partner.roles.remove(rookieRoleId).catch(() => {});
   }
 
   // Delete old leaderboard
@@ -196,22 +206,29 @@ function rotatePairs(program) {
 async function advancePhase(guild, client, program) {
   console.log(`[FosterProgram] Advancing to phase ${program.phase + 1}.`);
 
-  // Remove all old roles
-  await guild.members.fetch().catch(() => {});
-  for (const pair of program.pairs) {
-    const mentor = guild.members.cache.get(pair.mentorId);
-    if (mentor) await mentor.roles.remove(MENTOR_ROLE_ID).catch(() => {});
-    const partner = guild.members.cache.get(pair.partnerId);
-    if (partner) await partner.roles.remove(ROOKIE_ROLE_ID).catch(() => {});
-  }
-
   // Re-fetch and sort players
+  const config = await configManager.getGuildConfig(guild.id);
+  const clanMemberRoleId = config?.settings?.clanMemberRoleId;
+  const mentorRoleId = config?.settings?.mentorRoleId;
+  const rookieRoleId = config?.settings?.rookieRoleId;
+
+  if (!clanMemberRoleId) return;
+
   const clanMembers = guild.members.cache.filter(m =>
-    m.roles.cache.has(CLAN_MEMBER_ROLE_ID) && !m.user.bot
+    m.roles.cache.has(clanMemberRoleId) && !m.user.bot
   );
   const playerIds = clanMembers.map(m => m.id);
   const players = await Player.find({ discordId: { $in: playerIds }, ign: { $exists: true, $ne: '' } })
     .sort({ seasonSynergy: -1 });
+
+  // Remove all old roles
+  await guild.members.fetch().catch(() => {});
+  for (const pair of program.pairs) {
+    const mentor = guild.members.cache.get(pair.mentorId);
+    if (mentor && mentorRoleId) await mentor.roles.remove(mentorRoleId).catch(() => {});
+    const partner = guild.members.cache.get(pair.partnerId);
+    if (partner && rookieRoleId) await partner.roles.remove(rookieRoleId).catch(() => {});
+  }
 
   const mentorCount = Math.min(MENTOR_COUNT, Math.floor(players.length / 2));
   const mentorPlayers = players.slice(0, mentorCount);
@@ -222,15 +239,15 @@ async function advancePhase(guild, client, program) {
   for (const p of mentorPlayers) {
     const member = guild.members.cache.get(p.discordId);
     if (member) {
-      await member.roles.add(MENTOR_ROLE_ID).catch(() => {});
-      await member.roles.remove(ROOKIE_ROLE_ID).catch(() => {});
+      if (mentorRoleId) await member.roles.add(mentorRoleId).catch(() => {});
+      if (rookieRoleId) await member.roles.remove(rookieRoleId).catch(() => {});
     }
   }
   for (const p of rookiePlayers) {
     const member = guild.members.cache.get(p.discordId);
     if (member) {
-      await member.roles.add(ROOKIE_ROLE_ID).catch(() => {});
-      await member.roles.remove(MENTOR_ROLE_ID).catch(() => {});
+      if (rookieRoleId) await member.roles.add(rookieRoleId).catch(() => {});
+      if (mentorRoleId) await member.roles.remove(mentorRoleId).catch(() => {});
     }
   }
 
@@ -452,7 +469,11 @@ function buildButtons(page, totalPages) {
 
 async function refreshLeaderboard(client, program, page = 0) {
   try {
-    const channel = await client.channels.fetch(FOSTER_CHANNEL_ID).catch(() => null);
+    const config = await configManager.getGuildConfig(program.guildId);
+    const fosterChannelId = config?.settings?.fosterChannelId;
+    if (!fosterChannelId) return null;
+
+    const channel = await client.channels.fetch(fosterChannelId).catch(() => null);
     if (!channel) return null;
 
     await deleteOldLeaderboardMessage(client, program);
@@ -474,9 +495,12 @@ async function refreshLeaderboard(client, program, page = 0) {
 }
 
 async function deleteOldLeaderboardMessage(client, program) {
-  if (!program.leaderboardMessageId) return;
   try {
-    const channel = await client.channels.fetch(FOSTER_CHANNEL_ID).catch(() => null);
+    const config = await configManager.getGuildConfig(program.guildId);
+    const fosterChannelId = config?.settings?.fosterChannelId;
+    if (!fosterChannelId) return;
+
+    const channel = await client.channels.fetch(fosterChannelId).catch(() => null);
     if (!channel) return;
 
     const oldMsg = await channel.messages.fetch(program.leaderboardMessageId).catch(() => null);
@@ -541,11 +565,6 @@ module.exports = {
   refreshLeaderboard,
   deleteOldLeaderboardMessage,
   buildFinalResults,
-  FOSTER_CHANNEL_ID,
-  CLAN_MEMBER_ROLE_ID,
-  MENTOR_ROLE_ID,
-  ROOKIE_ROLE_ID,
-  NEWBIE_ROLE_ID,
   ROTATION_DAYS,
   PHASE_DAYS
 };

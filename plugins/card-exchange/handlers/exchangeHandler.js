@@ -32,10 +32,11 @@ const { getCards, getCache, getCardImage } = require('../../../utils/cardManager
 const CardExchange = require('../../../bot/database/models/CardExchange');
 const CardExchangeThread = require('../../../bot/database/models/CardExchangeThread');
 
+const configManager = require('../../../bot/utils/configManager');
+
 /* ─── Config ──────────────────────────────────────────────────────────────── */
-const EXCHANGE_CHANNEL_ID = '1486943351403184169';
-const TRADER_ROLE_ID      = '1486942697976631326';
 const COOLDOWN_MS         = 5 * 60 * 1000; // 5 minutes
+
 
 /* ─── State ───────────────────────────────────────────────────────────────── */
 const sessions = new Map();
@@ -46,8 +47,11 @@ const THREAD_EXPIRE_MS = 30 * 60 * 1000; // 30 minutes
 const SEARCH_COOLDOWN_MS = 10 * 1000; // 10 seconds for search/browse
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
-function hasTraderRole(member) {
-  return member.roles.cache.has(TRADER_ROLE_ID);
+async function hasTraderRole(member, guildId) {
+  const config = await configManager.getGuildConfig(guildId);
+  const traderRoleId = config?.settings?.traderRoleId;
+  if (!traderRoleId) return false;
+  return member.roles.cache.has(traderRoleId);
 }
 
 async function denyEphemeral(interaction, message) {
@@ -223,8 +227,14 @@ async function buildExchangeEmbed(user, wantedCard, offeredCards, code) {
 /* ─── Step Handlers ───────────────────────────────────────────────────────── */
 
 async function handlePostButton(interaction) {
-  if (interaction.channelId !== EXCHANGE_CHANNEL_ID) return denyEphemeral(interaction, '❌ This system only works in the exchange channel.');
-  if (!hasTraderRole(interaction.member)) return denyEphemeral(interaction, '❌ You need the **Trader** role to post an exchange.');
+  const config = await configManager.getGuildConfig(interaction.guildId);
+  const exchangeChannelId = config?.settings?.cardExchangeChannelId;
+
+  if (interaction.channelId !== exchangeChannelId) return denyEphemeral(interaction, '❌ This system only works in the exchange channel.');
+  
+  if (!(await hasTraderRole(interaction.member, interaction.guildId))) {
+    return denyEphemeral(interaction, '❌ You need the **Trader** role to post an exchange.');
+  }
   
   const existing = await CardExchange.findOne({ userId: interaction.user.id });
   if (existing) return denyEphemeral(interaction, '❌ You already have an active exchange!');
@@ -242,7 +252,9 @@ async function handlePostButton(interaction) {
 /* ─── Search Handlers ─────────────────────────────────────────────────────── */
 
 async function handleSearchButton(interaction) {
-  if (!hasTraderRole(interaction.member)) return denyEphemeral(interaction, '❌ You need the **Trader** role to search for exchanges.');
+  if (!(await hasTraderRole(interaction.member, interaction.guildId))) {
+    return denyEphemeral(interaction, '❌ You need the **Trader** role to search for exchanges.');
+  }
   
   const lastSearch = searchCooldowns.get(interaction.user.id);
   if (lastSearch && (Date.now() - lastSearch) < SEARCH_COOLDOWN_MS) {

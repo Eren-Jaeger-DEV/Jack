@@ -13,12 +13,7 @@ const { PermissionFlagsBits, ChannelType } = require('discord.js');
 const registrationManager = require('../services/registrationManager');
 const timeParser = require('../services/timeParser');
 const roleManager = require('../services/roleManager');
-
-/* ── Constants ── */
-const PARTICIPATE_ROLE_ID = '1477877148793573417';
-const WINNER_ROLE_ID      = '1477871908354654209';
-const CLAN_ROLE_ID        = '1477856665817714699';
-const ANNOUNCE_CHANNEL_ID = '1379098950929219756';
+const configManager = require('../../../bot/utils/configManager');
 
 /* ── Keyword matchers ── */
 const REG_KEYWORDS = ['registration open', 'register now', 'intra registration'];
@@ -46,7 +41,10 @@ module.exports = {
     /* ═══════════════════════════════════════════════
      *  PATH 1 — REGISTRATION TRIGGER (Announce Channel)
      * ═══════════════════════════════════════════════ */
-    if (channelId === ANNOUNCE_CHANNEL_ID && isAdmin(member)) {
+    const config = await configManager.getGuildConfig(message.guild.id);
+    const announceChannelId = config?.settings?.intraAnnounceChannelId;
+
+    if (channelId === announceChannelId && isAdmin(member)) {
 
       /* ── 1A. Winner Detection ── */
       if (WINNER_KEYWORDS.some(kw => content.includes(kw)) && message.mentions.members.size > 0) {
@@ -181,7 +179,10 @@ async function handleIGNRegistration(message, reg) {
     if (ign.length > 30 || ign.split(/\s+/).length > 3) return;
 
     // Check if user has CLAN_ROLE_ID
-    if (!message.member.roles.cache.has(CLAN_ROLE_ID)) {
+    const config = await configManager.getGuildConfig(message.guild.id);
+    const clanRoleId = config?.settings?.clanMemberRoleId;
+
+    if (clanRoleId && !message.member.roles.cache.has(clanRoleId)) {
       await message.react('❌');
       return message.reply('❌ You must be a clan member to register.');
     }
@@ -193,7 +194,10 @@ async function handleIGNRegistration(message, reg) {
       await message.react('✅');
 
       // Assign participate role
-      await roleManager.assignRole(message.guild, message.author.id, PARTICIPATE_ROLE_ID);
+      const participateRoleId = config?.settings?.intraParticipateRoleId;
+      if (participateRoleId) {
+        await roleManager.assignRole(message.guild, message.author.id, participateRoleId);
+      }
 
       // Send a subtle confirmation (count)
       const updated = await registrationManager.getActive(message.guild.id);
@@ -216,22 +220,29 @@ async function handleIGNRegistration(message, reg) {
  * ═══════════════════════════════════════════════════════ */
 async function handleWinner(message) {
   try {
+    const config = await configManager.getGuildConfig(message.guild.id);
+    const winnerRoleId = config?.settings?.intraWinnerRoleId;
+    const participateRoleId = config?.settings?.intraParticipateRoleId;
     const reg = await registrationManager.getActive(message.guild.id);
 
     // 1. Remove WINNER_ROLE_ID from all members who currently have it
-    await roleManager.removeRoleFromAll(message.guild, WINNER_ROLE_ID);
+    if (winnerRoleId) {
+      await roleManager.removeRoleFromAll(message.guild, winnerRoleId);
+    }
 
     // 2. Assign WINNER_ROLE_ID to all mentioned users
     const mentioned = message.mentions.members;
     const winners = [];
 
     for (const [, member] of mentioned) {
-      const assigned = await roleManager.assignRole(message.guild, member.id, WINNER_ROLE_ID);
+      const assigned = winnerRoleId ? await roleManager.assignRole(message.guild, member.id, winnerRoleId) : false;
       if (assigned) winners.push(member.user.tag);
     }
 
     // 3. Remove PARTICIPATE_ROLE_ID from all members
-    await roleManager.removeRoleFromAll(message.guild, PARTICIPATE_ROLE_ID);
+    if (participateRoleId) {
+      await roleManager.removeRoleFromAll(message.guild, participateRoleId);
+    }
 
     // 4. Close the active registration if one exists
     if (reg) {

@@ -11,10 +11,7 @@
 const { PermissionFlagsBits } = require('discord.js');
 const battleService = require('../services/battleService');
 const profileService = require('../../clan/services/profileService');
-
-/* ── Constants ── */
-const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
-const WINNER_ROLE_ID         = '1477872032644599892';
+const configManager = require('../../../bot/utils/configManager');
 
 /* ── PATCH 3: Duplicate event protection ── */
 const processedEvents = new Set();
@@ -32,11 +29,14 @@ module.exports = {
     if (!message.guild) return;
     if (message.author.bot) return;
     if (isDuplicate(message.id)) return;
+    const config = await configManager.getGuildConfig(message.guild.id);
+    const clanBattleChannelId = config?.settings?.clanBattleChannelId;
+    const clanBattleWinnerRoleId = config?.settings?.clanBattleWinnerRoleId;
     const content = message.content.toLowerCase().trim();
     const isUserAdmin = message.member && message.member.permissions.has(PermissionFlagsBits.ManageGuild);
 
     // Read-only logic: Delete non-admin messages in the battle channel
-    if (message.channel.id === CLAN_BATTLE_CHANNEL_ID && !isUserAdmin) {
+    if (clanBattleChannelId && message.channel.id === clanBattleChannelId && !isUserAdmin) {
       try {
         await message.delete().catch(() => {});
       } catch (err) {
@@ -45,7 +45,7 @@ module.exports = {
       return;
     }
 
-    if (message.channel.id !== CLAN_BATTLE_CHANNEL_ID) return;
+    if (!clanBattleChannelId || message.channel.id !== clanBattleChannelId) return;
     if (!isUserAdmin) return;
 
     /* ═══════════════════════════════════════════
@@ -104,7 +104,7 @@ module.exports = {
         await message.channel.send('🎉 **Winners, create a ticket to claim your rewards.**');
 
         // Role assignment: remove WINNER_ROLE from all, then assign to top 6
-        const winnerRole = message.guild.roles.cache.get(WINNER_ROLE_ID);
+        const winnerRole = clanBattleWinnerRoleId ? message.guild.roles.cache.get(clanBattleWinnerRoleId) : null;
         if (winnerRole) {
           // Remove from all
           for (const [, member] of winnerRole.members) {

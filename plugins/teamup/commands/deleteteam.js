@@ -1,12 +1,15 @@
 const teamService = require("../services/teamService");
-const { TEAMUP_CHANNEL_ID } = require("../config");
+const configManager = require("../../../bot/utils/configManager");
 
 module.exports = {
   name: "deleteteam",
   aliases: ["disbandteam", "teamdelete"],
   async run(ctx) {
-    if (ctx.channel.id !== TEAMUP_CHANNEL_ID) {
-      return ctx.reply(`⚠️ This command can only be used in <#${TEAMUP_CHANNEL_ID}>.`);
+    const config = await configManager.getGuildConfig(ctx.guild.id);
+    const teamupChannelId = config?.settings?.teamupChannelId;
+
+    if (teamupChannelId && ctx.channel.id !== teamupChannelId) {
+      return ctx.reply(`⚠️ This command can only be used in <#${teamupChannelId}>.`);
     }
 
     const team = await teamService.isInTeam(ctx.user.id);

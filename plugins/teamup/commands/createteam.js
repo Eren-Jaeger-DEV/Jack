@@ -1,13 +1,17 @@
-const { TEAM_TYPES, ALLOWED_SIZES, TEAMUP_CHANNEL_ID } = require("../config");
+const { TEAM_TYPES, ALLOWED_SIZES } = require("../config");
 const teamService = require("../services/teamService");
+const configManager = require("../../../bot/utils/configManager");
 const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
   name: "createteam",
   aliases: ["teamcreate"],
   async run(ctx) {
-    if (ctx.channel.id !== TEAMUP_CHANNEL_ID) {
-      return ctx.reply(`⚠️ This command can only be used in <#${TEAMUP_CHANNEL_ID}>.`);
+    const config = await configManager.getGuildConfig(ctx.guild.id);
+    const teamupChannelId = config?.settings?.teamupChannelId;
+
+    if (teamupChannelId && ctx.channel.id !== teamupChannelId) {
+      return ctx.reply(`⚠️ This command can only be used in <#${teamupChannelId}>.`);
     }
 
     try {

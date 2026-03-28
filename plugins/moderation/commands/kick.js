@@ -29,32 +29,11 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
   async run(ctx) {
+    const user = ctx.options.getUser('user');
+    const reason = ctx.options.getString('reason') || 'No reason';
 
-    let user;
-    let reason;
-
-    /* ---------- PREFIX COMMAND ---------- */
-
-    if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.KickMembers))
-        return ctx.reply('❌ No permission.');
-
-      user = ctx.message.mentions.users.first();
-      if (!user)
-        return ctx.reply('Usage: jack kick @user [reason]');
-
-      reason = ctx.args.slice(1).join(' ') || 'No reason';
-
-    }
-
-    /* ---------- SLASH COMMAND ---------- */
-
-    if (ctx.type === "slash") {
-
-      user = ctx.interaction.options.getUser('user');
-      reason = ctx.interaction.options.getString('reason') || 'No reason';
-
+    if (!user) {
+      return ctx.reply(`Usage: ${ctx.type === 'prefix' ? 'j ' : '/'}kick @user [reason]`);
     }
 
     const member = await ctx.guild.members.fetch(user.id).catch(() => null);

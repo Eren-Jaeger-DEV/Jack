@@ -1,42 +1,84 @@
 const mongoose = require('mongoose');
 
 const guildConfigSchema = new mongoose.Schema({
-  guildId: { type: String, required: true, unique: true },
-  logChannelId: { type: String },
-  adminGuideChannelId: { type: String },
-  adminGuideMessageId: { type: String },
+  guildId: { type: String, required: true, unique: true, index: true },
+  prefix: { type: String, default: "j" },
   
-  // Custom Controls
-  prefix: { type: String, default: "j " },
-  staffRoleId: { type: String },
-  mvpRoleId: { type: String },
-
-  // System Mappings
-  channels: {
-    general: { type: String, default: "1341978656096129065" },
-    media: { type: String, default: "1341978656096129067" },
-    links: { type: String, default: "1429740389731930162" },
-    commands: { type: String, default: "1399825266360057917" },
-    counting: { type: String }
+  welcome: {
+    enabled: { type: Boolean, default: false },
+    channelId: { type: String },
+    message: { type: String, default: "Welcome to the server, {user}!" }
   },
-
-  roles: {
-    owner: { type: String, default: "1407954932623347783" }, // Defaulting to specific role if found
-    manager: { type: String },
-    admin: { type: String },
-    contributor: { type: String }
-  },
-
+  
   plugins: {
-    type: Map,
-    of: Boolean,
-    default: {}
+    clan: { type: Boolean, default: true },
+    moderation: { type: Boolean, default: true },
+    leveling: { type: Boolean, default: true },
+    inviteTrackerAdvanced: { type: Boolean, default: true },
+    market: { type: Boolean, default: true },
+    "clan-battle": { type: Boolean, default: true },
+    "seasonal-synergy": { type: Boolean, default: true },
+    "intra-match": { type: Boolean, default: true },
+    "card-database": { type: Boolean, default: true },
+    tempvc: { type: Boolean, default: true },
+    teamup: { type: Boolean, default: true },
+    audit: { type: Boolean, default: true },
+    counting: { type: Boolean, default: true },
+    channelManagement: { type: Boolean, default: true },
+    "foster-program": { type: Boolean, default: true },
+    "member-classification": { type: Boolean, default: true },
+    utility: { type: Boolean, default: true },
+    "card-exchange": { type: Boolean, default: true }
   },
-  pluginSettings: {
-    type: Map,
-    of: Object,
-    default: {}
+
+  
+  settings: {
+    logChannelId: { type: String },
+    autoRoleId: { type: String },
+    modLogChannelId: { type: String },
+    inviteLogChannelId: { type: String },
+    
+    // Feature Channels
+    classificationChannelId: { type: String },
+    fosterChannelId: { type: String },
+    countingChannelId: { type: String },
+    cardExchangeChannelId: { type: String },
+    marketChannelId: { type: String },
+    clanBattleChannelId: { type: String },
+    synergyChannelId: { type: String },
+    intraAnnounceChannelId: { type: String },
+    cardDatabaseChannelId: { type: String },
+    tempvcCreateChannelId: { type: String },
+    tempvcPanelChannelId: { type: String },
+    tempvcCategoryId: { type: String },
+    teamupChannelId: { type: String },
+    generalChannelId: { type: String },
+    mediaChannelId: { type: String },
+    linksChannelId: { type: String },
+    botCommandsChannelId: { type: String },
+    xpIgnoreChannels: { type: [String], default: [] },
+
+    // Feature Roles
+    clanMemberRoleId: { type: String },
+    newbieRoleId: { type: String },
+    discordMemberRoleId: { type: String },
+    ownerRoleId: { type: String },
+    managerRoleId: { type: String },
+    mentorRoleId: { type: String },
+    rookieRoleId: { type: String },
+    synergyRoleId: { type: String },
+    traderRoleId: { type: String },
+    marketRoleId: { type: String },
+    weeklyMvpRoleId: { type: String },
+    seasonWinnerRoleId: { type: String },
+    intraParticipateRoleId: { type: String },
+    intraWinnerRoleId: { type: String },
+    clanBattleWinnerRoleId: { type: String },
+    teamupRoleId: { type: String },
+
+    // Maps
+    levelRoles: { type: Map, of: String, default: {} }
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('GuildConfig', guildConfigSchema);

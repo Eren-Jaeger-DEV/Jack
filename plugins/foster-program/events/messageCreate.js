@@ -11,8 +11,7 @@
 const { PermissionFlagsBits } = require('discord.js');
 const fosterService = require('../services/fosterService');
 const profileService = require('../../clan/services/profileService');
-
-const FOSTER_CHANNEL_ID = fosterService.FOSTER_CHANNEL_ID;
+const configManager = require('../../../bot/utils/configManager');
 
 /* ── PATCH 3: Duplicate event protection ── */
 const processedEvents = new Set();
@@ -35,12 +34,15 @@ module.exports = {
     const isUserAdmin = message.member && message.member.permissions.has(PermissionFlagsBits.ManageGuild);
 
     // Read-only logic for foster channel
-    if (message.channel.id === FOSTER_CHANNEL_ID && !isUserAdmin) {
+    const config = await configManager.getGuildConfig(message.guild.id);
+    const fosterChannelId = config?.settings?.fosterChannelId;
+
+    if (fosterChannelId && message.channel.id === fosterChannelId && !isUserAdmin) {
       try { await message.delete().catch(() => {}); } catch {}
       return;
     }
 
-    if (message.channel.id !== FOSTER_CHANNEL_ID) return;
+    if (!fosterChannelId || message.channel.id !== fosterChannelId) return;
     if (!isUserAdmin) return;
 
     /* ═══════════════════════════════════════════

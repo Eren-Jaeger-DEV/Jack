@@ -7,18 +7,27 @@ module.exports = {
   description: "Audit clan member registration status",
   aliases: ["rs"],
   usage: "/regstatus  |  j regstatus",
+  details: "Audit clan member registration status",
 
   data: new SlashCommandBuilder()
     .setName("regstatus")
     .setDescription("Audit clan member registration status"),
 
   async run(ctx) {
+    const configManager = require('../../../bot/utils/configManager');
+
     try {
-      const TARGET_ROLE_ID = '1477856665817714699';
+      const config = await configManager.getGuildConfig(ctx.guild.id);
+      const targetRoleId = config?.settings?.clanMemberRoleId;
       
+      if (!targetRoleId) {
+        return ctx.reply("❌ Target role (Clan Member) not configured.");
+      }
+
       // Fetch members safely
       await ctx.guild.members.fetch();
-      const role = ctx.guild.roles.cache.get(TARGET_ROLE_ID);
+      const role = ctx.guild.roles.cache.get(targetRoleId);
+
       
       if (!role) {
         return ctx.reply("❌ Target role not found on this server.");

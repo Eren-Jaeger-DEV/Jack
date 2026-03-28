@@ -14,7 +14,7 @@ const {
   ButtonStyle
 } = require('discord.js');
 
-const EXCHANGE_CHANNEL_ID = '1486943351403184169';
+const configManager = require('../../../bot/utils/configManager');
 
 // In-memory storage for the panel message ID
 let panelMessageId = null;
@@ -80,7 +80,13 @@ async function sendPanel(channel) {
  */
 async function ensurePanel(client) {
   try {
-    const channel = await client.channels.fetch(EXCHANGE_CHANNEL_ID).catch(() => null);
+    const GUILD_ID = process.env.GUILD_ID;
+    if (!GUILD_ID) return;
+    const config = await configManager.getGuildConfig(GUILD_ID);
+    const exchangeChannelId = config?.settings?.cardExchangeChannelId;
+    if (!exchangeChannelId) return;
+
+    const channel = await client.channels.fetch(exchangeChannelId).catch(() => null);
     if (!channel) return console.warn('[CardExchange] Exchange channel not found.');
 
     // Try to find an existing panel in the last 50 messages
@@ -109,7 +115,13 @@ async function ensurePanel(client) {
  */
 async function repostPanel(client) {
   try {
-    const channel = await client.channels.fetch(EXCHANGE_CHANNEL_ID).catch(() => null);
+    const GUILD_ID = process.env.GUILD_ID;
+    if (!GUILD_ID) return;
+    const config = await configManager.getGuildConfig(GUILD_ID);
+    const exchangeChannelId = config?.settings?.cardExchangeChannelId;
+    if (!exchangeChannelId) return;
+
+    const channel = await client.channels.fetch(exchangeChannelId).catch(() => null);
     if (!channel) return;
 
     // Delete old panel if it exists

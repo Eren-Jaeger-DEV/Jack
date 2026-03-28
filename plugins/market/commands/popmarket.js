@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { refreshMarketPanel, MARKET_CHANNEL_ID } = require("../../../bot/utils/marketPanel");
+const configManager = require("../../../bot/utils/configManager");
 
-const ALLOWED_ROLE_ID = "1480600580408742029";
 
 module.exports = {
 
@@ -18,7 +18,10 @@ module.exports = {
 
   async run(ctx) {
 
-    if (!ctx.member.roles.cache.has(ALLOWED_ROLE_ID)) {
+    const config = await configManager.getGuildConfig(ctx.guild.id);
+    const marketRoleId = config?.settings?.marketRoleId;
+
+    if (marketRoleId && !ctx.member.roles.cache.has(marketRoleId)) {
       return ctx.reply({ content: "❌ You don't have access to the POP market.", flags: 64 });
     }
 

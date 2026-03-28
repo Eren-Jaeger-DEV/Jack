@@ -3,8 +3,7 @@ const PopListing = require("../../../bot/database/models/PopListing");
 const popParser = require("../../../bot/utils/popParser");
 const priceParser = require("../../../bot/utils/priceParser");
 const { refreshMarketPanel } = require("../../../bot/utils/marketPanel");
-
-const ALLOWED_ROLE_ID = "1480600580408742029";
+const configManager = require("../../../bot/utils/configManager");
 
 module.exports = {
 
@@ -38,7 +37,10 @@ module.exports = {
   async run(ctx) {
 
     // 1. Role Restriction Check
-    if (!ctx.member.roles.cache.has(ALLOWED_ROLE_ID)) {
+    const config = await configManager.getGuildConfig(ctx.guild.id);
+    const marketRoleId = config?.settings?.marketRoleId;
+
+    if (marketRoleId && !ctx.member.roles.cache.has(marketRoleId)) {
       return ctx.reply({ content: "❌ You don't have permission to use the POP market.", flags: 64 });
     }
 

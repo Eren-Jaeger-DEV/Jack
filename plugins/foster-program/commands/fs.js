@@ -8,6 +8,8 @@
 
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const fosterService = require('../services/fosterService');
+const configManager = require('../../../bot/utils/configManager');
+
 
 module.exports = {
   name: 'fs',
@@ -58,7 +60,10 @@ module.exports = {
       }
 
       // Clan member check
-      if (!ctx.member.roles.cache.has(fosterService.CLAN_MEMBER_ROLE_ID)) {
+      const config = await configManager.getGuildConfig(ctx.guild.id);
+      const clanMemberRoleId = config?.settings?.clanMemberRoleId;
+
+      if (clanMemberRoleId && !ctx.member.roles.cache.has(clanMemberRoleId)) {
         return ctx.reply({ content: '❌ You must be a clan member to participate.', ephemeral: isEphemeral });
       }
 

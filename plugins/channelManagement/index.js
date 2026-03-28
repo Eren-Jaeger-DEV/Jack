@@ -1,5 +1,6 @@
 const { PermissionFlagsBits } = require('discord.js');
-const GuildConfig = require('../../bot/database/models/GuildConfig');
+const configManager = require('../../bot/utils/configManager');
+
 
 // Precise regex for links, including common TLDs and discord.gg
 const LINK_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(discord\.gg\/[^\s]+)|([^\s]+\.(com|net|org|io|me|xyz)([^\s]*)?)/i;
@@ -27,16 +28,18 @@ module.exports = {
       if (!message.guild) return;
 
       // Fetch dynamic configuration
-      const config = await GuildConfig.findOne({ guildId: message.guild.id }).catch(() => null);
-      const CHANNELS = config?.channels || {};
-      
-      const GENERAL_CHAT_ID = CHANNELS.general || '1341978656096129065';
-      const MEDIA_CHANNEL_ID = CHANNELS.media || '1341978656096129067';
-      const LINKS_CHANNEL_ID = CHANNELS.links || '1429740389731930162';
-      const BOT_COMMANDS_CHANNEL_ID = CHANNELS.commands || '1399825266360057917';
+      const config = await configManager.getGuildConfig(message.guild.id);
+      if (!config) return;
+
+      const {
+        generalChannelId,
+        mediaChannelId,
+        linksChannelId,
+        botCommandsChannelId
+      } = config.settings || {};
       
       // Target check: General Chat only
-      if (message.channelId !== GENERAL_CHAT_ID) return;
+      if (message.channelId !== generalChannelId) return;
 
       // 2. FEATURE: Delete other bot responses
       if (message.author.bot) {
@@ -62,7 +65,7 @@ module.exports = {
 
         if (isStrictPrefix || isWordCommand) {
           await message.delete().catch(() => {});
-          return sendWarning(message, `Use bot commands in <#${BOT_COMMANDS_CHANNEL_ID}>`);
+          return sendWarning(message, `Use bot commands in <#${botCommandsChannelId}>`);
         }
 
         // FEATURE 2: Link Detection (Priority 2)
@@ -73,7 +76,7 @@ module.exports = {
              // Allow GIFs
           } else {
             await message.delete().catch(() => {});
-            return sendWarning(message, `Send links in <#${LINKS_CHANNEL_ID}>`);
+            return sendWarning(message, `Send links in <#${linksChannelId}>`);
           }
         }
       }
@@ -85,7 +88,7 @@ module.exports = {
         
         if (hasNonGif) {
           await message.delete().catch(() => {});
-          return sendWarning(message, `Send media in <#${MEDIA_CHANNEL_ID}>`);
+          return sendWarning(message, `Send media in <#${mediaChannelId}>`);
         }
         // If they are all GIFs, allow it.
       }

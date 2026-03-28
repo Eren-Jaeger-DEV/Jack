@@ -9,10 +9,9 @@
 
 'use strict';
 
+const configManager = require('../../bot/utils/configManager');
 const { ensurePanel, repostPanel, getPanelMessageId } = require('./handlers/panelManager');
 const { registerHandler, cleanupExchanges } = require('./handlers/exchangeHandler');
-
-const EXCHANGE_CHANNEL_ID = '1486943351403184169';
 
 module.exports = {
   name: 'card-exchange',
@@ -39,9 +38,12 @@ module.exports = {
     // 3. Listen for messages in exchange channel to repost panel
     client.on('messageCreate', async message => {
       // Ignore DMs, other channels, and the bot's own panel message
-      if (!message.guild) return;
-      if (message.channelId !== EXCHANGE_CHANNEL_ID) return;
-      if (message.author.id === client.user.id) return;
+      if (!message.guild || message.author.bot) return;
+
+      const config = await configManager.getGuildConfig(message.guild.id);
+      const exchangeChannelId = config?.settings?.cardExchangeChannelId;
+
+      if (!exchangeChannelId || message.channelId !== exchangeChannelId) return;
 
       // Small debounce — only repost panel if the message is NOT the panel itself
       const panelId = getPanelMessageId();

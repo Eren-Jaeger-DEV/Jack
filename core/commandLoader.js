@@ -3,8 +3,9 @@ const path = require('path');
 
 module.exports = (client, pluginPath) => {
   const commandsPath = path.join(pluginPath, 'commands');
+  const loadedCommands = [];
 
-  if (!fs.existsSync(commandsPath)) return;
+  if (!fs.existsSync(commandsPath)) return loadedCommands;
 
   function loadDirectory(dir) {
     const files = fs.readdirSync(dir);
@@ -13,13 +14,21 @@ module.exports = (client, pluginPath) => {
       if (fs.statSync(fullPath).isDirectory()) {
         loadDirectory(fullPath);
       } else if (file.endsWith('.js')) {
-        const command = require(fullPath);
-        if (command.name) {
-          client.commands.set(command.name, command);
+        try {
+          // Clear cache to ensure fresh load if re-loading
+          delete require.cache[require.resolve(fullPath)];
+          const command = require(fullPath);
+          if (command.name) {
+            client.commands.set(command.name, command);
+            loadedCommands.push(command.name);
+          }
+        } catch (err) {
+          console.error(`[Jack] Failed to load command at ${fullPath}:`, err.message);
         }
       }
     }
   }
 
   loadDirectory(commandsPath);
+  return loadedCommands;
 };

@@ -18,8 +18,9 @@
 const { ChannelType } = require('discord.js');
 const { runSilentSync } = require('./syncHandler');
 
-const DB_CHANNEL_ID = '1486990546672291911';
+const configManager = require('../../../bot/utils/configManager');
 const DEBOUNCE_MS   = 7000; // 7 seconds — coalesces bursts
+
 
 let debounceTimer = null;
 
@@ -44,11 +45,16 @@ function scheduleSyncDebounced(client, reason) {
  * Determine if a message belongs to a DB channel thread.
  * @param {import('discord.js').Message} message
  */
-function isDbThreadMessage(message) {
+async function isDbThreadMessage(message) {
   if (!message.guild) return false;
   if (!message.channel.isThread()) return false;
+  
+  const config = await configManager.getGuildConfig(message.guild.id);
+  const dbChannelId = config?.settings?.cardDatabaseChannelId;
+  if (!dbChannelId) return false;
+
   // Check that the thread's parent is the DB channel
-  return message.channel.parentId === DB_CHANNEL_ID;
+  return message.channel.parentId === dbChannelId;
 }
 
 /**
@@ -57,8 +63,10 @@ function isDbThreadMessage(message) {
  */
 function registerAutoSync(client) {
   // 1. New thread created in DB channel → new category
-  client.on('threadCreate', thread => {
-    if (thread.parentId !== DB_CHANNEL_ID) return;
+  client.on('threadCreate', async thread => {
+    const config = await configManager.getGuildConfig(thread.guildId);
+    const dbChannelId = config?.settings?.cardDatabaseChannelId;
+    if (!dbChannelId || thread.parentId !== dbChannelId) return;
     scheduleSyncDebounced(client, `threadCreate: "${thread.name}"`);
   });
 
@@ -66,38 +74,43 @@ function registerAutoSync(client) {
   //    We only react to non-bot messages to avoid reacting to our own card posts.
   //    The card message IS posted by the bot — so we DO include bot messages here
   //    because those are the actual card entries.
-  client.on('messageCreate', message => {
+  client.on('messageCreate', async message => {
     if (!message.guild) return;
     if (message.system) return;
-    if (!isDbThreadMessage(message)) return;
+    if (!(await isDbThreadMessage(message))) return;
 
     // Schedule sync for both admin uploads and the bot's own card messages
     scheduleSyncDebounced(client, `messageCreate in "${message.channel.name}"`);
   });
 
   // 3. Message edited in a DB thread → card updated
-  client.on('messageUpdate', (_, newMessage) => {
+  client.on('messageUpdate', async (_, newMessage) => {
     if (!newMessage.guild) return;
     if (newMessage.system) return;
-    if (!isDbThreadMessage(newMessage)) return;
+    if (!(await isDbThreadMessage(newMessage))) return;
 
     scheduleSyncDebounced(client, `messageUpdate in "${newMessage.channel.name}"`);
   });
 
   // 4. Message deleted in a DB thread → card removed
-  client.on('messageDelete', message => {
+  client.on('messageDelete', async message => {
     if (!message.guild) return;
     // Partial messages don't have channel info — we check parentId via channel cache
     const channel = message.channel;
     if (!channel?.isThread()) return;
-    if (channel.parentId !== DB_CHANNEL_ID) return;
+
+    const config = await configManager.getGuildConfig(message.guild.id);
+    const dbChannelId = config?.settings?.cardDatabaseChannelId;
+    if (!dbChannelId || channel.parentId !== dbChannelId) return;
 
     scheduleSyncDebounced(client, `messageDelete in "${channel.name}"`);
   });
 
   // 5. Thread deleted in DB channel → category removed
-  client.on('threadDelete', thread => {
-    if (thread.parentId !== DB_CHANNEL_ID) return;
+  client.on('threadDelete', async thread => {
+    const config = await configManager.getGuildConfig(thread.guildId);
+    const dbChannelId = config?.settings?.cardDatabaseChannelId;
+    if (!dbChannelId || thread.parentId !== dbChannelId) return;
     scheduleSyncDebounced(client, `threadDelete: "${thread.name}"`);
   });
 

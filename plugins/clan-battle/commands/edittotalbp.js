@@ -6,8 +6,7 @@
 
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const battleService = require('../services/battleService');
-
-const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
+const configManager = require('../../../bot/utils/configManager');
 
 module.exports = {
 
@@ -84,8 +83,10 @@ module.exports = {
       await ctx.reply(`✅ Set **${targetLabel}**'s total points to **${points}**`);
 
       // Refresh leaderboard
+      const config = await configManager.getGuildConfig(ctx.guild.id);
+      const clanBattleChannelId = config?.settings?.clanBattleChannelId;
       const battle = await battleService.getActiveBattle(ctx.guild.id);
-      if (battle && ctx.channel.id === CLAN_BATTLE_CHANNEL_ID) {
+      if (battle && clanBattleChannelId && ctx.channel.id === clanBattleChannelId) {
         await battleService.refreshLeaderboard(ctx.client, battle);
       }
 

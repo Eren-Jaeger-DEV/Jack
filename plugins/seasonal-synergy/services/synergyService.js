@@ -9,13 +9,9 @@ const Season = require('../models/Season');
 const Player = require('../../../bot/database/models/Player');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const { generateLeaderboardImage } = require('../../../utils/leaderboardCanvas');
-const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
+const configManager = require('../../../bot/utils/configManager');
 
 /* ── Constants ── */
-const SYNERGY_CHANNEL_ID = '1477984930909786134';
-const CLAN_ROLE_ID = '1477856665817714699';
-const WEEKLY_MVP_ROLE_ID = '1479876704901009508';
-const SEASON_WINNER_ROLE_ID = '1477872708925788201';
 const MAX_WEEKLY_ENERGY = 15000;
 const PLAYERS_PER_PAGE = 15;
 
@@ -241,7 +237,11 @@ function buildButtons(page, totalPages) {
  */
 async function refreshLeaderboard(client, season, page = 0) {
   try {
-    const channel = await client.channels.fetch(SYNERGY_CHANNEL_ID).catch(() => null);
+    const config = await configManager.getGuildConfig(season.guildId);
+    const synergyChannelId = config?.settings?.synergyChannelId;
+    if (!synergyChannelId) return null;
+
+    const channel = await client.channels.fetch(synergyChannelId).catch(() => null);
     if (!channel) return null;
 
     // Delete old message
@@ -286,7 +286,11 @@ async function refreshLeaderboard(client, season, page = 0) {
 async function deleteOldLeaderboardMessage(client, season) {
   if (!season.leaderboardMessageId) return;
   try {
-    const channel = await client.channels.fetch(SYNERGY_CHANNEL_ID).catch(() => null);
+    const config = await configManager.getGuildConfig(season.guildId);
+    const synergyChannelId = config?.settings?.synergyChannelId;
+    if (!synergyChannelId) return;
+
+    const channel = await client.channels.fetch(synergyChannelId).catch(() => null);
     if (!channel) return;
 
     const oldMsg = await channel.messages.fetch(season.leaderboardMessageId).catch(() => null);
@@ -384,9 +388,5 @@ module.exports = {
   deleteOldLeaderboardMessage,
   buildFinalResults,
   isWeekend,
-  MAX_WEEKLY_ENERGY,
-  SYNERGY_CHANNEL_ID,
-  CLAN_ROLE_ID,
-  WEEKLY_MVP_ROLE_ID,
-  SEASON_WINNER_ROLE_ID
+  MAX_WEEKLY_ENERGY
 };

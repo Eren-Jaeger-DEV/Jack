@@ -18,8 +18,9 @@ const {
 
 const Card = require('../../../bot/database/models/Card');
 
-const DB_CHANNEL_ID  = '1486990546672291911';
+const configManager = require('../../../bot/utils/configManager');
 const CARD_NAME_RE   = /^Name:\s*(.+)$/im;
+
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 function isAdmin(member) {
@@ -78,7 +79,13 @@ function parseCard(message) {
  * Full sync: fetch all threads, parse all cards, upsert into MongoDB, and purge old data.
  */
 async function runSync(client) {
-  const channel = await client.channels.fetch(DB_CHANNEL_ID).catch(() => null);
+  const GUILD_ID = process.env.GUILD_ID;
+  if (!GUILD_ID) throw new Error('GUILD_ID environment variable not set.');
+  const config = await configManager.getGuildConfig(GUILD_ID);
+  const dbChannelId = config?.settings?.cardDatabaseChannelId;
+  if (!dbChannelId) throw new Error('Card database channel not configured.');
+
+  const channel = await client.channels.fetch(dbChannelId).catch(() => null);
   if (!channel) throw new Error('Database channel not found.');
 
   const fetched = await channel.threads.fetchActive().catch(() => null);

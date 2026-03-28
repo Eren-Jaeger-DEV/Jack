@@ -3,6 +3,7 @@ require("dotenv").config({ quiet: true });
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
 const { addLog, printLogs } = require("../utils/logger");
+const configManager = require("./utils/configManager");
 global.addLog = addLog;
 
 addLog("Environment", "Loaded");
@@ -34,16 +35,12 @@ mongoose
 /* Ready */
 
 client.once("clientReady", async () => {
+  // Initialize configuration cache
+  await configManager.init(client);
+
   // Load all standalone plugins synchronously
   require("../core/pluginLoader")(client);
   
-  // Load Advanced Invite Tracker
-  try {
-    require("../plugins/inviteTrackerAdvanced")(client);
-  } catch (err) {
-    console.error("❌ Failed to load Advanced Invite Tracker:", err.message);
-  }
-
   // Print centralized startup logs after plugins have initialized (including async ones)
   setTimeout(() => {
     printLogs(client.user.tag);

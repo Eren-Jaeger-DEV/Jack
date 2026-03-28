@@ -1,17 +1,27 @@
-const GuildConfig = require('../database/models/GuildConfig');
+const { getGuildConfig } = require('./configManager');
 
-module.exports = async (guild, embed) => {
-  try {
-    const config = await GuildConfig.findOne({ guildId: guild.id });
-    if (!config?.logChannelId) return;
+module.exports = (guild, embed) => {
+  if (!guild) return;
 
-    // Fetch channel instead of cache
-    const channel = await guild.channels.fetch(config.logChannelId);
-    if (!channel) return;
+  // Fire-and-forget: do not await this to prevent blocking command execution
+  getGuildConfig(guild.id).then(async (config) => {
+    try {
+      const logChannelId = config?.settings?.logChannelId;
+      if (!logChannelId) return;
 
-    await channel.send({ embeds: [embed] });
+      // Try cache first, then fetch if needed (but still non-blocking for the caller)
+      let channel = guild.channels.cache.get(logChannelId);
+      if (!channel) {
+        channel = await guild.channels.fetch(logChannelId).catch(() => null);
+      }
+      
+      if (!channel) return;
 
-  } catch (err) {
-    console.error("Logger error:", err);
-  }
+      await channel.send({ embeds: [embed] }).catch(() => null);
+    } catch (err) {
+      console.error("[Logger] Background Error:", err);
+    }
+  }).catch(err => {
+    console.error("[Logger] Config Fetch Error:", err);
+  });
 };

@@ -36,52 +36,16 @@ module.exports = {
     }
 
     if (interaction.isChatInputCommand()) {
-
       const command = client.commands.get(interaction.commandName);
       if (!command) {
         console.warn(`[Interaction] Command not found: ${interaction.commandName}`);
         return;
       }
 
-      const presenceText = getPresenceText(interaction.commandName);
-      setTemporaryPresence(client, presenceText);
-
-      const ctx = new Context(client, interaction);
-
-      try {
-
-        if (command.run) {
-          await command.run(ctx);
-
-          await CommandUsage.create({
-            commandName: interaction.commandName.toLowerCase(),
-            userID: interaction.user.id,
-            guildID: interaction.guild.id,
-            timestamp: new Date()
-          }).catch(() => null);
-        }
-
-      } catch (err) {
-
-        console.error(`Command error (${interaction.commandName})`, err);
-
-        if (!interaction.replied && !interaction.deferred) {
-          try {
-            await interaction.reply({
-              content: "⚠️ Something went wrong executing this command.",
-              flags: MessageFlags.Ephemeral
-            });
-          } catch (replyErr) {
-            if (replyErr?.code !== 10062) {
-              console.error("Failed to send command error reply:", replyErr);
-            }
-          }
-        }
-
-      }
-
+      const ctx = new Context(client, interaction, [], command);
+      const { runCommand } = require("../utils/commandExecutor");
+      await runCommand(command, ctx);
       return;
-
     }
 
     /* ---------- BUTTON INTERACTIONS ---------- */

@@ -9,11 +9,11 @@ const Battle = require('../models/Battle');
 const Player = require('../../../bot/database/models/Player');
 const { generateContributionImage } = require('../utils/contributionCanvas');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
 const PLAYERS_PER_PAGE       = 10;
 const MAX_POINTS             = 100;
-const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
 
 /* ═══════════════════════════════════════════
  *  BATTLE LIFECYCLE
@@ -201,9 +201,13 @@ function buildButtons(page, totalPages) {
  */
 async function refreshLeaderboard(client, battle, page = 0, interaction = null) {
   try {
-    const channel = await client.channels.fetch(CLAN_BATTLE_CHANNEL_ID).catch(() => null);
+    const config = await configManager.getGuildConfig(battle.guildId);
+    const clanBattleChannelId = config?.settings?.clanBattleChannelId;
+    if (!clanBattleChannelId) return null;
+
+    const channel = await client.channels.fetch(clanBattleChannelId).catch(() => null);
     if (!channel) {
-      console.log(`[ClanBattle] Channel not found: ${CLAN_BATTLE_CHANNEL_ID}`);
+      console.log(`[ClanBattle] Channel not found: ${clanBattleChannelId}`);
       return null;
     }
 
@@ -279,7 +283,11 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
 async function deleteOldLeaderboardMessage(client, battle) {
   if (!battle.leaderboardMessageId) return;
   try {
-    const channel = await client.channels.fetch(CLAN_BATTLE_CHANNEL_ID).catch(() => null);
+    const config = await configManager.getGuildConfig(battle.guildId);
+    const clanBattleChannelId = config?.settings?.clanBattleChannelId;
+    if (!clanBattleChannelId) return;
+
+    const channel = await client.channels.fetch(clanBattleChannelId).catch(() => null);
     if (!channel) return;
 
     const oldMsg = await channel.messages.fetch(battle.leaderboardMessageId).catch(() => null);

@@ -2,9 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const Level = require("../../bot/database/models/Level");
 const xpCache = require("./xpCache");
 const getLevelFromXP = require("./utils/getLevelFromXP");
-const levelRoles = require("./levelRoles");
-
-const ANNOUNCEMENT_CHANNEL_ID = "1478710940378857483";
+const configManager = require("../../bot/utils/configManager");
 
 module.exports = function xpWorker(client) {
   // Run every 5 minutes (300,000 ms)
@@ -60,8 +58,10 @@ async function handleLevelUp(client, profile, guildId, userId, newLevel) {
   if (!member) return;
 
   // Handle Roles
-  const targetRoleID = getRoleForLevel(newLevel);
-  const allRankRoles = Object.values(levelRoles);
+  const config = await configManager.getGuildConfig(guildId);
+  const levelingRolesMap = config?.settings?.levelRoles || new Map();
+  const targetRoleID = getRoleForLevel(newLevel, levelingRolesMap);
+  const allRankRoles = Array.from(levelingRolesMap.values());
 
   if (targetRoleID) {
     const rolesToRemove = allRankRoles.filter(id => member.roles.cache.has(id) && id !== targetRoleID);
@@ -78,7 +78,8 @@ async function handleLevelUp(client, profile, guildId, userId, newLevel) {
   }
 
   // Handle Announcement
-  const channel = guild.channels.cache.get(ANNOUNCEMENT_CHANNEL_ID);
+  const announcementChannelId = config?.settings?.logChannelId || config?.settings?.modLogChannelId; // Fallback or specific
+  const channel = announcementChannelId ? guild.channels.cache.get(announcementChannelId) : null;
   if (channel && channel.isTextBased()) {
     const embed = new EmbedBuilder()
       .setColor("#FFD700") // Gold highlight
@@ -90,11 +91,12 @@ async function handleLevelUp(client, profile, guildId, userId, newLevel) {
   }
 }
 
-function getRoleForLevel(level) {
-  const levels = Object.keys(levelRoles).map(Number).sort((a, b) => b - a);
+function getRoleForLevel(level, levelingRolesMap) {
+  if (!levelingRolesMap) return null;
+  const levels = Array.from(levelingRolesMap.keys()).map(Number).sort((a, b) => b - a);
   for (const threshold of levels) {
     if (level >= threshold) {
-      return levelRoles[threshold];
+      return levelingRolesMap.get(String(threshold));
     }
   }
   return null;

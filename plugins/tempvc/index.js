@@ -1,10 +1,10 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const { addLog } = require('../../utils/logger');
+const configManager = require('../../bot/utils/configManager');
+const path = require('path');
 
 const CONFIG = {
-  CREATE_VC_ID: '1478793326781272096',
-  PANEL_CHANNEL_ID: '1485163501558173727',
-  CATEGORY_ID: '1341978656096129068'
+  DATA_PATH: path.join(__dirname, 'data.json')
 };
 
 // Map of Voice Channel ID -> Owner User ID
@@ -12,7 +12,13 @@ const activeVCs = new Map();
 
 async function initControlPanel(client) {
   try {
-    const channel = await client.channels.fetch(CONFIG.PANEL_CHANNEL_ID).catch(() => null);
+    const GUILD_ID = process.env.GUILD_ID;
+    if (!GUILD_ID) return;
+    const config = await configManager.getGuildConfig(GUILD_ID);
+    const panelChannelId = config?.settings?.tempvcPanelChannelId;
+    if (!panelChannelId) return;
+
+    const channel = await client.channels.fetch(panelChannelId).catch(() => null);
     if (!channel) return;
 
     // Check if message already exists
@@ -69,9 +75,13 @@ module.exports = {
 
     // Voice State Tracker
     client.on('voiceStateUpdate', async (oldState, newState) => {
+      const config = await configManager.getGuildConfig(newState.guild.id);
+      const createVcId = config?.settings?.tempvcCreateChannelId;
+      const categoryId = config?.settings?.tempvcCategoryId;
+
       // User Joined "Create VC"
       if ((!oldState.channelId && newState.channelId) || (oldState.channelId !== newState.channelId)) {
-        if (newState.channelId === CONFIG.CREATE_VC_ID) {
+        if (createVcId && newState.channelId === createVcId) {
           const guild = newState.guild;
           const member = newState.member;
 
@@ -79,7 +89,7 @@ module.exports = {
             const newChannel = await guild.channels.create({
               name: `${member.user.username}'s VC`,
               type: ChannelType.GuildVoice,
-              parent: CONFIG.CATEGORY_ID,
+              parent: categoryId,
               permissionOverwrites: [
                 {
                   id: guild.roles.everyone.id,

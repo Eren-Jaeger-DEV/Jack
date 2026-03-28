@@ -3,93 +3,117 @@ const path = require('path');
 const commandLoader = require('./commandLoader');
 const eventLoader = require('./eventLoader');
 const { addLog } = require('../utils/logger');
+const configManager = require('../bot/utils/configManager');
 
-module.exports = (client) => {
+const activePluginComponents = new Map(); // folder -> { commands: [], events: [] }
+
+/**
+ * Loads a single plugin's commands and events.
+ */
+function loadPlugin(client, folder) {
+  if (activePluginComponents.has(folder)) return;
+
   const pluginsPath = path.join(__dirname, '../plugins');
+  const pluginPath = path.join(pluginsPath, folder);
+  const manifestPath = path.join(pluginPath, 'plugin.json');
+
+  if (!fs.existsSync(manifestPath)) return;
+
+  // Clear cache for manifest and index if they exist
+  try {
+    delete require.cache[require.resolve(manifestPath)];
+  } catch (e) {}
   
-  if (!fs.existsSync(pluginsPath)) return;
+  const manifest = require(manifestPath);
+  const mainFile = manifest.main || 'index.js';
+  const indexPath = path.join(pluginPath, mainFile);
 
-  const pluginFolders = fs.readdirSync(pluginsPath).filter(file => {
-    return fs.statSync(path.join(pluginsPath, file)).isDirectory();
-  });
+  // 1. Load Commands
+  const loadedCommands = commandLoader(client, pluginPath);
+  
+  // 2. Load Events
+  const loadedEvents = eventLoader(client, pluginPath);
 
-  let pluginCount = 0;
-
-  for (const folder of pluginFolders) {
-    const pluginPath = path.join(pluginsPath, folder);
-    const manifestPath = path.join(pluginPath, 'plugin.json');
-
-    if (!fs.existsSync(manifestPath)) continue;
-
-    const manifest = require(manifestPath);
-    const mainFile = manifest.main || 'index.js';
-    const indexPath = path.join(pluginPath, mainFile);
-
-    if (!fs.existsSync(indexPath)) continue;
-
-    const proxyClient = new Proxy(client, {
-      get(target, prop, receiver) {
-        if (prop === 'commands') {
-          return new Proxy(target.commands, {
-            get(cmdsTarget, cmdsProp) {
-              if (cmdsProp === 'set') {
-                return function(name, command) {
-                  const originalExecute = command.execute;
-                  const GuildConfig = require('../bot/database/models/GuildConfig');
-                  
-                  command.execute = async function(ctx, ...args) {
-                    if (ctx.guildId) {
-                      const config = await GuildConfig.findOne({ guildId: ctx.guildId });
-                      if (config && config.plugins && config.plugins.get(folder) === false) {
-                        return ctx.reply({ content: `The **${folder}** plugin is disabled in this server.`, ephemeral: true }).catch(() => {});
-                      }
-                    }
-                    return originalExecute.apply(this, [ctx, ...args]);
-                  };
-                  return cmdsTarget.set(name, command);
-                };
-              }
-              return Reflect.get(cmdsTarget, cmdsProp);
-            }
-          });
-        }
-        
-        if (prop === 'on') {
-          return function(eventName, listener) {
-            const GuildConfig = require('../bot/database/models/GuildConfig');
-            const wrappedListener = async (...args) => {
-              let guildId;
-              for (const arg of args) {
-                if (arg && arg.guildId) { guildId = arg.guildId; break; }
-                if (arg && arg.guild && arg.guild.id) { guildId = arg.guild.id; break; }
-              }
-              
-              if (guildId) {
-                const config = await GuildConfig.findOne({ guildId: guildId }).catch(() => null);
-                if (config && config.plugins && config.plugins.get(folder) === false) return;
-              }
-              return listener.apply(this, args);
-            };
-            return target.on(eventName, wrappedListener);
-          };
-        }
-        return Reflect.get(target, prop, receiver);
-      }
-    });
-
-    commandLoader(proxyClient, pluginPath);
-    eventLoader(proxyClient, pluginPath);
-
+  // 3. Optional Init Function
+  if (fs.existsSync(indexPath)) {
     try {
+      delete require.cache[require.resolve(indexPath)];
       const plugin = require(indexPath);
       if (typeof plugin.load === 'function') {
         plugin.load(client);
       }
-      pluginCount++;
     } catch (err) {
-      console.error(`[Jack] Failed to load plugin '${manifest.name}':`, err.message);
+      console.error(`[Jack] Failed to run init for plugin '${folder}':`, err.message);
     }
   }
 
-  addLog("Plugins", `${pluginCount} loaded`);
+  activePluginComponents.set(folder, {
+    commands: loadedCommands,
+    events: loadedEvents
+  });
+
+  console.log(`[Plugins] Successfully initialized ${folder} (${loadedCommands.length} cmds, ${loadedEvents.length} events)`);
+  addLog("Plugins", `Loaded active plugin: ${folder}`);
+}
+
+/**
+ * Unloads a single plugin's commands and events.
+ */
+function unloadPlugin(client, folder) {
+  const components = activePluginComponents.get(folder);
+  if (!components) return;
+
+  // 1. Remove Commands
+  components.commands.forEach(cmdName => {
+    client.commands.delete(cmdName);
+  });
+
+  // 2. Remove Events
+  components.events.forEach(({ eventName, handler }) => {
+    client.removeListener(eventName, handler);
+  });
+
+  activePluginComponents.delete(folder);
+  addLog("Plugins", `Unloaded plugin: ${folder}`);
+}
+
+module.exports = (client) => {
+  const pluginsPath = path.join(__dirname, '../plugins');
+  if (!fs.existsSync(pluginsPath)) return;
+
+  /**
+   * Public toggle function attached to client
+   */
+  client.togglePlugin = (folder, enabled) => {
+    if (enabled) {
+      loadPlugin(client, folder);
+    } else {
+      unloadPlugin(client, folder);
+    }
+  };
+
+  const init = async () => {
+    const pluginFolders = fs.readdirSync(pluginsPath).filter(file => {
+      return fs.statSync(path.join(pluginsPath, file)).isDirectory();
+    });
+
+    const GUILD_ID = process.env.GUILD_ID || "1407954932623347783";
+    const config = await configManager.getGuildConfig(GUILD_ID);
+    const enabledPlugins = config?.plugins || {};
+
+    let count = 0;
+    for (const folder of pluginFolders) {
+      // Check if enabled in config cache
+      if (enabledPlugins[folder] === true) {
+        console.log(`[Plugins] Loading enabled plugin: ${folder}`);
+        loadPlugin(client, folder);
+        count++;
+      }
+    }
+
+    console.log(`[Plugins] ${count} active plugins initialized`);
+    addLog("Plugins", `${count} active plugins initialized`);
+  };
+
+  init();
 };

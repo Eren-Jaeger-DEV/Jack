@@ -5,6 +5,7 @@ const session = require("express-session");
 const passport = require("passport");
 const DiscordStrategy = require("passport-discord").Strategy;
 const cors = require("cors");
+const configManager = require("../../bot/utils/configManager");
 
 const app = express();
 
@@ -261,29 +262,32 @@ app.get("/api/guilds", (req, res) => {
 
 const fs = require("fs");
 const path = require("path");
-const welcomePath = path.join(__dirname, "../../config/welcome.json");
-
 /* GET WELCOME SETTINGS */
 
-app.get("/api/welcome", (req, res) => {
+app.get("/api/welcome", async (req, res) => {
+  const guildId = req.query.guildId || process.env.GUILD_ID || "1407954932623347783";
   try {
-    const data = JSON.parse(fs.readFileSync(welcomePath));
-    res.json(data);
+    const GuildConfig = require("../../bot/database/models/GuildConfig");
+    let config = await GuildConfig.findOne({ guildId });
+    if (!config) {
+      config = await GuildConfig.create({ guildId });
+    }
+    res.json(config.welcome || {});
   } catch (err) {
+    console.error("Error fetching welcome config:", err);
     res.json({});
   }
 });
 
 /* UPDATE WELCOME SETTINGS */
 
-app.post("/api/welcome", express.json(), (req, res) => {
+app.post("/api/welcome", express.json(), async (req, res) => {
+  const guildId = req.body.guildId || process.env.GUILD_ID || "1407954932623347783";
   try {
-    fs.writeFileSync(
-      welcomePath,
-      JSON.stringify(req.body, null, 2)
-    );
+    await configManager.updateGuildConfig(guildId, { welcome: req.body });
     res.json({ status: "saved" });
   } catch (err) {
+    console.error("Error saving welcome config:", err);
     res.status(500).json({ error: "Failed to save" });
   }
 });
@@ -367,19 +371,13 @@ app.post("/api/plugins/toggle", express.json(), verifyGuildPermission, async (re
   }
 
   try {
-    const GuildConfig = require("../../bot/database/models/GuildConfig");
+    // Set the specific plugin toggle
+    const updates = {};
+    updates[`plugins.${plugin}`] = enabled;
     
-    // Find or create
-    let config = await GuildConfig.findOne({ guildId });
-    if (!config) {
-      config = new GuildConfig({ guildId });
-    }
-
-    // Set the specific plugin toggle via Mongoose Map .set()
-    config.plugins.set(plugin, enabled);
+    await configManager.updateGuildConfig(guildId, updates);
     
-    await config.save();
-    
+    const config = await configManager.getGuildConfig(guildId);
     res.json({ status: "success", plugins: config.plugins });
   } catch (err) {
     console.error("Error toggling plugin:", err);
@@ -409,12 +407,7 @@ app.put("/api/guilds/:guildId/config", express.json(), verifyGuildPermission, as
   const updates = req.body;
 
   try {
-    const GuildConfig = require("../../bot/database/models/GuildConfig");
-    const config = await GuildConfig.findOneAndUpdate(
-      { guildId },
-      { $set: updates },
-      { returnDocument: 'after', upsert: true }
-    );
+    const config = await configManager.updateGuildConfig(guildId, updates);
     res.json(config);
   } catch (err) {
     console.error("Error updating config:", err);

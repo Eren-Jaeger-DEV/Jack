@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const { addLog } = require('../../utils/logger');
-const GuildConfig = require('../../bot/database/models/GuildConfig');
+const configManager = require('../../bot/utils/configManager');
+const { addLog } = require('../../bot/utils/logger');
+
 
 const CONFIG = {
-  DEFAULT_CHANNEL_ID: '1478790421369983179',
   DATA_PATH: path.join(__dirname, 'data.json')
 };
 
@@ -34,10 +34,11 @@ function loadState() {
 
 async function verifyState(client) {
   try {
-    // For now, we sync with the default channel or the first one found in configs
-    let channelId = CONFIG.DEFAULT_CHANNEL_ID;
-    const config = await GuildConfig.findOne({ "channels.counting": { $exists: true, $ne: "" } });
-    if (config?.channels?.counting) channelId = config.channels.counting;
+    const GUILD_ID = process.env.GUILD_ID;
+    if (!GUILD_ID) return;
+    const config = await configManager.getGuildConfig(GUILD_ID);
+    const channelId = config?.settings?.countingChannelId;
+    if (!channelId) return;
 
     const channel = await client.channels.fetch(channelId).catch(() => null);
     if (!channel) return;
@@ -98,10 +99,10 @@ module.exports = {
       if (message.author.bot) return;
       if (!message.guild) return;
 
-      const config = await GuildConfig.findOne({ guildId: message.guild.id }).catch(() => null);
-      const CHANNEL_ID = config?.channels?.counting || CONFIG.DEFAULT_CHANNEL_ID;
+      const config = await configManager.getGuildConfig(message.guild.id);
+      const CHANNEL_ID = config?.settings?.countingChannelId;
 
-      if (message.channelId !== CHANNEL_ID) return;
+      if (!CHANNEL_ID || message.channelId !== CHANNEL_ID) return;
       if (!message.content || message.content.length === 0) return;
 
       const content = message.content.trim();

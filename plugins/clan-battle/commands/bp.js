@@ -15,10 +15,9 @@
 const { SlashCommandBuilder } = require('discord.js');
 const Player = require('../../../bot/database/models/Player');
 const battleService = require('../services/battleService');
+const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 
-const CLAN_ROLE_ID           = '1477856665817714699';
-const CLAN_BATTLE_CHANNEL_ID = '1379098755592093787';
 
 module.exports = {
 
@@ -46,9 +45,13 @@ module.exports = {
       const isEphemeral = ctx.isInteraction;
 
       // Clan role check
-      if (!ctx.member.roles.cache.has(CLAN_ROLE_ID)) {
-        return ctx.reply({ content: '❌ You must be a clan member to submit battle points.', ephemeral: isEphemeral });
-      }
+    // Clan role check
+    const config = await configManager.getGuildConfig(ctx.guild.id);
+    const clanRoleId = config?.settings?.clanMemberRoleId;
+
+    if (clanRoleId && !ctx.member.roles.cache.has(clanRoleId)) {
+      return ctx.reply({ content: '❌ You must be a clan member to submit battle points.', ephemeral: isEphemeral });
+    }
 
       // Parse points
       let points;
