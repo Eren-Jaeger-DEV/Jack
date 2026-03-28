@@ -37,9 +37,10 @@ module.exports = async (message, client) => {
     commandName = "createteam";
     args.shift();
   } else if (commandName === "sell" && sub === "pop") {
-    commandName = "sell";
+    commandName = "sellpop";
     args.shift();
   }
+
 
   /* ─── COMMAND RESOLUTION ─── */
   let command = client.commands.get(commandName);

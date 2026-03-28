@@ -34,7 +34,8 @@ mongoose
 
 /* Ready */
 
-client.once("clientReady", async () => {
+client.once("ready", async () => {
+
   // Initialize configuration cache
   await configManager.init(client);
 
