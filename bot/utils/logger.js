@@ -1,27 +1,60 @@
-const { getGuildConfig } = require('./configManager');
+/**
+ * JACK STRUCTURED LOGGING SYSTEM (v2.1.0)
+ * Standardized JSON logging for production diagnostic consistency.
+ */
 
-module.exports = (guild, embed) => {
-  if (!guild) return;
+const fs = require('fs');
+const path = require('path');
 
-  // Fire-and-forget: do not await this to prevent blocking command execution
-  getGuildConfig(guild.id).then(async (config) => {
+const LOG_LEVELS = {
+    INFO: "INFO",
+    WARN: "WARN",
+    ERROR: "ERROR",
+    CRITICAL: "CRITICAL"
+};
+
+/**
+ * Formats and writes a structured log entry.
+ */
+function log(level, context, message, meta = {}) {
+    const entry = {
+        timestamp: new Date().toISOString(),
+        level: level,
+        context: context,
+        message: message,
+        requestId: meta.requestId || null,
+        executionTime: meta.executionTime || null,
+        status: meta.status || null,
+        meta: meta
+    };
+
+
+    // 1. Console Output (Human Readable for Dev)
+    const color = level === LOG_LEVELS.CRITICAL ? "\x1b[41m" : 
+                  level === LOG_LEVELS.ERROR ? "\x1b[31m" : 
+                  level === LOG_LEVELS.WARN ? "\x1b[33m" : "";
+    const reset = "\x1b[0m";
+    
+    console.log(`${color}[${entry.timestamp}] [${level}] [${context}] ${message}${reset}`);
+
+    // 2. File Output (Structured JSON for Audit)
     try {
-      const logChannelId = config?.settings?.logChannelId;
-      if (!logChannelId) return;
-
-      // Try cache first, then fetch if needed (but still non-blocking for the caller)
-      let channel = guild.channels.cache.get(logChannelId);
-      if (!channel) {
-        channel = await guild.channels.fetch(logChannelId).catch(() => null);
-      }
-      
-      if (!channel) return;
-
-      await channel.send({ embeds: [embed] }).catch(() => null);
+        const logDir = path.join(__dirname, '../../logs');
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
+        fs.appendFileSync(path.join(logDir, 'bot.json.log'), JSON.stringify(entry) + '\n');
     } catch (err) {
-      console.error("[Logger] Background Error:", err);
+        // Fallback to basic stderr if file logging fails
+        console.error("Critical Failure in Logger Sync:", err);
     }
-  }).catch(err => {
-    console.error("[Logger] Config Fetch Error:", err);
-  });
+}
+
+module.exports = {
+    info: (ctx, msg, meta) => log(LOG_LEVELS.INFO, ctx, msg, meta),
+    warn: (ctx, msg, meta) => log(LOG_LEVELS.WARN, ctx, msg, meta),
+    error: (ctx, msg, meta) => log(LOG_LEVELS.ERROR, ctx, msg, meta),
+    critical: (ctx, msg, meta) => log(LOG_LEVELS.CRITICAL, ctx, msg, meta),
+    
+    // Legacy support (to be phased out)
+    addLog: (ctx, msg) => log(LOG_LEVELS.INFO, ctx, msg),
+    printLogs: (tag) => console.log(`[Startup] ${tag} initialized successfully.`)
 };

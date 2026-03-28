@@ -2,5 +2,7 @@
   "name": "market",
   "version": "1.0.0",
   "description": "Market commands module",
-  "main": "index.js"
+  "main": "index.js",
+  "id": "market",
+  "enabledByDefault": true
 }

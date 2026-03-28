@@ -2,5 +2,7 @@
   "name": "admin",
   "version": "1.0.0",
   "description": "Admin commands module",
-  "main": "index.js"
+  "main": "index.js",
+  "id": "admin",
+  "enabledByDefault": true
 }

@@ -3,5 +3,7 @@
   "version": "1.0.0",
   "description": "Custom automated responses and actions (Carl-bot style)",
   "main": "index.js",
-  "author": "Jack Dev"
+  "author": "Jack Dev",
+  "id": "triggers",
+  "enabledByDefault": true
 }

@@ -2,5 +2,7 @@
   "name": "moderation",
   "version": "1.0.0",
   "description": "Moderation commands module",
-  "main": "index.js"
+  "main": "index.js",
+  "id": "moderation",
+  "enabledByDefault": true
 }

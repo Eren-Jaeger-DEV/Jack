@@ -2,5 +2,7 @@
   "name": "packs",
   "version": "1.0.0",
   "description": "Packs commands module",
-  "main": "index.js"
+  "main": "index.js",
+  "id": "packs",
+  "enabledByDefault": true
 }

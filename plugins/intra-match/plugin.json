@@ -3,5 +3,7 @@
   "version": "1.0.0",
   "description": "Automated intra-clan match registration, time-based closing, and winner detection",
   "main": "index.js",
-  "author": "Jack Dev"
+  "author": "Jack Dev",
+  "id": "intra-match",
+  "enabledByDefault": true
 }

@@ -2,5 +2,7 @@
   "name": "counting",
   "version": "1.0.0",
   "description": "Sequential numerical counting plugin",
-  "main": "index.js"
+  "main": "index.js",
+  "id": "counting",
+  "enabledByDefault": true
 }

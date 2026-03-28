@@ -50,7 +50,8 @@ module.exports = async (message, client) => {
 
   if (!command) return;
 
-  // Create context and execute through unified pipeline
+  // Create context and execute through unified, hardened pipeline
   const ctx = new Context(client, message, args, command);
-  await runCommand(command, ctx);
+  const executor = require("../../core/commandExecutor");
+  await executor.execute(ctx, command);
 };

@@ -43,8 +43,8 @@ module.exports = {
       }
 
       const ctx = new Context(client, interaction, [], command);
-      const { runCommand } = require("../utils/commandExecutor");
-      await runCommand(command, ctx);
+      const executor = require("../../core/commandExecutor");
+      await executor.execute(ctx, command);
       return;
     }
 

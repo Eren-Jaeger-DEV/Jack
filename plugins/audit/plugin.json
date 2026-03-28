@@ -2,5 +2,7 @@
   "name": "audit",
   "version": "1.0.0",
   "description": "Auditing and analytics module",
-  "main": "index.js"
+  "main": "index.js",
+  "id": "audit",
+  "enabledByDefault": true
 }

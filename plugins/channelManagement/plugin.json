@@ -2,5 +2,7 @@
   "name": "channelManagement",
   "version": "1.0.0",
   "description": "General Chat enforcement plugin (Media, Links, Commands)",
-  "main": "index.js"
+  "main": "index.js",
+  "id": "channelManagement",
+  "enabledByDefault": true
 }

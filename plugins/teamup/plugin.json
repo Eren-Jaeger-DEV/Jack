@@ -4,5 +4,7 @@
   "description": "Conversational team creation and matchmaking system.",
   "main": "index.js",
   "author": "Antigravity",
-  "enabled": true
+  "enabled": true,
+  "id": "teamup",
+  "enabledByDefault": true
 }
