@@ -76,6 +76,8 @@ const guildConfigSchema = new mongoose.Schema({
     discordMemberRoleId: { type: String },
     ownerRoleId: { type: String },
     managerRoleId: { type: String },
+    adminRoleId: { type: String },
+    contributorRoleId: { type: String },
     mentorRoleId: { type: String },
     rookieRoleId: { type: String },
     synergyRoleId: { type: String },

@@ -97,7 +97,8 @@ module.exports = (client) => {
       return fs.statSync(path.join(pluginsPath, file)).isDirectory();
     });
 
-    const GUILD_ID = process.env.GUILD_ID || "1407954932623347783";
+    const GUILD_ID = process.env.GUILD_ID;
+
     const config = await configManager.getGuildConfig(GUILD_ID);
     const enabledPlugins = config?.plugins || {};
 

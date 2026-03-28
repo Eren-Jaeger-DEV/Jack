@@ -55,7 +55,8 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
 (async () => {
   try {
-    const guildId = process.env.GUILD_ID || "1341978655437619250"; // Use default from logic if not in env
+    const guildId = process.env.GUILD_ID;
+
 
     if (guildId) {
       console.log(`🚀 Deploying ${commands.length} commands to guild: ${guildId}`);

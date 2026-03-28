@@ -121,27 +121,30 @@ app.get("/api/user", async (req, res) => {
   try {
     const Player = require("../../bot/database/models/Player");
     const discordId = req.user.discordId || req.user.id;
-    const OWNER_ID = process.env.OWNER_ID || "771611262022844427";
-    const GUILD_ID = process.env.GUILD_ID || "1407954932623347783";
+    const OWNER_ID = process.env.OWNER_ID;
+    const GUILD_ID = process.env.GUILD_ID;
 
     console.log("[RBAC Sync] User:", req.user.username, "(", discordId, ")");
 
     let highestRole = "none";
 
     // 1. Role Sync from Discord Guild
-    if (discordId === OWNER_ID) {
+    if (OWNER_ID && discordId === OWNER_ID) {
       highestRole = "owner";
-    } else if (bot.isReady()) {
+    } else if (bot.isReady() && GUILD_ID) {
       const guild = bot.guilds.cache.get(GUILD_ID);
       if (guild) {
         try {
           const member = await guild.members.fetch(discordId);
           if (member) {
+            const config = await configManager.getGuildConfig(GUILD_ID);
+            const s = config?.settings || {};
             const r = member.roles.cache;
-            if (r.has("1407978936276746251")) highestRole = "owner";
-            else if (r.has("1477874246972604588")) highestRole = "manager";
-            else if (r.has("1477874711886303263")) highestRole = "admin";
-            else if (r.has("1477874451277287454")) highestRole = "contributor";
+
+            if (s.ownerRoleId && r.has(s.ownerRoleId)) highestRole = "owner";
+            else if (s.managerRoleId && r.has(s.managerRoleId)) highestRole = "manager";
+            else if (s.adminRoleId && r.has(s.adminRoleId)) highestRole = "admin";
+            else if (s.contributorRoleId && r.has(s.contributorRoleId)) highestRole = "contributor";
           }
         } catch (e) {
           console.warn(`[RBAC Sync] member.fetch fail for ${discordId}`);
@@ -195,7 +198,8 @@ app.get("/api/server", (req, res) => {
     return res.status(401).json({ error: "Not logged in" });
   }
 
-  const guildId = process.env.GUILD_ID || "1341978655437619250";
+  const guildId = process.env.GUILD_ID;
+
 
   if (!bot.isReady()) {
     return res.json({
@@ -265,7 +269,8 @@ const path = require("path");
 /* GET WELCOME SETTINGS */
 
 app.get("/api/welcome", async (req, res) => {
-  const guildId = req.query.guildId || process.env.GUILD_ID || "1407954932623347783";
+  const guildId = req.query.guildId || process.env.GUILD_ID;
+
   try {
     const GuildConfig = require("../../bot/database/models/GuildConfig");
     let config = await GuildConfig.findOne({ guildId });
@@ -282,7 +287,8 @@ app.get("/api/welcome", async (req, res) => {
 /* UPDATE WELCOME SETTINGS */
 
 app.post("/api/welcome", express.json(), async (req, res) => {
-  const guildId = req.body.guildId || process.env.GUILD_ID || "1407954932623347783";
+  const guildId = req.body.guildId || process.env.GUILD_ID;
+
   try {
     await configManager.updateGuildConfig(guildId, { welcome: req.body });
     res.json({ status: "saved" });

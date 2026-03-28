@@ -7,7 +7,8 @@ let cachedMessageId = null;
 
 async function refreshMarketPanel(client) {
   try {
-    const guildId = process.env.GUILD_ID || "1341978655437619250";
+    const guildId = process.env.GUILD_ID;
+
     const config = await configManager.getGuildConfig(guildId);
     const marketChannelId = config?.settings?.marketChannelId;
 

@@ -15,7 +15,8 @@ const requireRole = (minRole) => {
     }
 
     const discordId = req.user.discordId || req.user.id;
-    const OWNER_ID = process.env.OWNER_ID || "771611262022844427";
+    const OWNER_ID = process.env.OWNER_ID;
+
 
     // 1. Hard Bypass for Bot Owner (Always Owner Role)
     if (discordId === OWNER_ID) {
