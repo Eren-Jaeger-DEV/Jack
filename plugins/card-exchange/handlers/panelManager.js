@@ -57,7 +57,7 @@ function buildPanel() {
     .setStyle(ButtonStyle.Secondary)
     .setEmoji('🔍');
 
-  const row = new ActionRowBuilder().addComponents(btnInterested, btnPost, btnSearch);
+  const row = new ActionRowBuilder().addComponents(btnPost, btnSearch);
 
   return { embeds: [embed], components: [row] };
 }
