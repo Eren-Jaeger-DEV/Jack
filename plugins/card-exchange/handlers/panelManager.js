@@ -27,7 +27,7 @@ function buildPanel() {
   const embed = new EmbedBuilder()
     .setTitle('🏆 CARD EXCHANGE HUB')
     .setDescription(
-      'Welcome to the **Premium Card Exchange Marketplace**!\n' +
+      'Welcome to the **Card Exchange Marketplace**!\n' +
       'Trade your collectible cards with other members efficiently.\n\n' +
       '📬 **Create Post**\n' +
       'List your own cards and specify what you are looking for.\n\n' +
