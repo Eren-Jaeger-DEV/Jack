@@ -22,7 +22,7 @@ function buildOverviewEmbed(guild, section = null) {
             `Thank you for being part of the community.`
         );
     } else {
-        embed.setTitle(`🌐 Overview: ${section.name}`);
+        embed.setTitle(section.name);
         const content = section.items.map(i => `**${i.title}**\n${i.description}`).join('\n\n');
         embed.setDescription(content || "_No items in this section._");
     }
