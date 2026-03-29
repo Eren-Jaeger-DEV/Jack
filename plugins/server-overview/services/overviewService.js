@@ -11,7 +11,7 @@ function buildOverviewEmbed(guild, section = null) {
 
     if (!section) {
         embed.setDescription(
-            `#Welcome to ${guild?.name || 'our Server'}**\n\n` +
+            `# Welcome to ${guild?.name || 'our Server'}\n\n` +
             `We’re glad to have you here. This server represents the official community of **JackPirates**, built to connect members, streamline communication, and enhance coordination.\n\n` +
             `To get started, please use the **Server Overview Panel** available in this channel.\n\n` +
             `**How to Navigate:**\n\n` +
