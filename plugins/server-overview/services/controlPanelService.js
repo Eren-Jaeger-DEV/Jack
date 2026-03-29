@@ -21,6 +21,7 @@ function buildControlPanelEmbed(config) {
 function buildControlPanelButtons() {
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('add_section').setLabel('Add Section').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('delete_section').setLabel('Delete Section').setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId('add_item').setLabel('Add Item').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('edit_item').setLabel('Edit Item').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('delete_item').setLabel('Delete Item').setStyle(ButtonStyle.Danger)

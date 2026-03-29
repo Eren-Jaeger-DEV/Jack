@@ -26,7 +26,7 @@ module.exports = {
         }
 
         // 2. ADMIN ONLY CHECK
-        if (customId.startsWith('overview_') || ['add_section', 'add_item', 'edit_item', 'delete_item'].includes(customId)) {
+        if (customId.startsWith('overview_') || ['add_section', 'delete_section', 'add_item', 'edit_item', 'delete_item'].includes(customId)) {
             if (!isAdmin) {
                 return await interaction.reply({ content: "❌ You do not have permission to use the control panel.", ephemeral: true });
             }
@@ -113,11 +113,47 @@ module.exports = {
             const config = await OverviewConfig.findOne({ guildId });
             
             const section = config.sections.find(s => s.name === sName);
-            section.items = section.items.filter(i => i.title !== iTitle);
-            await config.save();
+            if (section) {
+                section.items = section.items.filter(i => i.title !== iTitle);
+                config.markModified('sections');
+                await config.save();
+            }
 
             await syncAll(interaction, config);
             await interaction.editReply({ content: "✅ Item deleted.", components: [] });
+        }
+
+        // 6. DELETE SECTION
+        if (customId === 'delete_section') {
+            const config = await OverviewConfig.findOne({ guildId });
+            if (config.sections.length === 0) {
+                return await interaction.reply({ content: "❌ No sections to delete.", ephemeral: true });
+            }
+
+            const row = new ActionRowBuilder().addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('modal_delete_section_select')
+                    .setPlaceholder('Select section to delete...')
+                    .addOptions(config.sections.map(s => ({
+                        label: s.name,
+                        value: s.name
+                    })))
+            );
+
+            await interaction.reply({ content: "Select a section to remove:", components: [row], ephemeral: true });
+        }
+
+        if (customId === 'modal_delete_section_select') {
+            await interaction.deferUpdate();
+            const sectionName = interaction.values[0];
+            const config = await OverviewConfig.findOne({ guildId });
+            
+            config.sections = config.sections.filter(s => s.name !== sectionName);
+            config.markModified('sections');
+            await config.save();
+
+            await syncAll(interaction, config);
+            await interaction.editReply({ content: "✅ Section deleted.", components: [] });
         }
     }
 };

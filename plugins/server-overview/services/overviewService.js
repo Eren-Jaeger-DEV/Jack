@@ -34,12 +34,13 @@ function buildOverviewEmbed(guild, section = null) {
  * Builds the overview selection dropdown.
  */
 function buildOverviewDropdown(sections) {
-    if (!sections || sections.length === 0) return null;
+    const activeSections = (sections || []).filter(s => s.items && s.items.length > 0);
+    if (activeSections.length === 0) return null;
 
     const select = new StringSelectMenuBuilder()
         .setCustomId('overview_select')
         .setPlaceholder('Select a section to view...')
-        .addOptions(sections.map(s => ({
+        .addOptions(activeSections.map(s => ({
             label: s.name,
             value: s.name
         })));
