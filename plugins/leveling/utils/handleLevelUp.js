@@ -46,9 +46,10 @@ async function handleLevelUp(client, guildId, userId, newLevel) {
   if (channel && (channel.isTextBased() || channel.type === 0)) {
     const embed = new EmbedBuilder()
       .setColor("#FFD700") // Gold highlight
-      .setAuthor({ name: `${member.displayName} leveled up!`, iconURL: member.user.displayAvatarURL() })
-      .setDescription(`**CONGRATS**\nYou are now level ${newLevel}!!`)
-      .setFooter({ text: "JACK × XZEEMO" });
+      .setTitle(`${member.displayName} leveled up!`)
+      .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+      .setDescription(`**CONGRATS**\nYou are now level **${newLevel}**!!!`)
+      .setFooter({ text: "JACK • XZEEMO", iconURL: guild.iconURL() });
 
     await channel.send({ content: `<@${userId}>`, embeds: [embed] }).catch(() => null);
   }
