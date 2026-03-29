@@ -16,7 +16,7 @@ function buildOverviewEmbed(guild, section = null) {
             `To get started, please use the **Server Overview Panel** available in this channel.\n\n` +
             `**How to Navigate:**\n\n` +
             `* Select a category from the dropdown menu in the panel\n` +
-            `* Each category provides relevant channels, information, and guidelines\n` +
+            `* Each category provides relevant channels, clan activities, information, and guidelines\n` +
             `* Follow the instructions within each section to access the appropriate areas\n\n` +
             `This system is designed to keep everything organized and easy to navigate. Please make sure to review the sections carefully before participating.\n\n` +
             `Thank you for being part of the community.`
