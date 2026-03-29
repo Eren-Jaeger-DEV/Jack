@@ -14,7 +14,6 @@ module.exports = {
 
         // 1. PUBLIC OVERVIEW: Dropdown Selection
         if (customId === 'overview_select') {
-            await interaction.deferUpdate();
             const config = await OverviewConfig.findOne({ guildId });
             if (!config) return;
 
@@ -22,7 +21,7 @@ module.exports = {
             const section = config.sections.find(s => s.name === sectionName);
             
             const embed = buildOverviewEmbed(interaction.guild, section);
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.reply({ embeds: [embed], ephemeral: true });
             return;
         }
 
