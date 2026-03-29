@@ -1,0 +1,8 @@
+{
+  "name": "Prefix Management",
+  "version": "1.0.0",
+  "description": "Allows managing server-specific prefixes while maintaining a master prefix.",
+  "main": "index.js",
+  "id": "prefix",
+  "enabledByDefault": true
+}

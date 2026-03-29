@@ -6,13 +6,21 @@ module.exports = async (message, client) => {
   if (!message.guild || message.author.bot || message.interaction) return;
 
   const config = await configManager.getGuildConfig(message.guild.id);
-  const prefix = config?.prefix || "j";
+  const customPrefix = config?.prefix || "j";
+  const masterPrefix = "j";
 
-  // Fast prefix check
-  if (!message.content.toLowerCase().startsWith(prefix.toLowerCase())) return;
+  // Check for prefixes (Custom first, then Master)
+  let usedPrefix = null;
+  if (message.content.toLowerCase().startsWith(customPrefix.toLowerCase())) {
+    usedPrefix = customPrefix;
+  } else if (message.content.toLowerCase().startsWith(masterPrefix.toLowerCase())) {
+    usedPrefix = masterPrefix;
+  }
+
+  if (!usedPrefix) return;
 
   const args = message.content
-    .slice(prefix.length)
+    .slice(usedPrefix.length)
     .trim()
     .split(/ +/);
 

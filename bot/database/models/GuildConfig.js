@@ -36,7 +36,8 @@ const guildConfigSchema = new mongoose.Schema({
     packs: { type: Boolean, default: true },
     roles: { type: Boolean, default: true },
     sticker: { type: Boolean, default: true },
-    triggers: { type: Boolean, default: true }
+    triggers: { type: Boolean, default: true },
+    prefix: { type: Boolean, default: true }
   },
 
 
