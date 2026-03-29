@@ -53,6 +53,12 @@ class Context {
         
         this.isInteraction = typeof source.isChatInputCommand === "function";
         
+        // Legacy/Compatibility Layer
+        this.type = this.isInteraction ? "slash" : "prefix";
+        this.args = args;
+        this.interaction = this.isInteraction ? source : null;
+        this.message = !this.isInteraction ? source : null;
+
         // Identity
         this.user = source.user || source.author;
         this.member = source.member;
