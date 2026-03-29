@@ -92,7 +92,15 @@ const guildConfigSchema = new mongoose.Schema({
     teamupRoleId: { type: String },
 
     // Maps
-    levelRoles: { type: Map, of: String, default: {} }
+    levelRoles: { type: Map, of: String, default: {
+      "1": "1477868599686336643",
+      "5": "1477869156367077559",
+      "10": "1477869258556964894",
+      "15": "1477869451977429113",
+      "20": "1477869710564524192",
+      "30": "1477869846933798992",
+      "40": "1477870041151311912"
+    } }
   }
 }, { timestamps: true });
 
