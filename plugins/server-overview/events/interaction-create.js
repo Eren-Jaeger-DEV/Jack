@@ -80,8 +80,8 @@ module.exports = {
                     .setCustomId('modal_edit_item_select')
                     .setPlaceholder('Select item to edit...')
                     .addOptions(config.sections.flatMap(s => s.items.map(i => ({
-                        label: `${s.name}: ${i.title}`,
-                        value: `${s.name}|${i.title}`
+                        label: `${s.name}: ${i.title}`.substring(0, 100),
+                        value: i._id.toString()
                     }))))
             );
 
@@ -89,14 +89,23 @@ module.exports = {
         }
 
         if (customId === 'modal_edit_item_select') {
-            const [sName, iTitle] = interaction.values[0].split('|');
+            const itemId = interaction.values[0];
             const config = await OverviewConfig.findOne({ guildId });
-            const section = config.sections.find(s => s.name === sName);
-            const item = section?.items.find(i => i.title === iTitle);
+            
+            let item = null;
+            let sectionName = "";
+
+            for (const s of config.sections) {
+                item = s.items.id(itemId);
+                if (item) {
+                    sectionName = s.name;
+                    break;
+                }
+            }
 
             if (!item) return await interaction.reply({ content: "❌ Item not found!", ephemeral: true });
 
-            const modal = new ModalBuilder().setCustomId(`modal_edit_item_submit|${sName}|${iTitle}`).setTitle('Edit Item Details');
+            const modal = new ModalBuilder().setCustomId(`modal_edit_item_submit|${itemId}`).setTitle('Edit Item Details');
             const titleInput = new TextInputBuilder().setCustomId('item_title').setLabel("Title").setStyle(TextInputStyle.Short).setValue(item.title).setRequired(true);
             const descInput = new TextInputBuilder().setCustomId('item_desc').setLabel("Description").setStyle(TextInputStyle.Paragraph).setValue(item.description).setRequired(true);
             
@@ -134,16 +143,22 @@ module.exports = {
             }
 
             if (customId.startsWith('modal_edit_item_submit')) {
-                const [, sName, oldTitle] = customId.split('|');
+                const itemId = customId.split('|')[1];
                 const newTitle = interaction.fields.getTextInputValue('item_title');
                 const newDescription = interaction.fields.getTextInputValue('item_desc');
 
-                const section = config.sections.find(s => s.name === sName);
-                const item = section?.items.find(i => i.title === oldTitle);
+                let itemFound = false;
+                for (const s of config.sections) {
+                    const item = s.items.id(itemId);
+                    if (item) {
+                        item.title = newTitle;
+                        item.description = newDescription;
+                        itemFound = true;
+                        break;
+                    }
+                }
 
-                if (item) {
-                    item.title = newTitle;
-                    item.description = newDescription;
+                if (itemFound) {
                     config.markModified('sections');
                     await config.save();
                 }
@@ -165,8 +180,8 @@ module.exports = {
                     .setCustomId('modal_delete_item_select')
                     .setPlaceholder('Select item to delete...')
                     .addOptions(config.sections.flatMap(s => s.items.map(i => ({
-                        label: `${s.name}: ${i.title}`,
-                        value: `${s.name}|${i.title}`
+                        label: `${s.name}: ${i.title}`.substring(0, 100),
+                        value: i._id.toString()
                     }))))
             );
 
@@ -175,12 +190,20 @@ module.exports = {
 
         if (customId === 'modal_delete_item_select') {
             await interaction.deferUpdate();
-            const [sName, iTitle] = interaction.values[0].split('|');
+            const itemId = interaction.values[0];
             const config = await OverviewConfig.findOne({ guildId });
             
-            const section = config.sections.find(s => s.name === sName);
-            if (section) {
-                section.items = section.items.filter(i => i.title !== iTitle);
+            let itemFound = false;
+            for (const s of config.sections) {
+                const item = s.items.id(itemId);
+                if (item) {
+                    s.items.pull(itemId);
+                    itemFound = true;
+                    break;
+                }
+            }
+
+            if (itemFound) {
                 config.markModified('sections');
                 await config.save();
             }
