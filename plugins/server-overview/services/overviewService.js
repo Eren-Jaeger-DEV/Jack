@@ -6,12 +6,12 @@ const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('dis
 function buildOverviewEmbed(guild, section = null) {
     const embed = new EmbedBuilder()
         .setTitle("Server Overview")
-        .setColor("#5865F2")
+        .setColor("#f70808ff")
         .setTimestamp();
 
     if (!section) {
         embed.setDescription(
-            `# Welcome to ${guild?.name || 'our Server'}\n\n` +
+            `#Welcome to ${guild?.name || 'our Server'}**\n\n` +
             `We’re glad to have you here. This server represents the official community of **JackPirates**, built to connect members, streamline communication, and enhance coordination.\n\n` +
             `To get started, please use the **Server Overview Panel** available in this channel.\n\n` +
             `**How to Navigate:**\n\n` +
