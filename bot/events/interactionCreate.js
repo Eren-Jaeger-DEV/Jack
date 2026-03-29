@@ -10,8 +10,7 @@ const guideMenuHandler = require("../interactions/guideMenuHandler");
 const CommandUsage = require("../database/models/CommandUsage");
 const Player = require("../database/models/Player");
 
-/* Server Overview button embeds */
-const overview = require("../systems/panels/serverOverview");
+
 
 const { setTemporaryPresence, getPresenceText } = require("../utils/presenceManager");
 
@@ -56,30 +55,7 @@ module.exports = {
         return guideMenuHandler(interaction);
       }
 
-      /* Server Overview panel buttons */
 
-      if (interaction.customId.startsWith("overview_")) {
-
-        const guild = interaction.guild;
-        let embed;
-
-        switch (interaction.customId) {
-          case "overview_roles":    embed = overview.rolesEmbed(guild); break;
-          case "overview_channels": embed = overview.channelsEmbed(guild); break;
-          case "overview_clan":     embed = overview.clanEmbed(); break;
-          case "overview_pop":      embed = overview.popEmbed(); break;
-          case "overview_support":  embed = overview.supportEmbed(); break;
-        }
-
-        if (embed) {
-          return interaction.reply({
-            embeds: [embed],
-            components: [overview.buildButtons()],
-            flags: MessageFlags.Ephemeral
-          });
-        }
-
-      }
 
       /* POP Marketplace buttons */
       if (
