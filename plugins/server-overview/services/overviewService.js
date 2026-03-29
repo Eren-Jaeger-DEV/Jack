@@ -5,7 +5,7 @@ const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('dis
  */
 function buildOverviewEmbed(guild, section = null) {
     const embed = new EmbedBuilder()
-        .setTitle("🌐 Server Overview")
+        .setTitle("#Server Overview")
         .setColor("#5865F2")
         .setTimestamp();
 
