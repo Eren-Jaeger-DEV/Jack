@@ -458,7 +458,12 @@ async function handleCodeModal(interaction) {
     return denyEphemeral(interaction, '❌ Session expired or incomplete.');
   }
 
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  try {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  } catch (err) {
+    console.error('[CardExchange] handleCodeModal deferReply error:', err.message);
+    return;
+  }
 
   const code = interaction.fields.getTextInputValue('cex_code')?.trim() || null;
   const embed = await buildExchangeEmbed(interaction.user, session.wantedCard, session.offeredCards, code);
@@ -498,7 +503,12 @@ async function handleInterested(interaction) {
   const posterId = interaction.customId.split('_')[2];
   if (interaction.user.id === posterId) return denyEphemeral(interaction, '❌ You cannot express interest in your own exchange!');
 
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  try {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  } catch (err) {
+    console.error('[CardExchange] handleInterested deferReply error:', err.message);
+    return;
+  }
 
   try {
     const posterName = interaction.message.embeds?.[0]?.footer?.text?.replace('Posted by ', '') || 'Poster';
@@ -575,7 +585,12 @@ async function handleDealFinal(interaction) {
     return interaction.reply({ content: '❌ Only the Lister can finalize the deal!', flags: MessageFlags.Ephemeral });
   }
 
-  await interaction.deferReply();
+  try {
+    await interaction.deferReply();
+  } catch (err) {
+    console.error('[CardExchange] handleDealFinal deferReply error:', err.message);
+    return;
+  }
 
   try {
     const listing = await CardExchange.findById(threadEntry.listingId);
@@ -634,21 +649,21 @@ function registerHandler(client) {
   _handler = async interaction => {
     try {
       if (interaction.isButton()) {
-        if (interaction.customId === 'cex_post') return handlePostButton(interaction);
-        if (interaction.customId === 'cex_search') return handleSearchButton(interaction);
-        if (interaction.customId === 'cex_browse') return handleBrowseButton(interaction);
-        if (interaction.customId.startsWith('cex_interested_')) return handleInterested(interaction);
-        if (interaction.customId.startsWith('cex_deal_final_')) return handleDealFinal(interaction);
-        if (interaction.customId.startsWith('cex_deal_cancel_')) return handleDealCancel(interaction);
+        if (interaction.customId === 'cex_post') return await handlePostButton(interaction);
+        if (interaction.customId === 'cex_search') return await handleSearchButton(interaction);
+        if (interaction.customId === 'cex_browse') return await handleBrowseButton(interaction);
+        if (interaction.customId.startsWith('cex_interested_')) return await handleInterested(interaction);
+        if (interaction.customId.startsWith('cex_deal_final_')) return await handleDealFinal(interaction);
+        if (interaction.customId.startsWith('cex_deal_cancel_')) return await handleDealCancel(interaction);
       }
       if (interaction.isStringSelectMenu()) {
-        if (interaction.customId === 'cex_step1_cat') return handleStep1(interaction);
-        if (interaction.customId === 'cex_step2_card') return handleStep2(interaction);
-        if (interaction.customId === 'cex_step3_offer') return handleStep3(interaction);
-        if (interaction.customId === 'cex_search_cat') return handleSearchCat(interaction);
-        if (interaction.customId === 'cex_search_card') return handleSearchCard(interaction);
+        if (interaction.customId === 'cex_step1_cat') return await handleStep1(interaction);
+        if (interaction.customId === 'cex_step2_card') return await handleStep2(interaction);
+        if (interaction.customId === 'cex_step3_offer') return await handleStep3(interaction);
+        if (interaction.customId === 'cex_search_cat') return await handleSearchCat(interaction);
+        if (interaction.customId === 'cex_search_card') return await handleSearchCard(interaction);
       }
-      if (interaction.isModalSubmit() && interaction.customId === 'cex_modal_code') return handleCodeModal(interaction);
+      if (interaction.isModalSubmit() && interaction.customId === 'cex_modal_code') return await handleCodeModal(interaction);
     } catch (err) {
       console.error('[CardExchange] Interaction error:', err.message);
       // Optional: send error to user if they are the reason
