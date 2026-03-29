@@ -3,14 +3,24 @@ const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('dis
 /**
  * Builds the overview display embed.
  */
-function buildOverviewEmbed(section = null) {
+function buildOverviewEmbed(guild, section = null) {
     const embed = new EmbedBuilder()
         .setTitle("🌐 Server Overview")
         .setColor("#5865F2")
         .setTimestamp();
 
     if (!section) {
-        embed.setDescription("Welcome to the server! Please select a section from the dropdown below to view more information.");
+        embed.setDescription(
+            `**Welcome to ${guild?.name || 'our Server'}**\n\n` +
+            `We’re glad to have you here. This server represents the official community of **JackPirates**, built to connect members, streamline communication, and enhance coordination.\n\n` +
+            `To get started, please use the **Server Overview Panel** available in this channel.\n\n` +
+            `**How to Navigate:**\n\n` +
+            `* Select a category from the dropdown menu in the panel\n` +
+            `* Each category provides relevant channels, information, and guidelines\n` +
+            `* Follow the instructions within each section to access the appropriate areas\n\n` +
+            `This system is designed to keep everything organized and easy to navigate. Please make sure to review the sections carefully before participating.\n\n` +
+            `Thank you for being part of the community.`
+        );
     } else {
         embed.setTitle(`🌐 Overview: ${section.name}`);
         const content = section.items.map(i => `**${i.title}**\n${i.description}`).join('\n\n');

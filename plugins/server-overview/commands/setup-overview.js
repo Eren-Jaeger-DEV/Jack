@@ -24,17 +24,38 @@ module.exports = {
             config = await OverviewConfig.create({ guildId: ctx.guildId, sections: [] });
         }
 
-        const embed = buildOverviewEmbed();
+        const embed = buildOverviewEmbed(ctx.guild);
         const row = buildOverviewDropdown(config.sections);
 
-        const message = await channel.send({ 
-            embeds: [embed], 
-            components: row ? [row] : [] 
+        const isFirstTime = !config.overviewMessageId;
+        let message;
+
+        if (config.overviewMessageId) {
+            try {
+                const oldMessage = await channel.messages.fetch(config.overviewMessageId);
+                if (oldMessage) {
+                    message = await oldMessage.edit({ 
+                        embeds: [embed], 
+                        components: row ? [row] : [] 
+                    });
+                }
+            } catch (err) {
+                // If message not found, it will fallback to sending a new one
+            }
+        }
+
+        if (!message) {
+            message = await channel.send({ 
+                embeds: [embed], 
+                components: row ? [row] : [] 
+            });
+            config.overviewMessageId = message.id;
+            await config.save();
+        }
+
+        await ctx.reply({ 
+            content: `✅ Overview ${isFirstTime ? 'initialized' : 'updated'} in <#${OVERVIEW_CHANNEL_ID}>`, 
+            ephemeral: true 
         });
-
-        config.overviewMessageId = message.id;
-        await config.save();
-
-        await ctx.reply(`✅ Overview initialized in <#${OVERVIEW_CHANNEL_ID}>`);
     }
 };

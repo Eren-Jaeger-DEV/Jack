@@ -21,7 +21,7 @@ module.exports = {
             const sectionName = interaction.values[0];
             const section = config.sections.find(s => s.name === sectionName);
             
-            const embed = buildOverviewEmbed(section);
+            const embed = buildOverviewEmbed(interaction.guild, section);
             await interaction.editReply({ embeds: [embed] });
             return;
         }
@@ -137,7 +137,7 @@ async function syncAll(interaction, config) {
             if (channel) {
                 const message = await channel.messages.fetch(config.overviewMessageId).catch(() => null);
                 if (message) {
-                    const embed = buildOverviewEmbed();
+                    const embed = buildOverviewEmbed(message.guild);
                     const row = buildOverviewDropdown(config.sections);
                     await message.edit({ embeds: [embed], components: row ? [row] : [] });
                 }
