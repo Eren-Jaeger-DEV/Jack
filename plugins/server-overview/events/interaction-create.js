@@ -32,7 +32,12 @@ module.exports = {
         }
 
         // 2. ADMIN ONLY CHECK
-        if (customId.startsWith('overview_') || ['add_section', 'delete_section', 'add_item', 'edit_item', 'delete_item'].includes(customId)) {
+        const adminActions = [
+            'add_section', 'delete_section', 'add_item', 'edit_item', 'delete_item',
+            'modal_edit_item_select', 'modal_delete_item_select', 'modal_delete_section_select'
+        ];
+
+        if (customId.startsWith('overview_') || adminActions.includes(customId)) {
             if (!isAdmin) {
                 return await interaction.reply({ content: "❌ You do not have permission to use the control panel.", ephemeral: true });
             }
@@ -63,7 +68,46 @@ module.exports = {
             return await interaction.showModal(modal);
         }
 
-        // 4. MODAL SUBMISSIONS: DATA UPDATE
+        // 5. EDIT ITEM (Selection Menu)
+        if (customId === 'edit_item') {
+            const config = await OverviewConfig.findOne({ guildId });
+            if (config.sections.every(s => s.items.length === 0)) {
+                return await interaction.reply({ content: "❌ No items to edit.", ephemeral: true });
+            }
+
+            const row = new ActionRowBuilder().addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('modal_edit_item_select')
+                    .setPlaceholder('Select item to edit...')
+                    .addOptions(config.sections.flatMap(s => s.items.map(i => ({
+                        label: `${s.name}: ${i.title}`,
+                        value: `${s.name}|${i.title}`
+                    }))))
+            );
+
+            await interaction.reply({ content: "Select an item to edit:", components: [row], ephemeral: true });
+        }
+
+        if (customId === 'modal_edit_item_select') {
+            const [sName, iTitle] = interaction.values[0].split('|');
+            const config = await OverviewConfig.findOne({ guildId });
+            const section = config.sections.find(s => s.name === sName);
+            const item = section?.items.find(i => i.title === iTitle);
+
+            if (!item) return await interaction.reply({ content: "❌ Item not found!", ephemeral: true });
+
+            const modal = new ModalBuilder().setCustomId(`modal_edit_item_submit|${sName}|${iTitle}`).setTitle('Edit Item Details');
+            const titleInput = new TextInputBuilder().setCustomId('item_title').setLabel("Title").setStyle(TextInputStyle.Short).setValue(item.title).setRequired(true);
+            const descInput = new TextInputBuilder().setCustomId('item_desc').setLabel("Description").setStyle(TextInputStyle.Paragraph).setValue(item.description).setRequired(true);
+            
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(titleInput),
+                new ActionRowBuilder().addComponents(descInput)
+            );
+            return await interaction.showModal(modal);
+        }
+
+        // 6. MODAL SUBMISSIONS: DATA UPDATE
         if (interaction.isModalSubmit()) {
             await interaction.deferUpdate();
             const config = await OverviewConfig.findOne({ guildId });
@@ -87,6 +131,22 @@ module.exports = {
 
                 section.items.push({ title, description });
                 await config.save();
+            }
+
+            if (customId.startsWith('modal_edit_item_submit')) {
+                const [, sName, oldTitle] = customId.split('|');
+                const newTitle = interaction.fields.getTextInputValue('item_title');
+                const newDescription = interaction.fields.getTextInputValue('item_desc');
+
+                const section = config.sections.find(s => s.name === sName);
+                const item = section?.items.find(i => i.title === oldTitle);
+
+                if (item) {
+                    item.title = newTitle;
+                    item.description = newDescription;
+                    config.markModified('sections');
+                    await config.save();
+                }
             }
 
             // Sync Both UIs
