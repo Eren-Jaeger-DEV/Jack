@@ -1,4 +1,5 @@
 const logger = require("../../../bot/utils/logger");
+const guildLogger = require("../../../bot/utils/guildLogger");
 const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
@@ -92,7 +93,7 @@ module.exports = {
       .setColor('Orange')
       .setTimestamp();
 
-    await logger(ctx.guild, embed);
+    await guildLogger.send(ctx.guild, embed, 'mod');
 
   }
 

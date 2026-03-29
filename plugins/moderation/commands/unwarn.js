@@ -1,5 +1,6 @@
 const logger = require("../../../bot/utils/logger");
-const { checkUser } = require("../../../bot/utils/checkPermission");
+const guildLogger = require("../../../bot/utils/guildLogger");
+const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -72,7 +73,7 @@ module.exports = {
       .setColor('Green')
       .setTimestamp();
 
-    await logger(ctx.guild, embed);
+    await guildLogger.send(ctx.guild, embed, 'mod');
 
   }
 

@@ -1,4 +1,5 @@
 const logger = require("../../../bot/utils/logger");
+const guildLogger = require("../../../bot/utils/guildLogger");
 const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
@@ -67,13 +68,12 @@ module.exports = {
     /* SLASH ARGUMENT PARSING */
 
     if (ctx.type === "slash") {
-
+      await ctx.defer({ ephemeral: true });
       amount = ctx.interaction.options.getInteger('amount');
       targetUser = ctx.interaction.options.getUser('target');
 
       if (!checkBot(ctx.guild, PermissionFlagsBits.ManageMessages))
         return ctx.reply({ content: '❌ I lack Manage Messages permission.', ephemeral: true });
-
     }
 
     // Logic for deleting messages
@@ -137,12 +137,18 @@ module.exports = {
           .setColor('Blue')
           .setTimestamp();
 
-        await logger(ctx.guild, embed);
+        await guildLogger.send(ctx.guild, embed, 'mod');
       }
 
     } catch (error) {
-      console.error("Clear error:", error);
-      ctx.reply({ content: "❌ An error occurred while clearing messages.", ephemeral: true });
+      if (ctx.replied || ctx.deferred) {
+        // If we already replied (successfully deleted), don't show an error unless the deletion itself failed.
+        // But the try block covers deletion, so if it finishes, we're good.
+        logger.error("Clear", `Suppressed post-deletion error: ${error.message}`);
+      } else {
+        console.error("Clear error:", error);
+        ctx.reply({ content: "❌ An error occurred while clearing messages.", ephemeral: true });
+      }
     }
 
   }
