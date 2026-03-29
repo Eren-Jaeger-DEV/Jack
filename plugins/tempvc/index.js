@@ -81,7 +81,7 @@ module.exports = {
     if (client.isReady()) {
       initControlPanel(client);
     } else {
-      client.once('ready', () => initControlPanel(client));
+      client.once('clientReady', () => initControlPanel(client));
     }
 
     // Voice State Tracker

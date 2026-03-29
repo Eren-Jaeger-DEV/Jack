@@ -93,7 +93,7 @@ module.exports = {
     if (client.isReady()) {
       verifyState(client);
     } else {
-      client.once('ready', () => verifyState(client));
+      client.once('clientReady', () => verifyState(client));
     }
 
     client.on('messageCreate', async (message) => {

@@ -22,7 +22,7 @@ module.exports = {
 
     // Wait until Discord is ready before touching channels
     if (!client.isReady()) {
-      client.once('ready', () => this.setup(client));
+      client.once('clientReady', () => this.setup(client));
     } else {
       await this.setup(client);
     }
