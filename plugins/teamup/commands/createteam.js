@@ -6,6 +6,9 @@ const { EmbedBuilder } = require("discord.js");
 module.exports = {
   name: "createteam",
   aliases: ["teamcreate"],
+  category: "teamup",
+  description: "Create a new team for gaming or esports.",
+  usage: "j createteam",
   async run(ctx) {
     const config = await configManager.getGuildConfig(ctx.guild.id);
     const teamupChannelId = config?.settings?.teamupChannelId;

@@ -4,6 +4,9 @@ const configManager = require("../../../bot/utils/configManager");
 module.exports = {
   name: "deleteteam",
   aliases: ["disbandteam", "teamdelete"],
+  category: "teamup",
+  description: "Disband and delete your current team.",
+  usage: "j deleteteam",
   async run(ctx) {
     const config = await configManager.getGuildConfig(ctx.guild.id);
     const teamupChannelId = config?.settings?.teamupChannelId;

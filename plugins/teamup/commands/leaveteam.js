@@ -4,6 +4,9 @@ const configManager = require("../../../bot/utils/configManager");
 module.exports = {
   name: "leaveteam",
   aliases: ["teamleave"],
+  category: "teamup",
+  description: "Leave your current team.",
+  usage: "j leaveteam",
   async run(ctx) {
     const config = await configManager.getGuildConfig(ctx.guild.id);
     const teamupChannelId = config?.settings?.teamupChannelId;
