@@ -20,8 +20,14 @@ module.exports = {
             const sectionName = interaction.values[0];
             const section = config.sections.find(s => s.name === sectionName);
             
+            // Send the ephemeral details to the user
             const embed = buildOverviewEmbed(interaction.guild, section);
             await interaction.reply({ embeds: [embed], ephemeral: true });
+
+            // Reset the main panel dropdown by editing the original message
+            const mainEmbed = buildOverviewEmbed(interaction.guild);
+            const row = buildOverviewDropdown(config.sections);
+            await interaction.message.edit({ embeds: [mainEmbed], components: row ? [row] : [] });
             return;
         }
 
