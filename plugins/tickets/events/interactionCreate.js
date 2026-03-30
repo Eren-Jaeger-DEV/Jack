@@ -4,7 +4,8 @@ const {
   PermissionFlagsBits,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  EmbedBuilder
 } = require("discord.js");
 
 module.exports = {
@@ -13,41 +14,29 @@ module.exports = {
   async execute(interaction, client) {
     if (!interaction.guild) return;
 
-    /* ---------- OPEN TICKET ---------- */
-    if (interaction.isButton() && interaction.customId === "ticket_open") {
+    /* ---------- TICKET CATEGORY SELECT (CREATE) ---------- */
+
+    if (interaction.isStringSelectMenu() && interaction.customId === "ticket_category_select") {
       await interaction.deferReply({ ephemeral: true });
 
-      // Use ServerMapManager to find the "Support" category
-      let category = client.serverMap.getCategory("support");
+      const categoryValue = interaction.values[0];
+      const TICKET_CATEGORY_ID = "1478783091765018796"; 
 
+      let category = interaction.guild.channels.cache.get(TICKET_CATEGORY_ID);
       if (!category) {
-        // Fallback or create if totally missing? 
-        // User said: "ensure thing ticket panel goes to 'Support' category"
-        // If it's missing in map, we try to fetch by name directly as a last resort
-        const categoryName = process.env.TICKET_CATEGORY_NAME || "Support";
-        category = interaction.guild.channels.cache.find(
-          c => c.name.toLowerCase().includes("support") && c.type === ChannelType.GuildCategory
-        );
-
-        if (!category) {
-          category = await interaction.guild.channels.create({
-            name: categoryName,
-            type: ChannelType.GuildCategory
-          });
-          // Re-init map to include new category
-          await client.serverMap.init(interaction.guild);
-        }
+        // Fallback or create? Usually we use the ID as requested.
+        console.warn(`[Tickets] Category ID ${TICKET_CATEGORY_ID} not found.`);
+        // Attempt search by name as a safety net
+        category = interaction.guild.channels.cache.find(c => c.name.includes("TICKETS") && c.type === ChannelType.GuildCategory);
       }
 
-      const staffRoleName = process.env.STAFF_ROLE_NAME || "Staff";
-      const staffRole = interaction.guild.roles.cache.find(
-        r => r.name === staffRoleName
-      );
+      const staffRole = interaction.guild.roles.cache.find(r => r.name === "Staff") || 
+                        interaction.guild.roles.cache.get("1485148160614465586");
 
       const channel = await interaction.guild.channels.create({
-        name: `ticket-${interaction.user.username}`,
+        name: `${categoryValue}-${interaction.user.username}`,
         type: ChannelType.GuildText,
-        parent: category.id,
+        parent: category ? category.id : null,
         permissionOverwrites: [
           {
             id: interaction.guild.roles.everyone.id,
@@ -58,79 +47,128 @@ module.exports = {
             allow: [
               PermissionFlagsBits.ViewChannel,
               PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.AttachFiles,
-              PermissionFlagsBits.ReadMessageHistory
+              PermissionFlagsBits.ReadMessageHistory,
+              PermissionFlagsBits.AttachFiles
             ]
           },
           ...(staffRole ? [{
             id: staffRole.id,
-            allow: [
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ReadMessageHistory
-            ]
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory]
           }] : [])
         ]
       });
 
+      // Welcome Message Construction
+      let welcomeTitle = "🎫 Support Ticket";
+      let welcomeDesc = `Hello ${interaction.user}, thanks for reaching out. Please describe your request clearly.`;
+
+      if (categoryValue === "reward_collection") {
+        welcomeTitle = "🎁 Reward Collection";
+        welcomeDesc = `Hello ${interaction.user}! Congratulations on your win. \n\nPlease provide your **BGMI UID** and the **Event Name** you participated in so we can process your reward.`;
+      } else if (categoryValue === "complaints_issues") {
+        welcomeTitle = "⚠️ Complaints / Issues";
+        welcomeDesc = `Hello ${interaction.user}. We're sorry you're facing an issue. \n\nPlease detail the problem or report the player with **evidence (screenshots/video)** to help us investigate.`;
+      } else if (categoryValue === "owner_management") {
+        welcomeTitle = "📩 Management Contact";
+        welcomeDesc = `Hello ${interaction.user}. Your message will be reviewed by the Management team directly. \n\nPlease be detailed and wait patiently for a response.`;
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle(welcomeTitle)
+        .setDescription(welcomeDesc)
+        .setColor("#F1C40F")
+        .setTimestamp()
+        .setFooter({ text: "Ticket System | Admin Panel Required to Close" });
+
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("ticket_claim")
-          .setLabel("Claim")
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-          .setCustomId("ticket_close")
+          .setCustomId("ticket_close_request")
           .setLabel("Close Ticket")
+          .setEmoji("🔒")
           .setStyle(ButtonStyle.Danger)
       );
 
       await channel.send({
-        content: `🎫 Ticket opened by ${interaction.user}. Please describe your issue clearly.`,
+        content: `${interaction.user} ${staffRole ? staffRole : ""}`,
+        embeds: [embed],
         components: [row]
       });
 
       return interaction.editReply({
-        content: `✅ Ticket created: ${channel}`
+        content: `✅ Your ticket has been created: ${channel}`
       });
     }
 
-    /* ---------- CLAIM TICKET ---------- */
-    if (interaction.isButton() && interaction.customId === "ticket_claim") {
+    /* ---------- CLOSE TICKET REQUEST ---------- */
+
+    if (interaction.isButton() && interaction.customId === "ticket_close_request") {
+
+      // Send the Admin closure panel
+      const adminEmbed = new EmbedBuilder()
+        .setTitle("🔒 Administrative Action Required")
+        .setDescription(
+          `Staff member ${interaction.user}, please choose an action for this ticket. \n\n` +
+          "**Re-open**: Resumes the ticket conversation. \n" +
+          "**Save Transcript**: Saves a record and deletes the channel."
+        )
+        .setColor("#E74C3C");
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId("ticket_reopen")
+          .setLabel("Re-open Ticket")
+          .setEmoji("🔓")
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId("ticket_save_delete")
+          .setLabel("Save Transcript & Delete")
+          .setEmoji("📁")
+          .setStyle(ButtonStyle.Secondary)
+      );
+
       return interaction.reply({
-        content: `👮 Ticket claimed by ${interaction.user}`
+        embeds: [adminEmbed],
+        components: [row]
       });
     }
 
-    /* ---------- CLOSE TICKET ---------- */
-    if (interaction.isButton() && interaction.customId === "ticket_close") {
-      await interaction.reply({
-        content: "Saving transcript and closing ticket...",
-        ephemeral: true
-      });
+    /* ---------- RE-OPEN TICKET ---------- */
+
+    if (interaction.isButton() && interaction.customId === "ticket_reopen") {
+      // Just delete the closure proposal
+      return interaction.message.delete().catch(() => {});
+    }
+
+    /* ---------- SAVE & DELETE TICKET ---------- */
+
+    if (interaction.isButton() && interaction.customId === "ticket_save_delete") {
+      // Only admins should use this
+      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: "❌ Only Administrators can finalize tickets.", ephemeral: true });
+      }
+
+      await interaction.reply({ content: "💾 Generating transcript, please wait...", ephemeral: true });
 
       const attachment = await transcript.createTranscript(interaction.channel);
+      const LOG_CHANNEL_ID = "1478693793791348776"; 
 
-      // Use ServerMapManager to find the "reward_ticket" channel under "Support"
-      let logChannel = client.serverMap.getChannel("support", "reward_ticket");
-
+      let logChannel = interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
       if (!logChannel) {
-        // Fallback to env or name search
-        const logChannelName = process.env.TICKET_LOG_CHANNEL_NAME || "reward-ticket";
-        logChannel = interaction.guild.channels.cache.find(
-          c => c.name === logChannelName
-        );
+        logChannel = interaction.guild.channels.cache.find(c => c.name.includes("ticket-log"));
       }
 
       if (logChannel) {
         await logChannel.send({
-          content: `📁 Ticket \`${interaction.channel.name}\` closed by ${interaction.user} (${interaction.user.id})`,
+          content: `📁 Ticket Transcript: **${interaction.channel.name}** \nClosed by: ${interaction.user} (${interaction.user.id})`,
           files: [attachment]
         });
       }
 
+      await interaction.followUp({ content: "🗑️ Ticket will be deleted in 5 seconds.", ephemeral: true });
+
       setTimeout(() => {
         interaction.channel.delete().catch(() => {});
-      }, 3000);
+      }, 5000);
     }
   }
 };
