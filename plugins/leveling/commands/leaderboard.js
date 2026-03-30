@@ -19,24 +19,32 @@ module.exports = {
       subcmd.setName("weekly").setDescription("View the weekly XP leaderboard")
     ),
 
-  async run(ctx) {
+  async run(ctx, pageOverride = 0) {
     let subCommand = "global";
+    let page = pageOverride;
 
+    // Determine subcommand
     if (ctx.isInteraction && ctx.options?.getSubcommand(false)) {
       subCommand = ctx.options.getSubcommand(false);
     } else if (!ctx.isInteraction && ctx.args?.length > 0) {
-      subCommand = ctx.args[0].toLowerCase();
+      const arg = ctx.args[0].toLowerCase();
+      if (arg === "weekly" || arg === "global") subCommand = arg;
     }
 
     const isWeekly = subCommand === "weekly";
     const sortField = isWeekly ? "weeklyXp" : "xp";
 
-    // Fetch top 10 users
+    // Fetch total users for pagination metadata
+    const totalUsers = await Level.countDocuments({ guildId: ctx.guild.id });
+    const totalPages = Math.ceil(totalUsers / 10);
+
+    // Fetch current page's users
     const topUsers = await Level.find({ guildId: ctx.guild.id })
       .sort({ [sortField]: -1 })
+      .skip(page * 10)
       .limit(10);
 
-    if (topUsers.length === 0) {
+    if (topUsers.length === 0 && page === 0) {
       return ctx.reply({ content: "No one has earned XP yet!", ephemeral: true });
     }
 
@@ -44,7 +52,8 @@ module.exports = {
     let description = "";
 
     topUsers.forEach((user, index) => {
-      const position = index < 3 ? medals[index] : `**#${index + 1}**`;
+      const globalIndex = page * 10 + index;
+      const position = (page === 0 && globalIndex < 3) ? medals[globalIndex] : `**#${globalIndex + 1}**`;
       const xpValue = isWeekly ? user.weeklyXp : user.xp;
       const nextLevelXP = xpForLevel(user.level + 1);
       
@@ -61,14 +70,28 @@ module.exports = {
       .setThumbnail(ctx.guild.iconURL({ dynamic: true, size: 512 }))
       .setDescription(description.trim());
 
+    // Build pagination buttons
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId("view_full_lb")
-        .setLabel("Full Leaderboard")
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji("🏆")
+        .setCustomId(`leveling_lb_prev_${page}_${subCommand}`)
+        .setLabel("Previous")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page === 0),
+      new ButtonBuilder()
+        .setCustomId(`leveling_lb_next_${page}_${subCommand}`)
+        .setLabel("Next")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= totalPages - 1)
     );
 
-    return ctx.reply({ embeds: [embed], components: [row] });
+    const components = totalPages > 1 ? [row] : [];
+
+    // If it's a real interaction update (from a button), update the message.
+    // Otherwise, it's a fresh command run (Slash or Message).
+    if (ctx.isInteraction && ctx.deferred) {
+      return await ctx.editReply({ embeds: [embed], components });
+    } else {
+      return ctx.reply({ embeds: [embed], components });
+    }
   }
 };
