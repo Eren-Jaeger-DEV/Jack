@@ -136,8 +136,9 @@ module.exports = {
 
         let newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
 
+        const season = await synergyService.getActiveSeason(interaction.guild.id);
         if (!season) {
-          return interaction.followUp({ content: '❌ No active season.', flags: MessageFlags.Ephemeral });
+          return interaction.followUp({ content: '❌ No active season.', flags: [MessageFlags.Ephemeral] });
         }
 
         const guild = await client.guilds.fetch(season.guildId).catch(() => null);
