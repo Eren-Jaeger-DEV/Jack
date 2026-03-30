@@ -10,6 +10,7 @@ const { validateCommand } = require("./validator");
 const { recordMetric } = require("./metricsManager");
 const { generateRefId } = require("./errorHandler");
 const logger = require("../bot/utils/logger");
+const { setTemporaryPresence, getPresenceText } = require("../bot/utils/presenceManager");
 const { performance } = require("perf_hooks");
 
 const MAX_EXECUTION_TIME = 10000; // 10 seconds
@@ -34,6 +35,9 @@ async function execute(ctx, command) {
         }
 
         // 3. Execution with Timeout Protection & Safety Wrap
+        const presenceData = getPresenceText(commandName);
+        setTemporaryPresence(ctx.client, presenceData);
+        
         let success = false;
         try {
             await Promise.race([
