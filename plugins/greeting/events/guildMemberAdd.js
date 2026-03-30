@@ -10,10 +10,16 @@ module.exports = {
       const config = await configManager.getGuildConfig(member.guild.id);
       if (!config || !config.greetingData || !config.greetingData.welcomeEnabled) return;
 
-      const channelId = config.greetingData.welcomeChannelId;
-      if (!channelId) return;
+      let channelId = config.greetingData.welcomeChannelId;
+      let channel;
 
-      const channel = member.guild.channels.cache.get(channelId);
+      if (channelId) {
+        channel = member.guild.channels.cache.get(channelId);
+      } else {
+        // Fallback to ServerMapManager checking for channel named 'welcome' exactly as requested
+        channel = client.serverMap?.getChannelByName("welcome");
+      }
+
       if (!channel) return;
 
       // Extract raw data from config or use defaults specifically tuned to the user's reference

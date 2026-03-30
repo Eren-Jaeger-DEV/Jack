@@ -97,6 +97,18 @@ class ServerMapManager {
     return null;
   }
 
+  getChannelByName(channelName) {
+    if (!this.map) return null;
+    const normChan = this.normalize(channelName);
+    
+    for (const catKey in this.map.categories) {
+      if (this.map.categories[catKey].channels[normChan]) {
+        return this.client.channels.cache.get(this.map.categories[catKey].channels[normChan].id);
+      }
+    }
+    return null;
+  }
+
   getCategory(categoryName) {
     if (!this.map) return null;
     const normCat = this.normalize(categoryName);

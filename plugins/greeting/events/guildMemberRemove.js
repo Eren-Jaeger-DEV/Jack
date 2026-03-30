@@ -10,10 +10,15 @@ module.exports = {
       const config = await configManager.getGuildConfig(member.guild.id);
       if (!config || !config.greetingData || !config.greetingData.goodbyeEnabled) return;
 
-      const channelId = config.greetingData.goodbyeChannelId;
-      if (!channelId) return;
+      let channelId = config.greetingData.goodbyeChannelId;
+      let channel;
 
-      const channel = member.guild.channels.cache.get(channelId);
+      if (channelId) {
+        channel = member.guild.channels.cache.get(channelId);
+      } else {
+        channel = client.serverMap?.getChannelByName("goodbye");
+      }
+
       if (!channel) return;
 
       const rawMessage = config.greetingData.goodbyeMessage || "**Goodbye Mate!!**\n\nThank You for spending time with us.";
