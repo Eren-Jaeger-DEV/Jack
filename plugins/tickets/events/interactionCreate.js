@@ -98,9 +98,12 @@ module.exports = {
         components: [row]
       });
 
-      return interaction.editReply({
+      await interaction.editReply({
         content: `✅ Your ticket has been created: ${channel}`
       });
+
+      // [UI FIX]: Reset the dropdown so it doesn't stay "stuck" on the selected option
+      return interaction.message.edit({ components: interaction.message.components }).catch(() => null);
     }
 
     /* ---------- CLOSE TICKET REQUEST ---------- */
