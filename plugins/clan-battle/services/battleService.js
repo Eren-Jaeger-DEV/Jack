@@ -337,6 +337,42 @@ function truncate(str, max) {
   return str.length > max ? str.substring(0, max - 1) + '…' : str;
 }
 
+/**
+ * Build all leaderboard pages as images for archival.
+ */
+async function getAllLeaderboardImages(client, battle) {
+  const sorted = [...battle.players].sort((a, b) => b.totalPoints - a.totalPoints);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 10));
+  const attachments = [];
+
+  const guild = await client.guilds.fetch(battle.guildId).catch(() => null);
+
+  for (let page = 0; page < totalPages; page++) {
+    const start = page * 10;
+    const slice = sorted.slice(start, start + 10);
+
+    const canvasPlayers = await Promise.all(slice.map(async (p) => {
+      const user = await client.users.fetch(p.userId).catch(() => null);
+      const displayName = await resolveDisplayName(guild, p.userId, p.ign);
+      
+      return {
+        name: displayName,
+        today: p.todayPoints,
+        total: p.totalPoints,
+        avatarURL: user ? user.displayAvatarURL({ extension: 'png', size: 128 }) : 'https://cdn.discordapp.com/embed/avatars/0.png'
+      };
+    }));
+
+    if (canvasPlayers.length > 0) {
+      const buffer = await generateContributionImage(canvasPlayers, page);
+      const attachment = new AttachmentBuilder(buffer, { name: `clan-battle-archive-page-${page + 1}.png` });
+      attachments.push(attachment);
+    }
+  }
+
+  return attachments;
+}
+
 module.exports = {
   createBattle,
   getActiveBattle,
@@ -349,5 +385,6 @@ module.exports = {
   refreshLeaderboard,
   deleteOldLeaderboardMessage,
   buildFinalResults,
+  getAllLeaderboardImages,
   MAX_POINTS
 };

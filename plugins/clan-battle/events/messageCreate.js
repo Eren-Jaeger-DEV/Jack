@@ -29,14 +29,19 @@ module.exports = {
     if (!message.guild) return;
     if (message.author.bot) return;
     if (isDuplicate(message.id)) return;
+    
     const config = await configManager.getGuildConfig(message.guild.id);
     const clanBattleChannelId = config?.settings?.clanBattleChannelId;
     const clanBattleWinnerRoleId = config?.settings?.clanBattleWinnerRoleId;
+    
+    // HARDCODE/FIX: Support the user-provided trigger channel
+    const isTriggerChannel = (clanBattleChannelId && message.channel.id === clanBattleChannelId) || message.channel.id === '1379098755592093787';
+    
     const content = message.content.toLowerCase().trim();
     const isUserAdmin = message.member && message.member.permissions.has(PermissionFlagsBits.ManageGuild);
 
     // Read-only logic: Delete non-admin messages in the battle channel
-    if (clanBattleChannelId && message.channel.id === clanBattleChannelId && !isUserAdmin) {
+    if (isTriggerChannel && !isUserAdmin) {
       try {
         await message.delete().catch(() => {});
       } catch (err) {
@@ -45,7 +50,7 @@ module.exports = {
       return;
     }
 
-    if (!clanBattleChannelId || message.channel.id !== clanBattleChannelId) return;
+    if (!isTriggerChannel) return;
     if (!isUserAdmin) return;
 
     /* ═══════════════════════════════════════════
@@ -95,8 +100,31 @@ module.exports = {
         // Delete old leaderboard
         await battleService.deleteOldLeaderboardMessage(client, finalBattle);
 
-        // Build final results
         const guild = await client.guilds.fetch(finalBattle.guildId).catch(() => null);
+
+        // EXTRA: Full Archive Generation
+        const archiveMsg = await message.channel.send('⏳ **Archiving final clan battle leaderboard...**');
+        try {
+          const attachments = await battleService.getAllLeaderboardImages(client, finalBattle);
+          if (attachments.length > 0) {
+            // Send in batches of 10
+            for (let i = 0; i < attachments.length; i += 10) {
+              const batch = attachments.slice(i, i + 10);
+              const startPage = i + 1;
+              const endIdx = Math.min(i + batch.length, attachments.length);
+              await message.channel.send({
+                content: `🖼️ **Clan Battle Archive: Pages ${startPage} - ${endIdx}**`,
+                files: batch
+              });
+            }
+          }
+          await archiveMsg.delete().catch(() => {});
+        } catch (err) {
+          console.error('[ClanBattle] Archive error:', err);
+          await archiveMsg.edit('⚠️ Failed to generate full archive, proceeding with winner announcement.').catch(() => {});
+        }
+
+        // Build final results
         const { results, top6 } = await battleService.buildFinalResults(guild, finalBattle);
 
         // Send results
