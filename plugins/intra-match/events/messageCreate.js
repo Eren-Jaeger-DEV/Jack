@@ -43,8 +43,9 @@ module.exports = {
      * ═══════════════════════════════════════════════ */
     const config = await configManager.getGuildConfig(message.guild.id);
     const announceChannelId = config?.settings?.intraAnnounceChannelId;
+    const isAnnounceChannel = (announceChannelId && channelId === announceChannelId) || channelId === '1379098950929219756';
 
-    if (channelId === announceChannelId && isAdmin(member)) {
+    if (isAnnounceChannel && isAdmin(member)) {
 
       /* ── 1A. Winner Detection ── */
       if (WINNER_KEYWORDS.some(kw => content.includes(kw)) && message.mentions.members.size > 0) {
