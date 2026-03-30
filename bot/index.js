@@ -4,6 +4,7 @@ const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
 const { addLog, printLogs } = require("../utils/logger");
 const configManager = require("./utils/configManager");
+const ServerMapManager = require("../core/serverMapManager");
 global.addLog = addLog;
 
 addLog("Environment", "Loaded");
@@ -19,6 +20,7 @@ const client = new Client({
 });
 
 client.commands = new Collection();
+client.serverMap = new ServerMapManager(client);
 
 /* Load Handlers */
 
@@ -38,6 +40,12 @@ client.once("clientReady", async () => {
 
   // Initialize configuration cache
   await configManager.init(client);
+
+  // Initialize the server map dynamically
+  const guild = client.guilds.cache.first();
+  if (guild) {
+    await client.serverMap.init(guild);
+  }
 
   // Load all standalone plugins synchronously
   require("../core/pluginLoader")(client);

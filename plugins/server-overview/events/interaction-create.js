@@ -266,7 +266,8 @@ async function syncAll(interaction, config) {
     try {
         // Sync Overview
         if (config.overviewMessageId) {
-            const OVERVIEW_CHANNEL_ID = "1477894589565374667";
+            const mappedChannel = client.serverMap?.getChannel("dashboard", "overview");
+            const OVERVIEW_CHANNEL_ID = mappedChannel ? mappedChannel.id : "1477894589565374667";
             const channel = client.channels.cache.get(OVERVIEW_CHANNEL_ID);
             if (channel) {
                 const message = await channel.messages.fetch(config.overviewMessageId).catch(() => null);

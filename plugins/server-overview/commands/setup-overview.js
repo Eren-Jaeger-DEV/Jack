@@ -12,7 +12,8 @@ module.exports = {
         .setDescription('Initializes the server overview in the designated channel.'),
 
     async run(ctx) {
-        const OVERVIEW_CHANNEL_ID = "1477894589565374667";
+        const mappedChannel = ctx.client.serverMap?.getChannel("dashboard", "overview");
+        const OVERVIEW_CHANNEL_ID = mappedChannel ? mappedChannel.id : "1477894589565374667";
         const channel = ctx.client.channels.cache.get(OVERVIEW_CHANNEL_ID);
 
         if (!channel) {

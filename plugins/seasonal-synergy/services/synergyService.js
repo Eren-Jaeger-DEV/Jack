@@ -17,9 +17,9 @@ const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 const MAX_WEEKLY_ENERGY = 15000;
 const PLAYERS_PER_PAGE = 15;
 
-const SYNERGY_CHANNEL_ID    = '1477984930909786134';
-const SEASON_WINNER_ROLE_ID = '1479876770513076756';
-const WEEKLY_MVP_ROLE_ID    = '1479876704901009508';
+const getSynergyChannelId = (client) => client.serverMap?.getChannel('clan_activity', 'seasonal_synergy')?.id || '1477984930909786134';
+const getSeasonWinnerRoleId = (client) => client.serverMap?.getRole('season_winner') || '1479876770513076756';
+const getWeeklyMvpRoleId = (client) => client.serverMap?.getRole('weekly_mvp') || '1479876704901009508';
 
 /* ═══════════════════════════════════════════
  *  SEASON LIFECYCLE
@@ -443,7 +443,7 @@ module.exports = {
   getAllLeaderboardImages,
   isWeekend,
   MAX_WEEKLY_ENERGY,
-  SYNERGY_CHANNEL_ID,
-  SEASON_WINNER_ROLE_ID,
-  WEEKLY_MVP_ROLE_ID
+  getSynergyChannelId,
+  getSeasonWinnerRoleId,
+  getWeeklyMvpRoleId
 };

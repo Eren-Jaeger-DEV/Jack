@@ -43,7 +43,8 @@ module.exports = {
      * ═══════════════════════════════════════════════ */
     const config = await configManager.getGuildConfig(message.guild.id);
     const announceChannelId = config?.settings?.intraAnnounceChannelId;
-    const isAnnounceChannel = (announceChannelId && channelId === announceChannelId) || channelId === '1379098950929219756';
+    const fallbackChannelId = client.serverMap?.getChannel('clan_activity', 'intra_clan_matches')?.id || '1379098950929219756';
+    const isAnnounceChannel = (announceChannelId && channelId === announceChannelId) || channelId === fallbackChannelId;
 
     if (isAnnounceChannel && isAdmin(member)) {
 

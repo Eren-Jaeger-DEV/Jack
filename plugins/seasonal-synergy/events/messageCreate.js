@@ -12,9 +12,6 @@ const { PermissionFlagsBits } = require('discord.js');
 const synergyService = require('../services/synergyService');
 const profileService = require('../../clan/services/profileService');
 
-const SYNERGY_CHANNEL_ID    = synergyService.SYNERGY_CHANNEL_ID;
-const SEASON_WINNER_ROLE_ID = synergyService.SEASON_WINNER_ROLE_ID;
-const WEEKLY_MVP_ROLE_ID    = synergyService.WEEKLY_MVP_ROLE_ID;
 
 /* ── PATCH 3: Duplicate event protection ── */
 const processedEvents = new Set();
@@ -32,6 +29,10 @@ module.exports = {
     if (!message.guild) return;
     if (message.author.bot) return;
     if (isDuplicate(message.id)) return;
+
+    const SYNERGY_CHANNEL_ID = synergyService.getSynergyChannelId(client);
+    const SEASON_WINNER_ROLE_ID = synergyService.getSeasonWinnerRoleId(client);
+    const WEEKLY_MVP_ROLE_ID = synergyService.getWeeklyMvpRoleId(client);
 
     const content = message.content.toLowerCase().trim();
     const isUserAdmin = message.member && message.member.permissions.has(PermissionFlagsBits.ManageGuild);

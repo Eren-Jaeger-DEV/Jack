@@ -12,7 +12,8 @@ module.exports = {
         .setDescription('Initializes the admin control panel in the designated channel.'),
 
     async run(ctx) {
-        const CONTROL_CHANNEL_ID = "1479492977305981220";
+        const mappedChannel = ctx.client.serverMap?.getChannel("moderators", "bots_setup");
+        const CONTROL_CHANNEL_ID = mappedChannel ? mappedChannel.id : "1479492977305981220";
         const channel = ctx.client.channels.cache.get(CONTROL_CHANNEL_ID);
 
         if (!channel) {

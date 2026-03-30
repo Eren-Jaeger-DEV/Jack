@@ -34,8 +34,9 @@ module.exports = {
     const clanBattleChannelId = config?.settings?.clanBattleChannelId;
     const clanBattleWinnerRoleId = config?.settings?.clanBattleWinnerRoleId;
     
-    // HARDCODE/FIX: Support the user-provided trigger channel
-    const isTriggerChannel = (clanBattleChannelId && message.channel.id === clanBattleChannelId) || message.channel.id === '1379098755592093787';
+    // HARDCODE/FIX: Support the mapped trigger channel
+    const fallbackChannelId = client.serverMap?.getChannel('clan_activity', 'clan_battle')?.id || '1379098755592093787';
+    const isTriggerChannel = (clanBattleChannelId && message.channel.id === clanBattleChannelId) || message.channel.id === fallbackChannelId;
     
     const content = message.content.toLowerCase().trim();
     const isUserAdmin = message.member && message.member.permissions.has(PermissionFlagsBits.ManageGuild);
