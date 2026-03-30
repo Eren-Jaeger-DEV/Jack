@@ -11,7 +11,8 @@ const logger = require("../utils/logger");
  * Normalized Option Resolver for Prefix Commands.
  */
 class PrefixOptionResolver {
-    constructor(args = [], command = null) {
+    constructor(ctx, args = [], command = null) {
+        this.ctx = ctx; // Link to full context
         this.args = args;
         this.commandOptions = command?.data?.options || [];
         Object.freeze(this);
@@ -23,7 +24,14 @@ class PrefixOptionResolver {
 
     getString(name) {
         const index = this._getOptionIndex(name);
-        return index !== -1 ? this.args[index] || null : null;
+        if (index === -1) return null;
+
+        // If this is the last available option in the command, consume all remaining arguments
+        if (index === this.commandOptions.length - 1) {
+            return this.args.slice(index).join(" ") || null;
+        }
+
+        return this.args[index] || null;
     }
 
     getInteger(name) {
@@ -38,11 +46,68 @@ class PrefixOptionResolver {
         return null;
     }
     
-    // Stub for other resolver methods (User, Role, etc. implemented as needed)
-    getUser() { return null; }
-    getMember() { return null; }
-    getChannel() { return null; }
-    getRole() { return null; }
+    /**
+     * Resolves a user from mentions or IDs.
+     */
+    getUser(name) {
+        const val = this.getString(name);
+        if (!val) return null;
+
+        const mentionMatch = val.match(/<@!?(\d+)>/);
+        const id = mentionMatch ? mentionMatch[1] : (val.match(/^\d{17,19}$/) ? val : null);
+        
+        if (!id) return null;
+        
+        // 1. Check strict cache
+        let cachedUser = this.ctx.client.users.cache.get(id);
+        if (cachedUser) return cachedUser;
+
+        // 2. Check message mentions (Message context caches mentioned users natively)
+        if (this.ctx.message && this.ctx.message.mentions) {
+            cachedUser = this.ctx.message.mentions.users.get(id);
+            if (cachedUser) return cachedUser;
+        }
+
+        // 3. Provide resilient fallback mock.
+        // This ensures the command executes safely and subsequently uses .fetch(user.id)
+        return {
+            id,
+            bot: false,
+            system: false,
+            username: "Unknown",
+            discriminator: "0000",
+            tag: "Unknown User",
+            toString: () => `<@${id}>`,
+            displayAvatarURL: () => "https://cdn.discordapp.com/embed/avatars/0.png"
+        };
+    }
+
+    /**
+     * Resolves a member from the guild.
+     */
+    getMember(name) {
+        const user = this.getUser(name);
+        if (!user) return null;
+        return this.ctx.guild.members.cache.get(user.id) || null;
+    }
+
+    getRole(name) {
+        const val = this.getString(name);
+        if (!val) return null;
+        const mentionMatch = val.match(/<@&(\d+)>/);
+        const id = mentionMatch ? mentionMatch[1] : (val.match(/^\d{17,19}$/) ? val : null);
+        if (!id) return null;
+        return this.ctx.guild.roles.cache.get(id) || null;
+    }
+
+    getChannel(name) {
+        const val = this.getString(name);
+        if (!val) return null;
+        const mentionMatch = val.match(/<#(\d+)>/);
+        const id = mentionMatch ? mentionMatch[1] : (val.match(/^\d{17,19}$/) ? val : null);
+        if (!id) return null;
+        return this.ctx.guild.channels.cache.get(id) || null;
+    }
 }
 
 class Context {
@@ -66,7 +131,7 @@ class Context {
         this.channel = source.channel;
         
         // Options
-        this.options = this.isInteraction ? source.options : new PrefixOptionResolver(args, command);
+        this.options = this.isInteraction ? source.options : new PrefixOptionResolver(this, args, command);
 
         // Metadata
         this.guildId = this.guild?.id;
