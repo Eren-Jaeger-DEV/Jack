@@ -4,10 +4,16 @@ const guildConfigSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true, index: true },
   prefix: { type: String, default: "j" },
   
-  welcome: {
-    enabled: { type: Boolean, default: false },
-    channelId: { type: String },
-    message: { type: String, default: "Welcome to the server, {user}!" }
+  greetingData: {
+    welcomeEnabled: { type: Boolean, default: false },
+    welcomeChannelId: { type: String, default: null },
+    welcomeMessage: { type: String, default: 'Welcome to **{server}**, {user}!' },
+    welcomeImage: { type: String, default: 'https://cdn.discordapp.com/attachments/1353964404378701916/1394935239557517322/standard_1.gif' },
+    
+    goodbyeEnabled: { type: Boolean, default: false },
+    goodbyeChannelId: { type: String, default: null },
+    goodbyeMessage: { type: String, default: '**Goodbye Mate!!**\n\nThank You for spending time with us.' },
+    goodbyeImage: { type: String, default: 'https://cdn.discordapp.com/attachments/1353964404378701916/1402495184943452170/standard_2.gif' }
   },
   
   plugins: {
@@ -37,7 +43,8 @@ const guildConfigSchema = new mongoose.Schema({
     roles: { type: Boolean, default: true },
     sticker: { type: Boolean, default: true },
     triggers: { type: Boolean, default: true },
-    prefix: { type: Boolean, default: true }
+    prefix: { type: Boolean, default: true },
+    greeting: { type: Boolean, default: true }
   },
 
 
