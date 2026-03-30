@@ -47,6 +47,10 @@ client.once("clientReady", async () => {
     await client.serverMap.init(guild);
   }
 
+  // Hook in the automatic rotating presence mechanism
+  const { startDefaultPresenceRotation } = require("./utils/presenceManager");
+  startDefaultPresenceRotation(client);
+
   // Load all standalone plugins synchronously
   require("../core/pluginLoader")(client);
   

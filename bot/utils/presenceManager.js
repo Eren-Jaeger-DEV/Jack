@@ -1,6 +1,6 @@
 /**
  * Presence Manager Utility
- * Handles temporary presence updates based on command execution.
+ * Handles temporary presence updates and background rotations.
  */
 
 /*
@@ -12,90 +12,148 @@ Activity Types in Discord.js v14:
 5: COMPETING
 */
 
-let presenceTimeout = null;
+let currentPresenceTimeout = null;
+let defaultPresenceInterval = null;
+
+const defaultActivities = [
+    { text: "over the thriving community 🌟", type: 3 }, // WATCHING
+    { text: "for misbehaving members 👁️", type: 3 },
+    { text: "with the server economy 💰", type: 0 },     // PLAYING
+    { text: "epic Clan Battles ⚔️", type: 5 },          // COMPETING
+    { text: "Season Synergy scores 📊", type: 3 },
+    { text: "user commands ⚡", type: 2 },              // LISTENING
+    { text: "the marketplace pulse 📉", type: 3 }
+];
 
 const commandMap = {
-    // Clan system
-    'clan': { text: 'Clan Empires rise', type: 3 },
-    'profile': { text: 'Player dossiers', type: 3 },
-    'battle': { text: 'in fierce Clan Battles', type: 5 },
-    'editbp': { text: 'Clan Battle points', type: 3 },
-    'ign': { text: 'BGMI databases', type: 3 },
-    'uid': { text: 'BGMI databases', type: 3 },
-    
-    // Emoji & Stickers
-    'emoji': { text: 'collecting rare Emojis', type: 0 },
-    'sticker': { text: 'collecting Stickers', type: 0 },
-    'pack': { text: 'managing Sticker Packs', type: 0 },
-    
-    // Moderation & Admin
-    'mod': { text: 'the ban hammer fall', type: 3 },
-    'kick': { text: 'the ban hammer fall', type: 3 },
-    'ban': { text: 'the ban hammer fall', type: 3 },
-    'mute': { text: 'the silence grow', type: 3 },
-    'warn': { text: 'server rulebreakers', type: 3 },
-    'clear': { text: 'messages disappear', type: 3 },
-    'admin': { text: 'system protocols', type: 3 },
-    'settings': { text: 'adjusting bot settings', type: 0 },
-    
-    // Fun & Social
-    'fun': { text: 'having some fun', type: 0 },
-    'action': { text: 'cool anime actions', type: 3 },
-    'tictactoe': { text: 'a game of TicTacToe', type: 5 },
-    'foster': { text: 'handling foster program', type: 3 },
-    
-    // Leveling
-    'rank': { text: 'players level up', type: 3 },
-    'addxp': { text: 'giving out XP', type: 0 },
-    
+    // Moderation
+    'kick': { text: 'the ban hammer strike 🔨', type: 3 },
+    'ban': { text: 'the ban hammer strike 🔨', type: 3 },
+    'unban': { text: 'forgiveness protocols 🕊️', type: 0 },
+    'mute': { text: 'the silence spread 🔇', type: 3 },
+    'unmute': { text: 'voices return 🔊', type: 2 },
+    'warn': { text: 'rulebreakers carefully 👁️', type: 3 },
+    'unwarn': { text: 'clearing records 📝', type: 0 },
+    'clear': { text: 'messages vanish 🧹', type: 3 },
+    'clearall': { text: 'obliterating history 💥', type: 0 },
+    'clearwarns': { text: 'wiping the slate clean 🧼', type: 0 },
+    'lock': { text: 'securing the perimeter 🔒', type: 3 },
+    'unlock': { text: 'opening the gates 🔓', type: 0 },
+    'addrole': { text: 'granting power ⚡', type: 0 },
+    'removerole': { text: 'revoking power 📉', type: 0 },
+    'nickname': { text: 'rewriting identities 🏷️', type: 0 },
+    'mod': { text: 'overall server safety 🛡️', type: 3 },
+
+    // Role Management
+    'rradd': { text: 'configuring React Roles 🎭', type: 0 },
+    'rrremove': { text: 'configuring React Roles 🎭', type: 0 },
+    'rrcreate': { text: 'building React Roles 🛠️', type: 0 },
+    'rrdelete': { text: 'destroying React Roles 💥', type: 0 },
+
+    // Clan & Battles
+    'clan': { text: 'empires rise and fall 🏛️', type: 3 },
+    'profile': { text: 'checking player dossiers 📁', type: 3 },
+    'uid': { text: 'searching the BGMI database 🔍', type: 3 },
+    'ign': { text: 'searching the BGMI database 🔍', type: 3 },
+    'deleteplayer': { text: 'erasing clan records ❌', type: 0 },
+    'battle': { text: 'in fierce Clan Battles ⚔️', type: 5 },
+    'editbp': { text: 'manipulating Battle Points 💰', type: 0 },
+    'edittotalbp': { text: 'recalculating rankings 📈', type: 0 },
+
+    // Leveling & Economy
+    'rank': { text: 'players level up ✨', type: 3 },
+    'addxp': { text: 'distributing experience 🎁', type: 0 },
+    'removexp': { text: 'draining experience 🧛', type: 0 },
+    'setlevel': { text: 'altering the power scale ⚖️', type: 0 },
+    'resetxp': { text: 'resetting power levels 💀', type: 0 },
+    'setxp': { text: 'altering the power scale ⚖️', type: 0 },
+    'popmarket': { text: 'the marketplace pulse 📉', type: 3 },
+    'sellpop': { text: 'a bustling market deal 💰', type: 3 },
+
     // Season Synergy
-    'we': { text: 'Seasonal Synergy', type: 3 },
-    'se': { text: 'Seasonal Synergy', type: 3 },
-    
-    // Utility
-    'help': { text: 'navigating the guide', type: 3 },
-    'info': { text: 'displaying bot info', type: 3 },
-    'utility': { text: 'using utility tools', type: 0 }
+    'we': { text: 'Weekend Synergy scores 🌟', type: 3 },
+    'se': { text: 'Seasonal Synergy rankings 🏆', type: 3 },
+
+    // Media
+    'emoji': { text: 'with rare Emojis 🎭', type: 0 },
+    'emojibank': { text: 'organizing the Emoji Vault 🏦', type: 0 },
+    'sticker': { text: 'collecting legendary Stickers 🖼️', type: 0 },
+    'pack': { text: 'managing specialized Sticker Packs 📦', type: 0 },
+    'avatar': { text: 'admiring user avatars 📸', type: 3 },
+
+    // Games & Events
+    'tictactoe': { text: 'a deadly game of TicTacToe ⭕', type: 5 },
+    'action': { text: 'cool anime action sequences 🍿', type: 3 },
+    'foster': { text: 'the foster program applications 👶', type: 3 },
+    'poll': { text: 'democracy in action 🗳️', type: 3 },
+    'steal': { text: 'stealing memes 🥷', type: 0 },
+
+    // Core Utilities
+    'ping': { text: 'network latency metrics 🏓', type: 3 },
+    'help': { text: 'lost travelers find their way 🗺️', type: 3 },
+    'serverinfo': { text: 'deep server analytics 📊', type: 3 },
+    'userinfo': { text: 'running background checks 🕵️', type: 0 },
+    'afk': { text: 'sleepy members 💤', type: 3 },
+    'sayit': { text: 'echoing voices 🗣️', type: 2 },
+    'announce': { text: 'loud broadcasting system 📢', type: 2 },
+    'admin': { text: 'classified system protocols 🛡️', type: 3 },
+    'settings': { text: 'adjusting bot settings ⚙️', type: 0 }
 };
 
 /**
- * Sets a temporary presence for the bot.
- * @param {import("discord.js").Client} client - The Discord client.
- * @param {object} presenceData - The presence object.
- * @param {number} [duration=8000] - The duration in milliseconds.
+ * Jumpstarts the automatic idle rotation of the bot's presence.
+ */
+function startDefaultPresenceRotation(client) {
+    if (defaultPresenceInterval) clearInterval(defaultPresenceInterval);
+    
+    const rotate = () => {
+        if (currentPresenceTimeout) return; // Yield to a temporary command presence
+        const presence = defaultActivities[Math.floor(Math.random() * defaultActivities.length)];
+        try {
+            client.user?.setActivity(presence.text, { type: presence.type });
+        } catch (err) {}
+    };
+
+    rotate(); // Mount immediately
+    defaultPresenceInterval = setInterval(rotate, 60000); // Shift every 60 seconds
+}
+
+/**
+ * Sets a temporary presence for the bot dynamically on action.
  */
 function setTemporaryPresence(client, presenceData, duration = 8000) {
     if (!client.user) return;
 
-    if (presenceTimeout) {
-        clearTimeout(presenceTimeout);
+    if (currentPresenceTimeout) {
+        clearTimeout(currentPresenceTimeout);
     }
 
     try {
         client.user.setActivity(presenceData.text, { type: presenceData.type });
     } catch (err) {}
 
-    presenceTimeout = setTimeout(() => {
+    currentPresenceTimeout = setTimeout(() => {
+        currentPresenceTimeout = null;
+        // Upon timeout, snap back to a random default idle activity immediately
+        const presence = defaultActivities[Math.floor(Math.random() * defaultActivities.length)];
         try {
-            client.user.setActivity("your server run smoothly 🚀", { type: 3 });
+            client.user.setActivity(presence.text, { type: presence.type });
         } catch (err) {}
-        presenceTimeout = null;
     }, duration);
 }
 
 /**
- * Gets the presence text for a specific command name.
- * @param {string} commandName - The name of the command.
- * @returns {object} The mapped presence object or fallback.
+ * Identifies the aesthetic activity for a specific action.
  */
 function getPresenceText(commandName) {
-    const defaultPresence = { text: "handling your commands ⚡", type: 0 }; // PLAYING
-    if (!commandName) return defaultPresence;
+    const defaultCommandPresence = { text: "handling your commands ⚡", type: 0 };
+    if (!commandName) return defaultCommandPresence;
     const name = commandName.toLowerCase();
-    return commandMap[name] || defaultPresence;
+    return commandMap[name] || defaultCommandPresence;
 }
 
 module.exports = {
+    startDefaultPresenceRotation,
     setTemporaryPresence,
     getPresenceText
 };
