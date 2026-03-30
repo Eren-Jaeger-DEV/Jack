@@ -9,8 +9,21 @@ module.exports = {
     async execute(interaction, client) {
         if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
 
-        const { customId, guildId, user } = interaction;
+        const { customId, guildId } = interaction;
         const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+
+        // Define all handled IDs for this plugin
+        const handledIds = [
+            'overview_select', 'add_section', 'delete_section', 'add_item', 'edit_item', 'delete_item',
+            'modal_add_section', 'modal_add_item', 'modal_edit_item_select', 
+            'modal_delete_item_select', 'modal_delete_section_select'
+        ];
+
+        const isOverviewModal = customId.startsWith('modal_edit_item_submit');
+        const isHandled = handledIds.includes(customId) || isOverviewModal;
+
+        // Early return if this interaction doesn't belong to this plugin
+        if (!isHandled) return;
 
         // 1. PUBLIC OVERVIEW: Dropdown Selection
         if (customId === 'overview_select') {
@@ -31,13 +44,8 @@ module.exports = {
             return;
         }
 
-        // 2. ADMIN ONLY CHECK
-        const adminActions = [
-            'add_section', 'delete_section', 'add_item', 'edit_item', 'delete_item',
-            'modal_edit_item_select', 'modal_delete_item_select', 'modal_delete_section_select'
-        ];
-
-        if (customId.startsWith('overview_') || adminActions.includes(customId)) {
+        // 2. ADMIN ONLY CHECK (Exclude the public overview_select)
+        if (customId !== 'overview_select') {
             if (!isAdmin) {
                 return await interaction.reply({ content: "❌ You do not have permission to use the control panel.", flags: [MessageFlags.Ephemeral] });
             }
@@ -86,6 +94,7 @@ module.exports = {
             );
 
             await interaction.reply({ content: "Select an item to edit:", components: [row], flags: [MessageFlags.Ephemeral] });
+            return;
         }
 
         if (customId === 'modal_edit_item_select') {
@@ -93,14 +102,9 @@ module.exports = {
             const config = await OverviewConfig.findOne({ guildId });
             
             let item = null;
-            let sectionName = "";
-
             for (const s of config.sections) {
                 item = s.items.id(itemId);
-                if (item) {
-                    sectionName = s.name;
-                    break;
-                }
+                if (item) break;
             }
 
             if (!item) return await interaction.reply({ content: "❌ Item not found!", flags: [MessageFlags.Ephemeral] });
@@ -118,6 +122,7 @@ module.exports = {
 
         // 6. MODAL SUBMISSIONS: DATA UPDATE
         if (interaction.isModalSubmit()) {
+            // Acknowledge ONLY IF it's our modal
             await interaction.deferUpdate();
             const config = await OverviewConfig.findOne({ guildId });
 
@@ -130,7 +135,7 @@ module.exports = {
                 await config.save();
             }
 
-            if (customId === 'modal_add_item') {
+            else if (customId === 'modal_add_item') {
                 const sectionName = interaction.fields.getTextInputValue('section_name');
                 const title = interaction.fields.getTextInputValue('item_title');
                 const description = interaction.fields.getTextInputValue('item_desc');
@@ -142,7 +147,7 @@ module.exports = {
                 await config.save();
             }
 
-            if (customId.startsWith('modal_edit_item_submit')) {
+            else if (customId.startsWith('modal_edit_item_submit')) {
                 const itemId = customId.split('|')[1];
                 const newTitle = interaction.fields.getTextInputValue('item_title');
                 const newDescription = interaction.fields.getTextInputValue('item_desc');
@@ -166,6 +171,7 @@ module.exports = {
 
             // Sync Both UIs
             await syncAll(interaction, config);
+            return;
         }
 
         // 5. DELETE ITEM (Simple Selection Flow)
@@ -186,6 +192,7 @@ module.exports = {
             );
 
             await interaction.reply({ content: "Select an item to remove:", components: [row], flags: [MessageFlags.Ephemeral] });
+            return;
         }
 
         if (customId === 'modal_delete_item_select') {
@@ -210,6 +217,7 @@ module.exports = {
 
             await syncAll(interaction, config);
             await interaction.editReply({ content: "✅ Item deleted.", components: [] });
+            return;
         }
 
         // 6. DELETE SECTION
@@ -230,6 +238,7 @@ module.exports = {
             );
 
             await interaction.reply({ content: "Select a section to remove:", components: [row], flags: [MessageFlags.Ephemeral] });
+            return;
         }
 
         if (customId === 'modal_delete_section_select') {
@@ -243,6 +252,7 @@ module.exports = {
 
             await syncAll(interaction, config);
             await interaction.editReply({ content: "✅ Section deleted.", components: [] });
+            return;
         }
     }
 };
