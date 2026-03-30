@@ -93,7 +93,7 @@ module.exports = {
       );
 
       await channel.send({
-        content: `${interaction.user} (Ticket Creator)`, // [IMPROVEMENT]: Removed staff ping, only ping opener.
+        content: `${interaction.user} (Ticket Creator)`,
         embeds: [embed],
         components: [row]
       });
@@ -147,7 +147,7 @@ module.exports = {
         return interaction.reply({ content: "❌ Only Administrators can finalize tickets.", ephemeral: true });
       }
 
-      await interaction.reply({ content: "💾 Generating advanced transcript, please wait...", ephemeral: true });
+      await interaction.reply({ content: "💾 Generating final transcript, please wait...", ephemeral: true });
 
       // Extract metadata from topic
       let ownerId = null;
@@ -165,24 +165,38 @@ module.exports = {
       const stats = {
         total: allMessages.size,
         attachments: 0,
-        users: {}
+        participants: new Map() // Using Map to store UserID -> { count, roles }
       };
 
-      allMessages.forEach(m => {
+      for (const m of allMessages.values()) {
         if (m.attachments.size > 0) stats.attachments += m.attachments.size;
-        if (!m.author.bot) {
-          const userTag = `${m.author.username}#${m.author.discriminator}`;
-          stats.users[userTag] = (stats.users[userTag] || 0) + 1;
-        } else if (m.author.id !== client.user.id) {
-            // Include other bots? Yes
-            const userTag = `[BOT] ${m.author.username}`;
-            stats.users[userTag] = (stats.users[userTag] || 0) + 1;
-        }
-      });
+        
+        // Skip bots entirely for the list, but count their messages in 'total'
+        if (m.author.bot) continue;
 
-      const participantBreakdown = Object.entries(stats.users)
-          .sort((a,b) => b[1] - a[1]) // Sort by count descending
-          .map(([user, count]) => `${count} - **${user}**`)
+        if (!stats.participants.has(m.author.id)) {
+          // Fetch the member once to get their roles
+          const member = await interaction.guild.members.fetch(m.author.id).catch(() => null);
+          const roles = member 
+            ? member.roles.cache
+                .filter(r => r.name !== "@everyone")
+                .map(r => r.name)
+                .join(", ") 
+            : "No Roles";
+
+          stats.participants.set(m.author.id, {
+            mention: `<@${m.author.id}>`,
+            roles: roles || "No Roles",
+            count: 0
+          });
+        }
+        
+        stats.participants.get(m.author.id).count++;
+      }
+
+      const participantBreakdown = Array.from(stats.participants.values())
+          .sort((a,b) => b.count - a.count) 
+          .map(p => `${p.count} - ${p.mention} - [${p.roles}]`) // [IMAGE REQUEST]: Mention + Roles
           .join('\n');
 
       const attachment = await transcript.createTranscript(interaction.channel);
@@ -194,7 +208,7 @@ module.exports = {
       }
 
       if (logChannel) {
-        // [IMAGE REQUEST]: Improved Formatting
+        // [IMAGE REQUEST]: Unified Output
         const serverInfoBlock = 
         `\`\`\`\n<Server-Info>\n` +
         `    Server: ${interaction.guild.name} (${interaction.guild.id})\n` +
@@ -205,16 +219,17 @@ module.exports = {
 
         const detailEmbed = new EmbedBuilder()
             .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() })
-            .setColor("#2ECC71") // Follow image style
+            .setColor("#2ECC71")
             .addFields(
               { name: "Ticket Owner", value: ownerId ? `<@${ownerId}>` : "Unknown", inline: true },
               { name: "Ticket Name", value: interaction.channel.name, inline: true },
               { name: "Panel Name", value: panelName, inline: true },
               { name: "Direct Transcript", value: "Use Button (Above)", inline: false },
-              { name: "Users in transcript", value: participantBreakdown || "No user messages", inline: false }
+              { name: "Users in tickets", value: participantBreakdown || "No user messages", inline: false } // [IMAGE REQUEST]: "Users in tickets"
             )
             .setTimestamp();
 
+        // One message combining text (serverInfo), file (attachment), and embed (detailEmbed)
         await logChannel.send({
           content: serverInfoBlock,
           embeds: [detailEmbed],
