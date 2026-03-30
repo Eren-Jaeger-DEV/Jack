@@ -7,7 +7,7 @@
  *  3. Periodic checker — every 60s, scans for newly expired timers
  */
 
-const { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const classificationService = require('./services/classificationService');
 const { addLog } = require('../../utils/logger');
 
@@ -59,7 +59,7 @@ module.exports = {
       try {
         // Permission check — ManageGuild only
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-          return interaction.reply({ content: '❌ You are not allowed to use this.', ephemeral: true });
+          return interaction.reply({ content: '❌ You are not allowed to use this.', flags: [MessageFlags.Ephemeral] });
         }
 
         const parts = interaction.customId.split('_');
@@ -76,7 +76,7 @@ module.exports = {
           const result = await classificationService.classifyAsClanMember(guild, targetUserId);
 
           if (!result.success) {
-            return interaction.reply({ content: `❌ ${result.error}`, ephemeral: true });
+            return interaction.reply({ content: `❌ ${result.error}`, flags: [MessageFlags.Ephemeral] });
           }
 
           // Send welcome in same channel
@@ -114,7 +114,7 @@ module.exports = {
           const result = await classificationService.classifyAsDiscordMember(guild, targetUserId);
 
           if (!result.success) {
-            return interaction.reply({ content: `❌ ${result.error}`, ephemeral: true });
+            return interaction.reply({ content: `❌ ${result.error}`, flags: [MessageFlags.Ephemeral] });
           }
 
           await interaction.channel.send(

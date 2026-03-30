@@ -1,4 +1,4 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, PermissionFlagsBits } = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const OverviewConfig = require('../models/OverviewConfig');
 const { buildOverviewEmbed, buildOverviewDropdown } = require('../services/overviewService');
 const { buildControlPanelEmbed } = require('../services/controlPanelService');
@@ -22,7 +22,7 @@ module.exports = {
             
             // Send the ephemeral details to the user
             const embed = buildOverviewEmbed(interaction.guild, section);
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: [MessageFlags.Ephemeral] });
 
             // Reset the main panel dropdown by editing the original message
             const mainEmbed = buildOverviewEmbed(interaction.guild);
@@ -39,7 +39,7 @@ module.exports = {
 
         if (customId.startsWith('overview_') || adminActions.includes(customId)) {
             if (!isAdmin) {
-                return await interaction.reply({ content: "❌ You do not have permission to use the control panel.", ephemeral: true });
+                return await interaction.reply({ content: "❌ You do not have permission to use the control panel.", flags: [MessageFlags.Ephemeral] });
             }
         }
 
@@ -53,7 +53,7 @@ module.exports = {
 
         if (customId === 'add_item') {
             const config = await OverviewConfig.findOne({ guildId });
-            if (config.sections.length === 0) return await interaction.reply({ content: "❌ Create a section first!", ephemeral: true });
+            if (config.sections.length === 0) return await interaction.reply({ content: "❌ Create a section first!", flags: [MessageFlags.Ephemeral] });
 
             const modal = new ModalBuilder().setCustomId('modal_add_item').setTitle('Add Item to Section');
             const sectionInput = new TextInputBuilder().setCustomId('section_name').setLabel("Target Section Name").setStyle(TextInputStyle.Short).setRequired(true);
@@ -72,7 +72,7 @@ module.exports = {
         if (customId === 'edit_item') {
             const config = await OverviewConfig.findOne({ guildId });
             if (config.sections.every(s => s.items.length === 0)) {
-                return await interaction.reply({ content: "❌ No items to edit.", ephemeral: true });
+                return await interaction.reply({ content: "❌ No items to edit.", flags: [MessageFlags.Ephemeral] });
             }
 
             const row = new ActionRowBuilder().addComponents(
@@ -85,7 +85,7 @@ module.exports = {
                     }))))
             );
 
-            await interaction.reply({ content: "Select an item to edit:", components: [row], ephemeral: true });
+            await interaction.reply({ content: "Select an item to edit:", components: [row], flags: [MessageFlags.Ephemeral] });
         }
 
         if (customId === 'modal_edit_item_select') {
@@ -103,7 +103,7 @@ module.exports = {
                 }
             }
 
-            if (!item) return await interaction.reply({ content: "❌ Item not found!", ephemeral: true });
+            if (!item) return await interaction.reply({ content: "❌ Item not found!", flags: [MessageFlags.Ephemeral] });
 
             const modal = new ModalBuilder().setCustomId(`modal_edit_item_submit|${itemId}`).setTitle('Edit Item Details');
             const titleInput = new TextInputBuilder().setCustomId('item_title').setLabel("Title").setStyle(TextInputStyle.Short).setValue(item.title).setRequired(true);
@@ -124,7 +124,7 @@ module.exports = {
             if (customId === 'modal_add_section') {
                 const name = interaction.fields.getTextInputValue('section_name');
                 if (config.sections.some(s => s.name === name)) {
-                    return await interaction.followUp({ content: "❌ Section already exists!", ephemeral: true });
+                    return await interaction.followUp({ content: "❌ Section already exists!", flags: [MessageFlags.Ephemeral] });
                 }
                 config.sections.push({ name, items: [] });
                 await config.save();
@@ -136,7 +136,7 @@ module.exports = {
                 const description = interaction.fields.getTextInputValue('item_desc');
 
                 const section = config.sections.find(s => s.name === sectionName);
-                if (!section) return await interaction.followUp({ content: "❌ Section not found!", ephemeral: true });
+                if (!section) return await interaction.followUp({ content: "❌ Section not found!", flags: [MessageFlags.Ephemeral] });
 
                 section.items.push({ title, description });
                 await config.save();
@@ -172,7 +172,7 @@ module.exports = {
         if (customId === 'delete_item') {
             const config = await OverviewConfig.findOne({ guildId });
             if (config.sections.every(s => s.items.length === 0)) {
-                return await interaction.reply({ content: "❌ No items to delete.", ephemeral: true });
+                return await interaction.reply({ content: "❌ No items to delete.", flags: [MessageFlags.Ephemeral] });
             }
 
             const row = new ActionRowBuilder().addComponents(
@@ -185,7 +185,7 @@ module.exports = {
                     }))))
             );
 
-            await interaction.reply({ content: "Select an item to remove:", components: [row], ephemeral: true });
+            await interaction.reply({ content: "Select an item to remove:", components: [row], flags: [MessageFlags.Ephemeral] });
         }
 
         if (customId === 'modal_delete_item_select') {
@@ -216,7 +216,7 @@ module.exports = {
         if (customId === 'delete_section') {
             const config = await OverviewConfig.findOne({ guildId });
             if (config.sections.length === 0) {
-                return await interaction.reply({ content: "❌ No sections to delete.", ephemeral: true });
+                return await interaction.reply({ content: "❌ No sections to delete.", flags: [MessageFlags.Ephemeral] });
             }
 
             const row = new ActionRowBuilder().addComponents(
@@ -229,7 +229,7 @@ module.exports = {
                     })))
             );
 
-            await interaction.reply({ content: "Select a section to remove:", components: [row], ephemeral: true });
+            await interaction.reply({ content: "Select a section to remove:", components: [row], flags: [MessageFlags.Ephemeral] });
         }
 
         if (customId === 'modal_delete_section_select') {

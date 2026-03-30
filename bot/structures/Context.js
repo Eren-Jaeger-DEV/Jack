@@ -83,6 +83,12 @@ class Context {
      */
     async reply(data) {
         if (typeof data === "string") data = { content: data };
+        
+        // Handle deprecated ephemeral property
+        if (data.ephemeral === true) {
+            data.flags = [MessageFlags.Ephemeral];
+            delete data.ephemeral;
+        }
 
         try {
             if (this.isInteraction) {
@@ -105,11 +111,17 @@ class Context {
      */
     async defer(options = {}) {
         if (this.isInteraction) {
+            // Handle deprecated ephemeral property
+            if (options.ephemeral === true) {
+                options.flags = [MessageFlags.Ephemeral];
+                delete options.ephemeral;
+            }
             return await this.source.deferReply(options);
         } else {
             return await this.channel.sendTyping().catch(() => null);
         }
     }
+
 }
 
 module.exports = Context;

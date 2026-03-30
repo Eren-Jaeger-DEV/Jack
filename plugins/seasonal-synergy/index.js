@@ -7,6 +7,7 @@
  *  3. Restart recovery — restore active season state on boot
  */
 
+const { MessageFlags } = require('discord.js');
 const synergyService = require('./services/synergyService');
 const Season = require('./models/Season');
 const profileService = require('../clan/services/profileService');
@@ -135,13 +136,12 @@ module.exports = {
 
         let newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
 
-        const season = await synergyService.getActiveSeason(interaction.guild.id);
         if (!season) {
-          return interaction.followUp({ content: '❌ No active season.', ephemeral: true });
+          return interaction.followUp({ content: '❌ No active season.', flags: MessageFlags.Ephemeral });
         }
 
         const guild = await client.guilds.fetch(season.guildId).catch(() => null);
-        const lb = await synergyService.getLeaderboardPayload(guild, season, newPage);
+        const lb = await synergyService.getLeaderboardPage(guild, newPage);
 
         if (newPage < 0) newPage = 0;
         if (newPage >= lb.totalPages) newPage = lb.totalPages - 1;

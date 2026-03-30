@@ -1,3 +1,4 @@
+const { MessageFlags } = require("discord.js");
 const teamService = require("../services/teamService");
 const Team = require("../models/Team");
 
@@ -11,19 +12,19 @@ module.exports = {
         // Find team associated with this message
         const team = await Team.findOne({ messageId: interaction.message.id });
         if (!team) {
-          return interaction.reply({ content: "❌ This team no longer exists.", ephemeral: true });
+          return interaction.reply({ content: "❌ This team no longer exists.", flags: [MessageFlags.Ephemeral] });
         }
 
         const result = await teamService.joinTeam(client, interaction.guild, interaction.user.id, team._id);
 
         if (result.success) {
-          await interaction.reply({ content: "✅ You have joined the team!", ephemeral: true });
+          await interaction.reply({ content: "✅ You have joined the team!", flags: [MessageFlags.Ephemeral] });
         } else {
-          await interaction.reply({ content: `❌ ${result.message}`, ephemeral: true });
+          await interaction.reply({ content: `❌ ${result.message}`, flags: [MessageFlags.Ephemeral] });
         }
       } catch (err) {
         console.error("[TeamUp] Join button error:", err);
-        await interaction.reply({ content: "⚠️ An error occurred while joining the team.", ephemeral: true });
+        await interaction.reply({ content: "⚠️ An error occurred while joining the team.", flags: [MessageFlags.Ephemeral] });
       }
     }
   }

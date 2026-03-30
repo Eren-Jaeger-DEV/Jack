@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
 const { addLog } = require('../../utils/logger');
 const configManager = require('../../bot/utils/configManager');
 const path = require('path');
@@ -149,20 +149,20 @@ module.exports = {
         const memberVC = member.voice.channel;
         
         if (!memberVC || !activeVCs.has(memberVC.id)) {
-          return interaction.reply({ content: "❌ You must be in a personal VC to use this.", ephemeral: true });
+          return interaction.reply({ content: "❌ You must be in a personal VC to use this.", flags: [MessageFlags.Ephemeral] });
         }
 
         if (activeVCs.get(memberVC.id) !== member.id) {
-          return interaction.reply({ content: "❌ You are no longer the owner of this VC.", ephemeral: true });
+          return interaction.reply({ content: "❌ You are no longer the owner of this VC.", flags: [MessageFlags.Ephemeral] });
         }
 
         try {
           const newName = interaction.fields.getTextInputValue('new_name');
           await memberVC.setName(newName);
-          return await interaction.reply({ content: `✅ VC renamed to \`${newName}\`.`, ephemeral: true });
+          return await interaction.reply({ content: `✅ VC renamed to \`${newName}\`.`, flags: [MessageFlags.Ephemeral] });
         } catch (err) {
           console.error('[TempVC] Rename error:', err);
-          return await interaction.reply({ content: "❌ Failed to rename channel.", ephemeral: true }).catch(()=>null);
+          return await interaction.reply({ content: "❌ Failed to rename channel.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
         }
       }
 
@@ -171,24 +171,24 @@ module.exports = {
           const memberVC = member.voice.channel;
           
           if (!memberVC || !activeVCs.has(memberVC.id)) {
-            return interaction.reply({ content: "❌ You must be in a personal VC to use this.", ephemeral: true });
+            return interaction.reply({ content: "❌ You must be in a personal VC to use this.", flags: [MessageFlags.Ephemeral] });
           }
   
           if (activeVCs.get(memberVC.id) !== member.id) {
-            return interaction.reply({ content: "❌ You are no longer the owner of this VC.", ephemeral: true });
+            return interaction.reply({ content: "❌ You are no longer the owner of this VC.", flags: [MessageFlags.Ephemeral] });
           }
   
           try {
             const limitStr = interaction.fields.getTextInputValue('user_limit');
             const limit = parseInt(limitStr);
             if (isNaN(limit) || limit < 0 || limit > 99) {
-                return interaction.reply({ content: "❌ Please enter a valid number between 0 and 99.", ephemeral: true });
+                return interaction.reply({ content: "❌ Please enter a valid number between 0 and 99.", flags: [MessageFlags.Ephemeral] });
             }
             await memberVC.setUserLimit(limit);
-            return await interaction.reply({ content: `✅ VC user limit set to ${limit === 0 ? "Unlimited" : limit}.`, ephemeral: true });
+            return await interaction.reply({ content: `✅ VC user limit set to ${limit === 0 ? "Unlimited" : limit}.`, flags: [MessageFlags.Ephemeral] });
           } catch (err) {
             console.error('[TempVC] Limit error:', err);
-            return await interaction.reply({ content: "❌ Failed to set user limit.", ephemeral: true }).catch(()=>null);
+            return await interaction.reply({ content: "❌ Failed to set user limit.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
           }
         }
 
@@ -197,11 +197,11 @@ module.exports = {
           const memberVC = member.voice.channel;
           
           if (!memberVC || !activeVCs.has(memberVC.id)) {
-            return interaction.reply({ content: "❌ You must be in a personal VC to use this.", ephemeral: true });
+            return interaction.reply({ content: "❌ You must be in a personal VC to use this.", flags: [MessageFlags.Ephemeral] });
           }
   
           if (activeVCs.get(memberVC.id) !== member.id) {
-            return interaction.reply({ content: "❌ You are no longer the owner of this VC.", ephemeral: true });
+            return interaction.reply({ content: "❌ You are no longer the owner of this VC.", flags: [MessageFlags.Ephemeral] });
           }
   
           try {
@@ -213,18 +213,18 @@ module.exports = {
             );
   
             if (!target) {
-              return interaction.reply({ content: "❌ Member not found in your voice channel.", ephemeral: true });
+              return interaction.reply({ content: "❌ Member not found in your voice channel.", flags: [MessageFlags.Ephemeral] });
             }
   
             if (target.id === member.id) {
-              return interaction.reply({ content: "❌ You cannot kick yourself.", ephemeral: true });
+              return interaction.reply({ content: "❌ You cannot kick yourself.", flags: [MessageFlags.Ephemeral] });
             }
   
             await target.voice.disconnect();
-            return await interaction.reply({ content: `✅ Kicked **${target.user.username}** from the VC.`, ephemeral: true });
+            return await interaction.reply({ content: `✅ Kicked **${target.user.username}** from the VC.`, flags: [MessageFlags.Ephemeral] });
           } catch (err) {
             console.error('[TempVC] Kick error:', err);
-            return await interaction.reply({ content: "❌ Failed to kick member.", ephemeral: true }).catch(()=>null);
+            return await interaction.reply({ content: "❌ Failed to kick member.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
           }
         }
 
@@ -233,11 +233,11 @@ module.exports = {
           const memberVC = member.voice.channel;
           
           if (!memberVC || !activeVCs.has(memberVC.id)) {
-            return interaction.reply({ content: "❌ You must be in a personal VC to use this.", ephemeral: true });
+            return interaction.reply({ content: "❌ You must be in a personal VC to use this.", flags: [MessageFlags.Ephemeral] });
           }
   
           if (activeVCs.get(memberVC.id) !== member.id) {
-            return interaction.reply({ content: "❌ You are no longer the owner of this VC.", ephemeral: true });
+            return interaction.reply({ content: "❌ You are no longer the owner of this VC.", flags: [MessageFlags.Ephemeral] });
           }
   
           try {
@@ -250,7 +250,7 @@ module.exports = {
             );
   
             if (!target) {
-              return interaction.reply({ content: "❌ Member not found in your voice channel.", ephemeral: true });
+              return interaction.reply({ content: "❌ Member not found in your voice channel.", flags: [MessageFlags.Ephemeral] });
             }
   
             // Transfer ownership
@@ -258,10 +258,10 @@ module.exports = {
             await memberVC.permissionOverwrites.edit(target.id, { ManageChannels: true, MoveMembers: true, Connect: true, Speak: true });
             await memberVC.permissionOverwrites.edit(member.id, { ManageChannels: null, MoveMembers: null });
             
-            return await interaction.reply({ content: `👑 Ownership transferred to **${target.user.username}**.`, ephemeral: true });
+            return await interaction.reply({ content: `👑 Ownership transferred to **${target.user.username}**.`, flags: [MessageFlags.Ephemeral] });
           } catch (err) {
             console.error('[TempVC] Transfer error:', err);
-            return await interaction.reply({ content: "❌ Failed to transfer ownership.", ephemeral: true }).catch(()=>null);
+            return await interaction.reply({ content: "❌ Failed to transfer ownership.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
           }
         }
 
@@ -273,11 +273,11 @@ module.exports = {
       const memberVC = member.voice.channel;
 
       if (!memberVC || !activeVCs.has(memberVC.id)) {
-        return interaction.reply({ content: "❌ You must be in a personal VC to use this.", ephemeral: true });
+        return interaction.reply({ content: "❌ You must be in a personal VC to use this.", flags: [MessageFlags.Ephemeral] });
       }
 
       if (activeVCs.get(memberVC.id) !== member.id) {
-        return interaction.reply({ content: "❌ You are not the owner of this VC.", ephemeral: true });
+        return interaction.reply({ content: "❌ You are not the owner of this VC.", flags: [MessageFlags.Ephemeral] });
       }
 
       const everyoneRole = interaction.guild.roles.everyone.id;
@@ -286,22 +286,22 @@ module.exports = {
         switch (action) {
           case 'lock':
             await memberVC.permissionOverwrites.edit(everyoneRole, { Connect: false });
-            await interaction.reply({ content: "🔒 VC Locked.", ephemeral: true });
+            await interaction.reply({ content: "🔒 VC Locked.", flags: [MessageFlags.Ephemeral] });
             break;
 
           case 'unlock':
             await memberVC.permissionOverwrites.edit(everyoneRole, { Connect: null });
-            await interaction.reply({ content: "🔓 VC Unlocked.", ephemeral: true });
+            await interaction.reply({ content: "🔓 VC Unlocked.", flags: [MessageFlags.Ephemeral] });
             break;
 
           case 'hide':
             await memberVC.permissionOverwrites.edit(everyoneRole, { ViewChannel: false });
-            await interaction.reply({ content: "👁️ VC Hidden.", ephemeral: true });
+            await interaction.reply({ content: "👁️ VC Hidden.", flags: [MessageFlags.Ephemeral] });
             break;
 
           case 'show':
             await memberVC.permissionOverwrites.edit(everyoneRole, { ViewChannel: null });
-            await interaction.reply({ content: "👻 VC Visible.", ephemeral: true });
+            await interaction.reply({ content: "👻 VC Visible.", flags: [MessageFlags.Ephemeral] });
             break;
 
           case 'rename':
@@ -377,7 +377,7 @@ module.exports = {
       } catch (err) {
         console.error('[TempVC] Button error:', err);
         if (!interaction.replied) {
-          await interaction.reply({ content: "❌ An error occurred while processing your request.", ephemeral: true }).catch(()=>null);
+          await interaction.reply({ content: "❌ An error occurred while processing your request.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
         }
       }
     });

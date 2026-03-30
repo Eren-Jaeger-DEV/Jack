@@ -7,6 +7,7 @@
  *  3. Button handler — leaderboard pagination
  */
 
+const { MessageFlags } = require('discord.js');
 const fosterService = require('./services/fosterService');
 const { addLog } = require('../../utils/logger');
 
@@ -65,7 +66,7 @@ module.exports = {
 
         const program = await fosterService.getActiveProgram(interaction.guild.id);
         if (!program) {
-          return interaction.reply({ content: '❌ No active foster program.', ephemeral: true });
+          return interaction.reply({ content: '❌ No active foster program.', flags: [MessageFlags.Ephemeral] });
         }
 
         await interaction.deferUpdate().catch(() => {});

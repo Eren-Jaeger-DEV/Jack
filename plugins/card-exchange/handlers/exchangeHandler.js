@@ -453,16 +453,19 @@ async function handleStep3(interaction) {
 }
 
 async function handleCodeModal(interaction) {
-  const session = sessions.get(interaction.user.id);
-  if (!session || session.step !== 4 || !session.wantedCard || !session.offeredCards?.length) {
-    return denyEphemeral(interaction, '❌ Session expired or incomplete.');
+  // Acknowledge immediately to prevent Unknown Interaction / Timeout
+  try {
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+  } catch (err) {
+    if (err.code !== 10062) {
+      console.error('[CardExchange] handleCodeModal deferReply error:', err.message);
+    }
+    return;
   }
 
-  try {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-  } catch (err) {
-    console.error('[CardExchange] handleCodeModal deferReply error:', err.message);
-    return;
+  const session = sessions.get(interaction.user.id);
+  if (!session || session.step !== 4 || !session.wantedCard || !session.offeredCards?.length) {
+    return interaction.followUp({ content: '❌ Session expired or incomplete.', flags: [MessageFlags.Ephemeral] });
   }
 
   const code = interaction.fields.getTextInputValue('cex_code')?.trim() || null;
@@ -501,12 +504,16 @@ async function handleCodeModal(interaction) {
 /* ─── Interested Handler ──────────────────────────────────────────────────── */
 async function handleInterested(interaction) {
   const posterId = interaction.customId.split('_')[2];
-  if (interaction.user.id === posterId) return denyEphemeral(interaction, '❌ You cannot express interest in your own exchange!');
+  if (interaction.user.id === posterId) {
+    return interaction.reply({ content: '❌ You cannot express interest in your own exchange!', flags: [MessageFlags.Ephemeral] });
+  }
 
   try {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
   } catch (err) {
-    console.error('[CardExchange] handleInterested deferReply error:', err.message);
+    if (err.code !== 10062) {
+      console.error('[CardExchange] handleInterested deferReply error:', err.message);
+    }
     return;
   }
 

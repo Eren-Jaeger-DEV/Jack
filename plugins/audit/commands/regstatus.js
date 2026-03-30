@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags } = require('discord.js');
 const Player = require('../../../bot/database/models/Player');
 
 module.exports = {
@@ -152,7 +152,7 @@ module.exports = {
 
       collector.on('collect', async (i) => {
         if (i.user.id !== ctx.user.id) {
-          return i.reply({ content: '❌ You cannot use these buttons.', ephemeral: true });
+          return i.reply({ content: '❌ You cannot use these buttons.', flags: [MessageFlags.Ephemeral] });
         }
 
         if (i.customId === 'audit_prev' && currentPage > 0) {
