@@ -4,10 +4,10 @@ const configManager = require("../../../bot/utils/configManager");
 module.exports = {
   name: "setupgreeting",
   category: "admin",
-  description: "Configure the welcome and goodbye messages and channels.",
-  usage: "/setupgreeting <welcome|goodbye> [channel] [enabled] [image] [message]",
+  description: "Configure channels for welcome and goodbye messages.",
+  usage: "/setupgreeting <welcome|goodbye> [channel] [enabled]",
   aliases: ["setgreet", "greetconfig"],
-  details: "Use this to manage the greeting plugin channels and toggles. You can use {user}, {server}, and {memberCount} in your messages.",
+  details: "Use this to manage the channels for the greeting plugin.",
 
   data: new SlashCommandBuilder()
     .setName("setupgreeting")
@@ -15,41 +15,33 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand(sub => 
       sub.setName("welcome")
-         .setDescription("Configure the welcome message settings")
+         .setDescription("Set the welcome message channel")
          .addChannelOption(o => o.setName("channel").setDescription("Where to send welcome messages"))
          .addBooleanOption(o => o.setName("enabled").setDescription("Turn welcomes on/off"))
-         .addStringOption(o => o.setName("image").setDescription("URL of the GIF/image to use"))
-         .addStringOption(o => o.setName("message").setDescription("Custom message text"))
     )
     .addSubcommand(sub => 
       sub.setName("goodbye")
-         .setDescription("Configure the goodbye message settings")
+         .setDescription("Set the goodbye message channel")
          .addChannelOption(o => o.setName("channel").setDescription("Where to send goodbye messages"))
          .addBooleanOption(o => o.setName("enabled").setDescription("Turn goodbyes on/off"))
-         .addStringOption(o => o.setName("image").setDescription("URL of the GIF/image to use"))
-         .addStringOption(o => o.setName("message").setDescription("Custom message text"))
     ),
 
   async run(ctx) {
     if (ctx.type === 'prefix') {
-      return ctx.reply("❌ Please use the slash command `/setupgreeting` to configure these complex settings.");
+      return ctx.reply("❌ Please use the slash command `/setupgreeting` to configure these settings.");
     }
 
     const command = ctx.options.getSubcommand();
     const channel = ctx.options.getChannel("channel");
     const enabled = ctx.options.getBoolean("enabled");
-    const image = ctx.options.getString("image");
-    const message = ctx.options.getString("message");
 
-    // Require at least one option to be modified
-    if (channel === null && enabled === null && image === null && message === null) {
-      return ctx.reply({ content: "⚠️ You must specify at least one option to update.", ephemeral: true });
+    if (channel === null && enabled === null) {
+      return ctx.reply({ content: "⚠️ You must specify a channel or toggle it enabled/disabled.", ephemeral: true });
     }
 
     const guildId = ctx.guild.id;
     let config = await configManager.getGuildConfig(guildId);
     
-    // Ensure the greetingData object exists
     if (!config.greetingData) {
       config.greetingData = {
         welcomeEnabled: false,
@@ -67,15 +59,11 @@ module.exports = {
     let replyMsg = [];
 
     if (command === "welcome") {
-      if (channel !== null) { updates.welcomeChannelId = channel.id; replyMsg.push(`Channel: <#${channel.id}>`); }
-      if (enabled !== null) { updates.welcomeEnabled = enabled; replyMsg.push(`Enabled: **${enabled}**`); }
-      if (image !== null) { updates.welcomeImage = image; replyMsg.push(`Image: [Link](${image})`); }
-      if (message !== null) { updates.welcomeMessage = message; replyMsg.push(`Message Updated`); }
+      if (channel !== null) { updates.welcomeChannelId = channel.id; replyMsg.push(`Channel set to: <#${channel.id}>`); updates.welcomeEnabled = true; }
+      if (enabled !== null) { updates.welcomeEnabled = enabled; replyMsg.push(`Enabled status: **${enabled}**`); }
     } else if (command === "goodbye") {
-      if (channel !== null) { updates.goodbyeChannelId = channel.id; replyMsg.push(`Channel: <#${channel.id}>`); }
-      if (enabled !== null) { updates.goodbyeEnabled = enabled; replyMsg.push(`Enabled: **${enabled}**`); }
-      if (image !== null) { updates.goodbyeImage = image; replyMsg.push(`Image: [Link](${image})`); }
-      if (message !== null) { updates.goodbyeMessage = message; replyMsg.push(`Message Updated`); }
+      if (channel !== null) { updates.goodbyeChannelId = channel.id; replyMsg.push(`Channel set to: <#${channel.id}>`); updates.goodbyeEnabled = true; }
+      if (enabled !== null) { updates.goodbyeEnabled = enabled; replyMsg.push(`Enabled status: **${enabled}**`); }
     }
 
     await configManager.updateGuildConfig(guildId, { greetingData: updates });
