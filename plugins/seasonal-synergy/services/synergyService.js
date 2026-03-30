@@ -374,6 +374,53 @@ async function getPlayerSynergy(userId) {
  *  EXPORTS
  * ═══════════════════════════════════════════ */
 
+async function getAllLeaderboardImages(guild) {
+  const allPlayers = await Player.find({
+    $or: [
+      { weeklySynergy: { $gt: 0 } },
+      { seasonSynergy: { $gt: 0 } },
+      { ign: { $exists: true, $ne: '' } }
+    ]
+  }).sort({ seasonSynergy: -1 });
+
+  const attachments = [];
+  const totalPages = Math.max(1, Math.ceil(allPlayers.length / PLAYERS_PER_PAGE));
+
+  for (let page = 0; page < totalPages; page++) {
+    const start = page * PLAYERS_PER_PAGE;
+    const slice = allPlayers.slice(start, start + PLAYERS_PER_PAGE);
+    const playersArray = [];
+
+    for (let i = 0; i < slice.length; i++) {
+      const p = slice[i];
+      const displayName = await resolveDisplayName(guild, p.discordId, p.ign);
+      
+      let avatarURL = 'https://cdn.discordapp.com/embed/avatars/0.png';
+      if (guild) {
+        try {
+          const member = await guild.members.fetch(p.discordId).catch(() => null);
+          if (member) avatarURL = member.user.displayAvatarURL({ extension: 'png', size: 128 });
+        } catch (e) { }
+      }
+
+      playersArray.push({
+        name: displayName,
+        weekly: p.weeklySynergy || 0,
+        season: p.seasonSynergy || 0,
+        avatarURL
+      });
+    }
+
+    if (playersArray.length > 0) {
+      const buffer = await generateLeaderboardImage(playersArray, page);
+      const attachment = new AttachmentBuilder(buffer, { name: `leaderboard-page-${page + 1}.png` });
+      attachments.push(attachment);
+    }
+  }
+
+  return attachments;
+}
+
 module.exports = {
   createSeason,
   getActiveSeason,
@@ -389,6 +436,7 @@ module.exports = {
   refreshLeaderboard,
   deleteOldLeaderboardMessage,
   buildFinalResults,
+  getAllLeaderboardImages,
   isWeekend,
   MAX_WEEKLY_ENERGY
 };

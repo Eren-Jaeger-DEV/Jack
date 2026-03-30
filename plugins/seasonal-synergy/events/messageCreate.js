@@ -107,8 +107,31 @@ module.exports = {
         // Delete old leaderboard
         await synergyService.deleteOldLeaderboardMessage(client, finalSeason);
 
-        // Build final results
         const guild = await client.guilds.fetch(finalSeason.guildId).catch(() => null);
+
+        // EXTRA: Full Archive Generation
+        const archiveMsg = await message.channel.send('⏳ **Archiving full seasonal leaderboard...**');
+        try {
+          const attachments = await synergyService.getAllLeaderboardImages(guild);
+          if (attachments.length > 0) {
+            // Send in batches of 10 (Discord limit)
+            for (let i = 0; i < attachments.length; i += 10) {
+              const batch = attachments.slice(i, i + 10);
+              const startPage = i + 1;
+              const endIdx = Math.min(i + batch.length, attachments.length);
+              await message.channel.send({
+                content: `🖼️ **Season Final Archive: Pages ${startPage} - ${endIdx}**`,
+                files: batch
+              });
+            }
+          }
+          await archiveMsg.delete().catch(() => {});
+        } catch (err) {
+          console.error('[SeasonalSynergy] Archive error:', err);
+          await archiveMsg.edit('⚠️ Failed to generate full archive, proceeding with winner announcement.').catch(() => {});
+        }
+
+        // Build final results
         const { results, top3 } = await synergyService.buildFinalResults(guild);
 
         // Send results
