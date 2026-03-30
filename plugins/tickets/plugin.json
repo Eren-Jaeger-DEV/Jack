@@ -1,0 +1,9 @@
+{
+  "name": "Tickets",
+  "id": "tickets",
+  "version": "1.0.0",
+  "description": "Standalone ticket system integrated with ServerMapManager.",
+  "author": "Antigravity",
+  "main": "index.js",
+  "enabledByDefault": true
+}

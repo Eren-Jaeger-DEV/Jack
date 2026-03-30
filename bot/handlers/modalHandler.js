@@ -119,48 +119,5 @@ module.exports = async function modalHandler(interaction) {
 
   }
 
-  /* ---------- ANNOUNCEMENT MODAL ---------- */
-  if (interaction.customId.startsWith("announce_modal_")) {
-
-    const { EmbedBuilder, PermissionFlagsBits } = require("discord.js");
-
-    const channelId = interaction.customId.replace("announce_modal_", "");
-    const targetChannel = interaction.guild.channels.cache.get(channelId);
-
-    if (!targetChannel) {
-      return interaction.reply({ content: "❌ Target channel not found.", flags: 64 });
-    }
-
-    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return interaction.reply({ content: "❌ No permission.", flags: 64 });
-    }
-
-    const title = interaction.fields.getTextInputValue("title");
-    const description = interaction.fields.getTextInputValue("description");
-    const color = interaction.fields.getTextInputValue("color") || "Random";
-    const image = interaction.fields.getTextInputValue("image") || null;
-
-    const embed = new EmbedBuilder()
-      .setTitle(title)
-      .setDescription(description)
-      .setColor(color)
-      .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-
-    if (image) {
-      // Basic URL validation
-      if (image.startsWith('http')) {
-        embed.setImage(image);
-      }
-    }
-
-    try {
-      await targetChannel.send({ embeds: [embed] });
-      return interaction.reply({ content: `✅ Announcement sent to ${targetChannel}!`, flags: 64 });
-    } catch (err) {
-      console.error(err);
-      return interaction.reply({ content: "❌ Failed to send announcement. Ensure I have permissions in that channel.", flags: 64 });
-    }
-
-  }
-
+  // NOTE: Announcement and Ticket modals have been migrated to their respective plugins.
 };
