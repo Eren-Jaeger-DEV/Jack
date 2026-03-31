@@ -70,7 +70,7 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 400, 
+        maxOutputTokens: 800, // SWEET SPOT: Prevents mid-sentence cuts while staying brief
         temperature: 0.25, 
         topP: 0.95,
         thinkingConfig: { thinkingLevel: "MEDIUM" }, // SPEED UP: Still smart, but faster.
