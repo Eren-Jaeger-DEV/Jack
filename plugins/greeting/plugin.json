@@ -1,0 +1,8 @@
+{
+  "name": "greeting",
+  "version": "1.0.0",
+  "description": "Welcome and Goodbye messages plugin",
+  "main": "index.js",
+  "id": "greeting",
+  "enabledByDefault": true
+}
