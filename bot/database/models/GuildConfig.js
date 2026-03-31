@@ -44,7 +44,8 @@ const guildConfigSchema = new mongoose.Schema({
     sticker: { type: Boolean, default: true },
     triggers: { type: Boolean, default: true },
     prefix: { type: Boolean, default: true },
-    greeting: { type: Boolean, default: true }
+    greeting: { type: Boolean, default: true },
+    ai: { type: Boolean, default: true }
   },
 
 
