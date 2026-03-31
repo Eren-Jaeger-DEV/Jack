@@ -70,7 +70,7 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 1024,
+        maxOutputTokens: 400, // STRICT BRAIN CAP: Under 2-3 sentences
         temperature: 0.2, // Slightly more creative and less "systematic"
         topP: 0.95,
         thinkingConfig: { thinkingLevel: "HIGH" },
@@ -93,9 +93,9 @@ module.exports = {
         }))
       });
 
-      // NO INJECTED TAGS - CLEAN USER PROMPT ONLY
+      const cleanPrompt = `User Request (KEEP IT UNDER 60 WORDS): ${prompt}`;
       let response = await chat.sendMessageStream({
-        message: [{ text: prompt }]
+        message: [{ text: cleanPrompt }]
       });
 
       let fullText = "";

@@ -4,6 +4,7 @@ const { getClanContext } = require('../../../bot/utils/clanContext');
 
 // In-memory history cache
 const chatHistory = new Map();
+const channelLocks = new Map(); // PROTECTOR: One stream at a time per channel
 
 function updateHistory(channelId, role, content) {
     if (!chatHistory.has(channelId)) chatHistory.set(channelId, []);
@@ -17,15 +18,6 @@ module.exports = {
 
     async execute(message, client) {
         if (message.author.bot || !message.guild) return;
-
-        const config = await configManager.getGuildConfig(message.guild.id);
-        const aiChannelId = config?.settings?.aiChannelId;
-        const isMentioned = message.mentions.has(client.user) && !message.mentions.everyone;
-        const isAiChannel = aiChannelId && message.channel.id === aiChannelId;
-        
-        if (isMentioned && !isAiChannel && aiChannelId) {
-            return message.reply(`❌ **Jack AI** is only available in <#${aiChannelId}>. Please chat there!`).catch(() => {});
-        }
 
         if (!isAiChannel && !isMentioned) return;
 
@@ -95,9 +87,11 @@ module.exports = {
             updateHistory(message.channel.id, 'user', prompt);
             updateHistory(message.channel.id, 'assistant', response);
 
-        } catch (err) {
-            console.error('[JackAI] Interaction error:', err.message);
-            await streamingMessage.edit("❌ **Jack's brain encountered a problem.** Please try again.").catch(() => {});
+        } catch (error) {
+            console.error("[Gemini 3.1 Neural] Failure:", error.message);
+            if (streamingMessage) await streamingMessage.edit("❌ **Jack's brain encountered a problem. Please try again.**").catch(() => {});
+        } finally {
+            channelLocks.delete(message.channel.id); // RELEASE THE LOCK: Boss is now listening.
         }
     }
 };
