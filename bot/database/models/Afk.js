@@ -16,6 +16,11 @@ const afkSchema = new mongoose.Schema({
   since: {
     type: Date,
     default: Date.now
+  },
+
+  pings: {
+    type: Number,
+    default: 0
   }
 
 });
