@@ -11,8 +11,16 @@ module.exports = {
         const { guild } = member;
         const config = await configManager.getGuildConfig(guild.id);
         const inviteLogChannelId = config?.settings?.inviteLogChannelId || config?.settings?.logChannelId;
+        let logChannel = null;
 
-        const logChannel = inviteLogChannelId ? guild.channels.cache.get(inviteLogChannelId) : null;
+        if (inviteLogChannelId) {
+            logChannel = await guild.channels.fetch(inviteLogChannelId).catch(() => null);
+        }
+
+        if (!logChannel && client.serverMap) {
+            // Fallback to name-based identification via ServerMapManager
+            logChannel = client.serverMap.getChannelByName("jack_log");
+        }
 
         // 1. Account Age Flags
         const accountAgeDays = (Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24);

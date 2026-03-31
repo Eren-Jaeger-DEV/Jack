@@ -11,9 +11,17 @@ module.exports = {
         const { guild } = member;
         const config = await configManager.getGuildConfig(guild.id);
         const logChannelId = config?.settings?.inviteLogChannelId || config?.settings?.logChannelId;
+        let logChannel = null;
+
+        if (logChannelId) {
+            logChannel = await guild.channels.fetch(logChannelId).catch(() => null);
+        }
+
+        if (!logChannel && client.serverMap) {
+            logChannel = client.serverMap.getChannelByName("jack_log");
+        }
 
         const joinRecord = await InviteJoin.findOne({ memberId: member.id, guildId: guild.id });
-        const logChannel = logChannelId ? guild.channels.cache.get(logChannelId) : null;
         
         let classification = "Normal Leave";
         let inviterName = "Unknown/Vanity";
