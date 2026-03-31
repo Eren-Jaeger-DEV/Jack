@@ -85,7 +85,8 @@ module.exports = {
                     lastUpdateTime = 0;
                 }
 
-                if (!inThinkingPhase && now - lastUpdateTime > 1200 && fullText.length > 0) {
+                // Streaming updates (FAST: 800ms safety buffer)
+                if (!inThinkingPhase && now - lastUpdateTime > 800 && fullText.length > 0) {
                     lastUpdateTime = now;
                     await streamingMessage.edit(fullText.substring(0, 1990) + " ▌").catch(() => null);
                 }

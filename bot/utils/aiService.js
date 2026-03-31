@@ -70,10 +70,10 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 400, // STRICT BRAIN CAP: Under 2-3 sentences
-        temperature: 0.2, // Slightly more creative and less "systematic"
+        maxOutputTokens: 400, 
+        temperature: 0.25, 
         topP: 0.95,
-        thinkingConfig: { thinkingLevel: "HIGH" },
+        thinkingConfig: { thinkingLevel: "MEDIUM" }, // SPEED UP: Still smart, but faster.
         tools: tools,
         safetySettings: [
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
