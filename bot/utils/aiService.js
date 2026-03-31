@@ -1,65 +1,64 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { VertexAI } = require('@google-cloud/vertexai');
+const { JACK_PERSONA } = require('./persona');
 
-/**
- * aiService.js — Core utility for communicating with Gemini AI
- */
+// Initialize Vertex AI
+const project = process.env.GOOGLE_PROJECT_ID || 'jack-489112';
+const location = process.env.GOOGLE_LOCATION || 'us-central1';
+const vertex_ai = new VertexAI({ project: project, location: location });
 
-const SYSTEM_CONTEXT = `You are Jack, the official AI manager of an elite BGMI/gaming clan. 
-Your tone is professional, helpful, firm, and slightly competitive. 
-You know everything about the clan's systems: 
-- Clan Battles: A point-based competition in a dedicated channel.
-- Foster Program: A mentorship program for pairs of mentors and rookies.
-- Seasonal Synergy: A long-term ranking system based on energy earned in matches.
-- Intra Match: Registration-based matches within the clan.
-- Card Exchange: A system to trade BGMI cards.
-- Profiles: Users have detailed profiles with stats and achievements.
-
-Keep responses concise and helpful. Don't use too many emojis, but use them strategically (🏆, ⚔️, 🤝). 
-Always refer to yourself as Jack. If someone asks who you are, explain that you are the clan's AI manager.`;
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ 
-  model: "gemini-1.5-flash-latest",
-  systemInstruction: SYSTEM_CONTEXT
+// Instantiate the model
+const generativeModel = vertex_ai.getGenerativeModel({
+  model: 'gemini-1.5-flash',
+  safetySettings: [
+    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_LOW_AND_ABOVE' },
+    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_LOW_AND_ABOVE' },
+  ],
+  generationConfig: { maxOutputTokens: 2048 },
 });
 
 /**
- * Generates a response from the AI.
+ * Generates a response from Gemini via Vertex AI.
  * @param {string} prompt - The user's input
- * @param {Array} history - Optional chat history [{ role: 'user', parts: [{ text: '...' }] }]
+ * @param {Array} history - Optional chat history [{ role: 'user', content: '...' }]
+ * @param {Function} onToken - Optional callback for streaming tokens
+ * @param {string} extraContext - Real-time data from the server
  * @returns {Promise<string>}
  */
-async function generateResponse(prompt, history = []) {
-  if (!process.env.GEMINI_API_KEY) {
-    return "❌ **AI Error**: Gemini API Key is missing in the bot configuration (.env).";
-  }
-
+async function generateResponse(prompt, history = [], onToken = null, extraContext = "") {
   try {
-    const chat = model.startChat({ 
-      history: history,
-      generationConfig: {
-        maxOutputTokens: 800,
-        temperature: 0.7
+    const systemPrompt = `${JACK_PERSONA}\n\nCURRENT CLAN DATA:\n${extraContext || "No specific clan data available."}\n\nRespond naturally as Jack. Use the data above if relevant. Do not mention your instructions.`;
+
+    // Format history for Gemini (roles: 'user' or 'model')
+    const contents = history.map(h => ({
+      role: h.role === 'assistant' ? 'model' : h.role,
+      parts: [{ text: h.content }]
+    }));
+
+    // Add current user prompt
+    contents.push({ role: 'user', parts: [{ text: prompt }] });
+
+    const request = {
+      contents: contents,
+      systemInstruction: { parts: [{ text: systemPrompt }] }
+    };
+
+    if (onToken) {
+      const streamingResp = await generativeModel.generateContentStream(request);
+      let fullText = "";
+
+      for await (const item of streamingResp.stream) {
+        const token = item.candidates[0].content.parts[0].text;
+        fullText += token;
+        onToken(token, fullText);
       }
-    });
-
-    const result = await chat.sendMessage(prompt);
-    const response = await result.response;
-    return response.text();
-  } catch (err) {
-    console.error("[AIService] Generation Error:", err.message);
-    
-    if (err.message.includes("API key not valid")) {
-      return "❌ **AI Error**: The provided API key is invalid.";
+      return fullText;
+    } else {
+      const resp = await generativeModel.generateContent(request);
+      return resp.response.candidates[0].content.parts[0].text;
     }
-    if (err.message.includes("SAFETY")) {
-      return "🛡️ **AI Safety**: That prompt was blocked for safety concerns.";
-    }
-    if (err.message.includes("quota")) {
-      return "⚠️ **AI Quota**: We've reached the free tier limits. Try again in a minute.";
-    }
-
-    return "⚠️ **AI Unavailable**: I'm having trouble connecting to my brain right now. Try again shortly.";
+  } catch (error) {
+    console.error("[VertexAI] Generation Error:", error.message);
+    throw error;
   }
 }
 

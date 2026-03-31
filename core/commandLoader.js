@@ -5,10 +5,14 @@ module.exports = (client, pluginPath) => {
   const commandsPath = path.join(pluginPath, 'commands');
   const loadedCommands = [];
 
-  if (!fs.existsSync(commandsPath)) return loadedCommands;
+  if (!fs.existsSync(commandsPath)) {
+    console.log(`[Jack] Commands directory not found for path: ${commandsPath}`);
+    return loadedCommands;
+  }
 
   function loadDirectory(dir) {
     const files = fs.readdirSync(dir);
+    console.log(`[Jack] Scanning directory: ${dir}. Files found: [${files.join(', ')}]`);
     for (const file of files) {
       const fullPath = path.join(dir, file);
       if (fs.statSync(fullPath).isDirectory()) {

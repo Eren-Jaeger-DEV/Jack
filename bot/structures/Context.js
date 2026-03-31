@@ -138,6 +138,9 @@ class Context {
         this.channelId = this.channel?.id;
         this.userId = this.user?.id;
 
+        // Internal tracking for edits
+        this._lastResponse = null;
+
         // Prevent modification
         Object.freeze(this);
     }
@@ -162,11 +165,42 @@ class Context {
                 }
                 return await this.source.reply(data);
             } else {
-                return await this.channel.send(data);
+                const msg = await this.channel.send(data);
+                this._lastResponse = msg;
+                return msg;
             }
         } catch (err) {
             if (err?.code === 10062) return null; // Unknown interaction
             logger.error("Context", `Failed to send reply: ${err.message}`);
+            throw err;
+        }
+    }
+
+    /**
+     * Standardized edit function.
+     * Edits the existing reply or original response.
+     */
+    async editReply(data) {
+        if (typeof data === "string") data = { content: data };
+        
+        // Handle deprecated ephemeral property
+        if (data.ephemeral === true) {
+            data.flags = [MessageFlags.Ephemeral];
+            delete data.ephemeral;
+        }
+
+        try {
+            if (this.isInteraction) {
+                return await this.source.editReply(data);
+            } else {
+                if (this._lastResponse) {
+                    return await this._lastResponse.edit(data);
+                }
+                return await this.reply(data);
+            }
+        } catch (err) {
+            if (err?.code === 10062) return null; // Unknown interaction
+            logger.error("Context", `Failed to edit reply: ${err.message}`);
             throw err;
         }
     }

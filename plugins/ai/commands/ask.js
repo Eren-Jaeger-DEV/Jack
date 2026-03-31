@@ -5,7 +5,7 @@ const { handleError } = require('../../../core/errorHandler');
 
 /**
  * AI Ask Command — Core Interaction
- * Blueprint standard with enhanced error handling and context compatibility.
+ * Enhanced with ChatGPT-style streaming updates.
  */
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
   description: "Ask Jack AI a question",
   aliases: ["ai", "jack"],
   usage: "/ask <prompt>",
-  details: "Interacts with the Gemini AI model to provide intelligent responses based on clan context.",
+  details: "Interacts with local Ollama to provide streaming intelligent responses.",
 
   data: new SlashCommandBuilder()
     .setName("ask")
@@ -35,28 +35,53 @@ module.exports = {
 
     const prompt = ctx.options.getString("prompt");
 
-    // 2. Standardized defer (handles both slash and prefix typing states)
+    // 2. Initial Defer/Response
     await ctx.defer();
+    const startTime = Date.now();
+    let currentText = "⏳ **Jack is thinking...**";
+    await ctx.editReply({ content: currentText });
+
+    let lastUpdate = Date.now();
+    let firstTokenReceived = false;
+    const UPDATE_INTERVAL = 500; // Update Discord every 500ms for high responsiveness
 
     try {
-      const response = await aiService.generateResponse(prompt);
+      const fullResponse = await aiService.generateResponse(prompt, [], async (token, fullText) => {
+        const now = Date.now();
+        
+        // IMMEDIATE FIRST TOKEN: Bypass the 500ms timer for the first word
+        // This ensures the user sees Jack start "writing" instantly.
+        if (!firstTokenReceived || (now - lastUpdate > UPDATE_INTERVAL)) {
+          firstTokenReceived = true;
+          lastUpdate = now;
+          let display = fullText + " ▌"; // Cursor effect
+          
+          if (display.length > 2000) display = display.slice(-1990); // Keep Discord limits in check
+          
+          await ctx.editReply({ content: display }).catch(() => null);
+        }
+      });
 
-      // 3. Handle response length (Discord limit is 2000 for content, ~4000 for embeds)
-      if (response.length > 1900) {
+      // 3. Final completion
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      const footer = `\n\n*Generated in ${duration}s via Ollama (tinyllama)*`;
+      
+      let finalContent = fullResponse + footer;
+      
+      if (finalContent.length > 2000) {
         const embed = new EmbedBuilder()
           .setTitle("🤖 Jack AI Response")
           .setColor("Gold")
-          .setDescription(response.slice(0, 4000))
-          .setFooter({ text: "Context-aware response generated via Gemini 1.5 Flash" })
+          .setDescription(fullResponse.slice(0, 4000))
+          .setFooter({ text: `Ollama (tinyllama) • ${duration}s` })
           .setTimestamp();
           
-        return ctx.reply({ embeds: [embed] });
+        return ctx.editReply({ content: "✅ Response complete:", embeds: [embed] });
       }
 
-      await ctx.reply({ content: response });
+      await ctx.editReply({ content: finalContent });
 
     } catch (err) {
-      // 4. Standardized Global Error Handling
       await handleError(err, ctx, "ask");
     }
   }

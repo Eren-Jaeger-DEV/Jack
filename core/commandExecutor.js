@@ -13,7 +13,7 @@ const logger = require("../bot/utils/logger");
 const { setTemporaryPresence, getPresenceText } = require("../bot/utils/presenceManager");
 const { performance } = require("perf_hooks");
 
-const MAX_EXECUTION_TIME = 10000; // 10 seconds
+const MAX_EXECUTION_TIME = 120000; // 120 seconds
 
 /**
  * Orchestrates the execution of a command.
