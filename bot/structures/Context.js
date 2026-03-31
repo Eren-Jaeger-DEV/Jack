@@ -140,9 +140,6 @@ class Context {
 
         // Internal tracking for edits
         this._lastResponse = null;
-
-        // Prevent modification
-        Object.freeze(this);
     }
 
     /**
