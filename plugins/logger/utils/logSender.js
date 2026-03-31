@@ -19,7 +19,7 @@ async function sendLog(client, guild, type, embed) {
     const targetName = channelMap[type];
     if (!targetName) return;
 
-    const channel = client.serverMap.getChannelByName(targetName);
+    const channel = client.serverMap.getChannel('LOGS', targetName);
     if (!channel) return;
 
     try {
