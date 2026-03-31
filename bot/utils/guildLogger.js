@@ -24,8 +24,30 @@ async function logToGuild(guild, payload, type = 'log') {
             case 'market':
                 channelId = config.settings?.marketLogChannelId;
                 break;
+            case 'join-leave':
+                channelId = config.settings?.joinLeaveLogChannelId;
+                break;
+            case 'member':
+                channelId = config.settings?.memberLogChannelId;
+                break;
+            case 'voice':
+                channelId = config.settings?.voiceLogChannelId;
+                break;
+            case 'message':
+                channelId = config.settings?.messageLogChannelId;
+                break;
+            case 'server':
+                channelId = config.settings?.serverLogChannelId;
+                break;
             default:
                 channelId = config.settings?.logChannelId;
+        }
+
+        if (!channelId && guild.client.serverMap) {
+            // Fallback to ServerMapManager if specific config ID is missing
+            const mapName = type.replace('-', '_') + '_log';
+            const mappedChannel = guild.client.serverMap.getChannelByName(mapName);
+            if (mappedChannel) channelId = mappedChannel.id;
         }
 
         if (!channelId) return;

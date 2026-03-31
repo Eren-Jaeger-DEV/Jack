@@ -1,0 +1,8 @@
+{
+  "name": "logger",
+  "version": "1.0.0",
+  "description": "Comprehensive standalone server logging plugin with Voice, Message, Member, and Server tracking.",
+  "main": "index.js",
+  "id": "logger",
+  "enabledByDefault": true
+}

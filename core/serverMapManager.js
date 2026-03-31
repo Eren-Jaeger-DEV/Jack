@@ -8,8 +8,21 @@ class ServerMapManager {
 
   normalize(name) {
     if (!name) return '';
-    return name
-      .toLowerCase()
+    
+    // Simple small-caps mapping to ensure decorated names resolve
+    const smallCapsMap = {
+      'ᴀ': 'a', 'ʙ': 'b', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ꜰ': 'f', 'ɢ': 'g', 'ʜ': 'h', 
+      'ɪ': 'i', 'ᴊ': 'j', 'ᴋ': 'k', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 
+      'ǫ': 'q', 'ʀ': 'r', 's': 's', 'ᴛ': 't', 'ᴜ': 'u', 'ᴠ': 'v', 'ᴡ': 'w', 'x': 'x', 
+      'ʏ': 'y', 'ᴢ': 'z'
+    };
+
+    let normalized = name.toLowerCase();
+    for (const [char, mapped] of Object.entries(smallCapsMap)) {
+      normalized = normalized.replaceAll(char.toLowerCase(), mapped);
+    }
+
+    return normalized
       .replace(/[^a-z0-9]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '');
