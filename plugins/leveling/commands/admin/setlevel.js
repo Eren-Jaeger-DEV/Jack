@@ -39,7 +39,7 @@ module.exports = {
     const profile = await Level.findOneAndUpdate(
       { userId: target.id, guildId: ctx.guild.id },
       { xp: requiredXp, level: level, weeklyXp: requiredXp },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     return ctx.reply({ content: `✅ Set ${target.tag}'s level to ${profile.level}. Total XP is now ${profile.xp}.`, ephemeral: true });

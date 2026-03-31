@@ -84,7 +84,7 @@ module.exports = {
                 await InviteStats.findOneAndUpdate(
                     { userId: inviter.id, guildId: guild.id },
                     { $inc: { invites: 1 } },
-                    { upsert: true, new: true }
+                    { upsert: true, returnDocument: 'after' }
                 );
 
                 // 5. Raid Detection (5+ joins in 5 mins from same inviter)

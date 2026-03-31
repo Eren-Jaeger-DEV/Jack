@@ -40,7 +40,7 @@ async function endBattle(guildId) {
   return Battle.findOneAndUpdate(
     { guildId, active: true },
     { active: false },
-    { new: true }
+    { returnDocument: 'after' }
   );
 }
 

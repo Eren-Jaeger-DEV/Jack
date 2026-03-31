@@ -38,7 +38,7 @@ module.exports = {
     const profile = await Level.findOneAndUpdate(
       { userId: target.id, guildId: ctx.guild.id },
       { $inc: { xp: amount, weeklyXp: amount } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     profile.level = getLevelFromXP(profile.xp);

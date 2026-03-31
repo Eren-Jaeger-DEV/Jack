@@ -60,7 +60,7 @@ async function updateGuildConfig(guildId, updates) {
     const config = await GuildConfig.findOneAndUpdate(
       { guildId },
       { $set: updates },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
     
     const configObj = config.toObject();

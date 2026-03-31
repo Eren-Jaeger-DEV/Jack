@@ -21,9 +21,12 @@ module.exports = (client, pluginPath) => {
           if (command.name) {
             client.commands.set(command.name, command);
             loadedCommands.push(command.name);
+            console.log(`[Jack] Successfully loaded command: ${command.name}`);
+          } else {
+            console.error(`[Jack] Command file missing 'name' at ${fullPath}`);
           }
         } catch (err) {
-          console.error(`[Jack] Failed to load command at ${fullPath}:`, err.message);
+          console.error(`[Jack] Critical error loading command at ${fullPath}:`, err);
         }
       }
     }

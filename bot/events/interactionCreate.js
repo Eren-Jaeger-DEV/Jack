@@ -30,7 +30,7 @@ module.exports = {
           username: interaction.user.username,
           avatar: interaction.user.avatar
         },
-        { upsert: false } // Only update if they already exist
+        { upsert: false, returnDocument: 'after' } // Only update if they already exist
       ).catch(() => null);
     }
 
@@ -38,6 +38,7 @@ module.exports = {
       const command = client.commands.get(interaction.commandName);
       if (!command) {
         console.warn(`[Interaction] Command not found: ${interaction.commandName}`);
+        console.log(`[Interaction] Available commands: ${[...client.commands.keys()].join(', ')}`);
         return;
       }
 

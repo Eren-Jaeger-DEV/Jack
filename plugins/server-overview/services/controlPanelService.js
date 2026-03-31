@@ -37,7 +37,7 @@ async function updateConfig(guildId, data) {
     return await OverviewConfig.findOneAndUpdate(
         { guildId },
         data,
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
     );
 }
 

@@ -56,7 +56,7 @@ async function incrementAchievement(userId, field, amount = 1) {
     await Player.findOneAndUpdate(
       { discordId: userId },
       { $inc: { [field]: amount } },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
   } catch (err) {
     console.error(`[ProfileService] Achievement increment error (${field}, ${userId}):`, err.message);
@@ -105,7 +105,7 @@ async function setAchievement(userId, field, value) {
     await Player.findOneAndUpdate(
       { discordId: userId },
       { $set: { [field]: value } },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
   } catch (err) {
     console.error(`[ProfileService] Achievement manual set error (${field}, ${userId}):`, err.message);
