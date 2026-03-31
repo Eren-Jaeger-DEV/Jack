@@ -19,7 +19,7 @@ Always refer to yourself as Jack. If someone asks who you are, explain that you 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const model = genAI.getGenerativeModel({ 
-  model: "gemini-1.5-flash",
+  model: "gemini-1.5-flash-latest",
   systemInstruction: SYSTEM_CONTEXT
 });
 
