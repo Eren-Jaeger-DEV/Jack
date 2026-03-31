@@ -41,6 +41,12 @@ module.exports = {
 
       // Decision: Should I respond?
       const isAiChannel = aiChannelId && message.channel.id === aiChannelId;
+      
+      // If mentioned outside the AI channel, redirect them
+      if (isMentioned && !isAiChannel && aiChannelId) {
+        return message.reply(`❌ **Jack AI** is only available in <#${aiChannelId}>. Please chat there!`).catch(() => {});
+      }
+
       if (!isAiChannel && !isMentioned) return;
 
       // Extract prompt: remove the bot's mention if present

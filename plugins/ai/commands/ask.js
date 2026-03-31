@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const aiService = require('../../../bot/utils/aiService');
+const configManager = require('../../../bot/utils/configManager');
 
 module.exports = {
   name: "ask",
@@ -13,6 +14,16 @@ module.exports = {
     .addStringOption(o => o.setName("prompt").setDescription("What do you want to ask?").setRequired(true)),
 
   async run(ctx) {
+    const config = await configManager.getGuildConfig(ctx.guild.id);
+    const aiChannelId = config?.settings?.aiChannelId;
+
+    if (aiChannelId && ctx.channel.id !== aiChannelId) {
+      return ctx.reply({ 
+        content: `❌ **Jack AI** is only available in <#${aiChannelId}>. Please use the command there!`, 
+        ephemeral: true 
+      });
+    }
+
     const prompt = ctx.options.getString("prompt");
 
     // Defer the reply because AI takes time
