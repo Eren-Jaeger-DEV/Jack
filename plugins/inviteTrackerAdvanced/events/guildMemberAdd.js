@@ -35,13 +35,14 @@ module.exports = {
         // 3. Detect Invite Used
         let inviter = null;
         let joinType = "Normal";
+        let usedInvite = null;
 
         try {
             const oldInvites = inviteCache.get(guild.id) || new Map();
             const newInvites = await guild.invites.fetch().catch(() => new Map());
             
             // Find used invite
-            const usedInvite = newInvites.find(inv => {
+            usedInvite = newInvites.find(inv => {
                 const prevUses = oldInvites.get(inv.code) || 0;
                 return inv.uses > prevUses;
             });
