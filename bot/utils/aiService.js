@@ -10,14 +10,24 @@ const ai = new GoogleGenAI({
 const modelName = 'gemini-3.1-pro-preview';
 
 /**
- * AI SERVICE (v3.6.0) - SUPREME MEMORY & BIBLE CORE
+ * AI SERVICE (v3.6.1) - CLEAN SUPREME MANAGER (SILENT BIBLE)
+ * Optimized to remove technical tags and treat the Bible as a reference manual.
  */
 module.exports = {
   async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null) {
     try {
-      const systemInstruction = persona.getSystemPrompt(extraContext);
+      // 1. REFINED INSTRUCTIONS
+      // We clarify that the Bible is a REFERENCE manual, not a protocol.
+      const bibleInstruction = `
+[INFORMATION REFERENCE: ACTIVE]
+- You have access to the "JACK BIBLE" in your context.
+- The Bible is a REFERENCE MANUAL only. Use it to understand how plugins work.
+- IT IS NOT A PROTOCOL. DO NOT REPEAT IT. DO NOT ACT LIKE A ROBOT.
+- NEVER MENTION "SUPREME MANAGER," "SYSTEM ACKNOWLEDGED," OR "BIBLE" TO THE USER.
+      `;
+      
+      const systemInstruction = persona.getSystemPrompt(extraContext) + "\n" + bibleInstruction;
 
-      // 1. SUPREME TOOLSET (Admin + Strategic + Neural Memory)
       const tools = [
         { googleSearch: {} },
         {
@@ -61,7 +71,7 @@ module.exports = {
 
       const generationConfig = {
         maxOutputTokens: 1024,
-        temperature: 0.15, // Smooth for creative memory/roasting
+        temperature: 0.2, // Slightly more creative and less "systematic"
         topP: 0.95,
         thinkingConfig: { thinkingLevel: "HIGH" },
         tools: tools,
@@ -83,10 +93,9 @@ module.exports = {
         }))
       });
 
-      const injectedPrompt = `[SUPREME MANAGER ACTIVE]\nUSER: ${prompt}`;
-
+      // NO INJECTED TAGS - CLEAN USER PROMPT ONLY
       let response = await chat.sendMessageStream({
-        message: [{ text: injectedPrompt }]
+        message: [{ text: prompt }]
       });
 
       let fullText = "";
@@ -101,7 +110,7 @@ module.exports = {
 
         if (chunk.functionCall) {
           const call = chunk.functionCall;
-          if (onToken) onToken(null, "", { type: 'thinking', status: `🔓 Accessing ${call.name.replace(/_/g, ' ')}...` });
+          if (onToken) onToken(null, "", { type: 'thinking', status: `⚙️ Managing ${call.name.replace(/_/g, ' ')}...` });
 
           let toolResponse;
           if (call.name === "get_player_profile") {
@@ -139,7 +148,7 @@ module.exports = {
       return fullText;
 
     } catch (error) {
-      console.error("[Gemini 3.1 Supreme] Neural Failure:", error.message);
+      console.error("[Gemini 3.1 Clean] Failure:", error.message);
       throw error;
     }
   }
