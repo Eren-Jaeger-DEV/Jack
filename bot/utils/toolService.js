@@ -31,6 +31,45 @@ module.exports = {
   },
 
   /**
+   * MEMORY TOOL: Records a personality trait or interaction note about a member.
+   */
+  async record_personality_trait(discord_id, note, reputation_change = 0) {
+    const rawId = this._sanitizeId(discord_id);
+    const MemberDiary = require("../database/models/MemberDiary");
+    try {
+      let diary = await MemberDiary.findOne({ discordId: rawId });
+      if (!diary) diary = new MemberDiary({ discordId: rawId });
+      
+      // Update data
+      diary.notes += `\n[${new Date().toLocaleDateString()}] ${note}`;
+      diary.reputationScore += reputation_change;
+      diary.interactionCount += 1;
+      diary.lastInteraction = Date.now();
+      
+      await diary.save();
+      return { success: `Memory Updated: ${note} (Reputation: ${diary.reputationScore})` };
+    } catch (e) { return { error: "Failed to record trait." }; }
+  },
+
+  /**
+   * MEMORY TOOL: Fetches the personality and interaction history of a member.
+   */
+  async fetch_member_history(discord_id) {
+    const rawId = this._sanitizeId(discord_id);
+    const MemberDiary = require("../database/models/MemberDiary");
+    try {
+      const diary = await MemberDiary.findOne({ discordId: rawId });
+      if (!diary) return { profile: "New user. No personality profile yet." };
+      return {
+        profile: diary.personalityProfile,
+        score: diary.reputationScore,
+        notes: diary.notes,
+        lastSeen: diary.lastInteraction
+      };
+    } catch (e) { return { error: "Failed to fetch history." }; }
+  },
+
+  /**
    * CORE TOOL: Fetches live server statistics (Member counts).
    */
   async get_server_stats(guild) {

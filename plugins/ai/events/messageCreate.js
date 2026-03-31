@@ -42,7 +42,9 @@ module.exports = {
         let streamingMessage = await message.reply("⚡ **Jack is formulating a strategy...**").catch(() => null);
         if (!streamingMessage) return;
 
-        const extraContext = await getClanContext(message.guild);
+        // 2. Fetch Live Clan Stats & Member Diary (Ground Truth)
+        const extraContext = await getClanContext(message.guild, message.member);
+        
         const history = chatHistory.get(message.channel.id) || [];
         
         let lastUpdateTime = Date.now();

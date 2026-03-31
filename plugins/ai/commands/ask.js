@@ -33,7 +33,8 @@ module.exports = {
     const startTime = Date.now();
     await ctx.editReply({ content: "⚡ **Jack is formulating a strategy...**" });
 
-    const extraContext = await getClanContext(ctx.guild);
+    // 2. Fetch Live Clan Stats & Member Diary (Ground Truth)
+    const extraContext = await getClanContext(ctx.guild, ctx.member);
 
     let lastUpdateTime = Date.now();
     let inThinkingPhase = true;
