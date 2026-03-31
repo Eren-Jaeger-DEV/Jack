@@ -155,11 +155,16 @@ module.exports = {
 
         await message.react('🏆');
 
-        // Achievement tracking: increment clanBattleWins + update bestClanBattleRank
-        for (let i = 0; i < top6.length; i++) {
+        // Achievement tracking: update bestClanBattleRank for ALL participants, increment wins for #1
+        const sortedPlayers = [...finalBattle.players].sort((a, b) => b.totalPoints - a.totalPoints);
+        for (let i = 0; i < sortedPlayers.length; i++) {
           const rank = i + 1;
-          await profileService.incrementAchievement(top6[i].userId, 'achievements.clanBattleWins');
-          await profileService.setAchievementIfBetter(top6[i].userId, 'achievements.bestClanBattleRank', rank);
+          const p = sortedPlayers[i];
+          
+          if (rank === 1) {
+            await profileService.incrementAchievement(p.userId, 'achievements.clanBattleWins');
+          }
+          await profileService.setAchievementIfBetter(p.userId, 'achievements.bestClanBattleRank', rank);
         }
 
       } catch (err) {

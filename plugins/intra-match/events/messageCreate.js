@@ -13,6 +13,7 @@ const { PermissionFlagsBits, ChannelType } = require('discord.js');
 const registrationManager = require('../services/registrationManager');
 const timeParser = require('../services/timeParser');
 const roleManager = require('../services/roleManager');
+const profileService = require('../../clan/services/profileService');
 const configManager = require('../../../bot/utils/configManager');
 
 /* ── Keyword matchers ── */
@@ -237,8 +238,12 @@ async function handleWinner(message) {
     const winners = [];
 
     for (const [, member] of mentioned) {
-      const assigned = winnerRoleId ? await roleManager.assignRole(message.guild, member.id, winnerRoleId) : false;
-      if (assigned) winners.push(member.user.tag);
+      const assigned = winnerRoleId ? await roleManager.assignRole(message.guild, member.id, winnerRoleId) : true;
+      if (assigned) {
+        winners.push(member.user.tag);
+        // Achievement tracking: increment intraWins
+        await profileService.incrementAchievement(member.id, 'achievements.intraWins');
+      }
     }
 
     // 3. Remove PARTICIPATE_ROLE_ID from all members

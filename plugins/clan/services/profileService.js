@@ -2,7 +2,7 @@
  * profileService.js — Profile & Achievements Service
  *
  * Centralized logic for reading and updating player achievements.
- * PATCH 1 & 2: Safe atomic updates with $inc and conditional $set.
+ * Atomic updates with $inc and conditional $set.
  */
 
 const Player = require('../../../bot/database/models/Player');
@@ -43,15 +43,20 @@ async function getAchievements(userId) {
 }
 
 /**
- * PATCH 1: Safe atomic increment using findOneAndUpdate.
+ * Safe atomic increment using findOneAndUpdate.
  * Will not crash if player is missing, uses $inc for race-safety.
+ * @param {string} userId
+ * @param {string} field - Achievement sub-field (e.g., 'achievements.clanBattleWins')
+ * @param {number} amount
  */
 async function incrementAchievement(userId, field, amount = 1) {
   try {
+    if (!field.startsWith('achievements.')) field = `achievements.${field}`;
+    
     await Player.findOneAndUpdate(
       { discordId: userId },
       { $inc: { [field]: amount } },
-      { new: true }
+      { new: true, upsert: true }
     );
   } catch (err) {
     console.error(`[ProfileService] Achievement increment error (${field}, ${userId}):`, err.message);
@@ -59,24 +64,51 @@ async function incrementAchievement(userId, field, amount = 1) {
 }
 
 /**
- * PATCH 2: Set achievement only if the new value is better (lower rank).
+ * Set achievement only if the new value is better (lower rank).
  * Handles null/undefined gracefully.
+ * @param {string} userId
+ * @param {string} field - Achievement sub-field (e.g., 'achievements.bestClanBattleRank')
+ * @param {number} newValue
  */
 async function setAchievementIfBetter(userId, field, newValue) {
+  if (!newValue || newValue <= 0) return;
   try {
     const player = await Player.findOne({ discordId: userId });
     if (!player) return;
 
+    if (!field.startsWith('achievements.')) field = `achievements.${field}`;
     const shortField = field.replace('achievements.', '');
     const current = player.achievements?.[shortField];
 
-    if (current === null || current === undefined || newValue < current) {
-      if (!player.achievements) player.achievements = {};
-      player.achievements[shortField] = newValue;
-      await player.save();
+    // Better if currently null, or new value is less than current (e.g. Rank 1 is better than Rank 5)
+    if (current === null || current === undefined || current === 0 || newValue < current) {
+      await Player.findOneAndUpdate(
+        { discordId: userId },
+        { $set: { [field]: newValue } }
+      );
     }
   } catch (err) {
     console.error(`[ProfileService] Achievement best-value error (${field}, ${userId}):`, err.message);
+  }
+}
+
+/**
+ * Manually set an achievement field value.
+ * @param {string} userId
+ * @param {string} field
+ * @param {any} value
+ */
+async function setAchievement(userId, field, value) {
+  try {
+    if (!field.startsWith('achievements.')) field = `achievements.${field}`;
+    
+    await Player.findOneAndUpdate(
+      { discordId: userId },
+      { $set: { [field]: value } },
+      { new: true, upsert: true }
+    );
+  } catch (err) {
+    console.error(`[ProfileService] Achievement manual set error (${field}, ${userId}):`, err.message);
   }
 }
 
@@ -84,5 +116,6 @@ module.exports = {
   getProfile,
   getAchievements,
   incrementAchievement,
-  setAchievementIfBetter
+  setAchievementIfBetter,
+  setAchievement
 };
