@@ -19,7 +19,7 @@ module.exports = {
 
         if (!logChannel && client.serverMap) {
             // Fallback to name-based identification via ServerMapManager
-            logChannel = client.serverMap.getChannelByName("jack_log");
+            logChannel = client.serverMap.getChannelByName("invite-log") || client.serverMap.getChannelByName("invite_log") || client.serverMap.getChannelByName("jack_log");
         }
 
         // 1. Account Age Flags

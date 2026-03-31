@@ -18,7 +18,7 @@ module.exports = {
         }
 
         if (!logChannel && client.serverMap) {
-            logChannel = client.serverMap.getChannelByName("jack_log");
+            logChannel = client.serverMap.getChannelByName("invite-log") || client.serverMap.getChannelByName("invite_log") || client.serverMap.getChannelByName("jack_log");
         }
 
         const joinRecord = await InviteJoin.findOne({ memberId: member.id, guildId: guild.id });
