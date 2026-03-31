@@ -76,6 +76,7 @@ const guildConfigSchema = new mongoose.Schema({
     mediaChannelId: { type: String },
     linksChannelId: { type: String },
     botCommandsChannelId: { type: String },
+    aiChannelId: { type: String },
     xpIgnoreChannels: { type: [String], default: [] },
 
     // Feature Roles
