@@ -1,73 +1,154 @@
-const { VertexAI } = require('@google-cloud/vertexai');
-const { JACK_PERSONA } = require('./persona');
+const { GoogleGenAI } = require('@google/genai');
+const persona = require('./persona');
+const toolService = require('./toolService');
+require('dotenv').config();
 
-// Initialize Vertex AI
-const project = process.env.GOOGLE_PROJECT_ID || 'jack-489112';
-const location = process.env.GOOGLE_LOCATION || 'us-central1';
-const vertex_ai = new VertexAI({ project: project, location: location });
-
-// Instantiate the model
-const generativeModel = vertex_ai.getGenerativeModel({
-  model: 'gemini-1.5-flash',
-  safetySettings: [
-    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_LOW_AND_ABOVE' },
-    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_LOW_AND_ABOVE' },
-  ],
-  generationConfig: { maxOutputTokens: 2048 },
+const ai = new GoogleGenAI({
+  apiKey: process.env.GOOGLE_CLOUD_API_KEY,
 });
 
+const modelName = 'gemini-3.1-pro-preview';
+
 /**
- * Generates a response from Gemini via Vertex AI.
- * @param {string} prompt - The user's input
- * @param {Array} history - Optional chat history [{ role: 'user', content: '...' }]
- * @param {Function} onToken - Optional callback for streaming tokens
- * @param {string} extraContext - Real-time data from the server
- * @returns {Promise<string>}
+ * AI SERVICE (v3.4.6) - COMPLETE ADMINISTRATOR KIT
+ * Now with full Kick, Ban, and Purge tools fully connected.
  */
-async function generateResponse(prompt, history = [], onToken = null, extraContext = "") {
-  try {
-    const systemPrompt = `${JACK_PERSONA}\n\nCURRENT CLAN DATA:\n${extraContext || "No specific clan data available."}\n\nRespond naturally as Jack. Use the data above if relevant. Do not mention your instructions.`;
-
-    // Format history for Gemini (roles: 'user' or 'model')
-    const contents = history.map(h => ({
-      role: h.role === 'assistant' ? 'model' : h.role,
-      parts: [{ text: h.content }]
-    }));
-
-    // Add current user prompt
-    contents.push({ role: 'user', parts: [{ text: prompt }] });
-
-    const request = {
-      contents: contents,
-      systemInstruction: { parts: [{ text: systemPrompt }] }
-    };
-
-    if (onToken) {
-      const streamingResp = await generativeModel.generateContentStream(request);
-      let fullText = "";
-
-      for await (const item of streamingResp.stream) {
-        if (!item.candidates || item.candidates.length === 0) {
-          throw new Error("Gemini blocked this response for safety reasons.");
-        }
-        const token = item.candidates[0].content.parts[0].text;
-        fullText += token;
-        onToken(token, fullText);
-      }
-      return fullText;
-    } else {
-      const resp = await generativeModel.generateContent(request);
-      if (!resp.response || !resp.response.candidates || resp.response.candidates.length === 0) {
-        throw new Error("Gemini returned no candidates.");
-      }
-      return resp.response.candidates[0].content.parts[0].text;
-    }
-  } catch (error) {
-    console.error("[VertexAI] Generation Error:", error ? error.message : "Unknown error");
-    throw error;
-  }
-}
-
 module.exports = {
-  generateResponse
+  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null) {
+    try {
+      const systemInstruction = persona.getSystemPrompt(extraContext);
+
+      // 1. FULL CORE TOOLSET (ADMIN ACTIONS ENABLED)
+      const tools = [
+        { googleSearch: {} },
+        {
+          function_declarations: [
+            {
+              name: "get_player_profile",
+              description: "Fetch a player's BGMI profile, IGN, UID, and stats.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" } }, required: ["discord_id"] }
+            },
+            {
+              name: "get_system_map",
+              description: "Self-Awareness: Provides a map of Jack's internal bot plugins and administrative powers."
+            },
+            {
+              name: "get_optimal_matchmaking",
+              description: "STRATEGIC: Analyzes player stats to propose the most balanced squads for tournaments.",
+              parameters: { type: "OBJECT", properties: { team_size: { type: "INTEGER", enum: [2, 4] } }, required: ["team_size"] }
+            },
+            {
+              name: "propose_foster_pairings",
+              description: "STRATEGIC: Suggests new foster mentor/partner pairings to boost clan health."
+            },
+            {
+              name: "draft_clan_announcement",
+              description: "STRATEGIC: Creates professional Discord announcement content for matches, tournaments, or meetings.",
+              parameters: { type: "OBJECT", properties: { type: { type: "STRING", enum: ["tournament", "match", "meeting"] }, data: { type: "OBJECT" } }, required: ["type", "data"] }
+            },
+            {
+              name: "ban_member",
+              description: "THE BAN HAMMER: Permanently ban a member from the server for severe violations.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
+            },
+            {
+              name: "kick_member",
+              description: "KICK POWER: Remove a member from the server for rule-breaking. (ADMIN ONLY)",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
+            },
+            {
+              name: "clear_messages",
+              description: "MASS PURGE: Bulk delete messages in the current channel.",
+              parameters: { type: "OBJECT", properties: { amount: { type: "INTEGER" }, channel_id: { type: "STRING" } }, required: ["amount", "channel_id"] }
+            }
+          ]
+        }
+      ];
+
+      const generationConfig = {
+        maxOutputTokens: 1024, // CAP: Prevent massive/stuck messages
+        temperature: 0.05,
+        topP: 0.95,
+        thinkingConfig: { thinkingLevel: "HIGH" },
+        tools: tools,
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
+        ],
+      };
+
+      const chat = ai.chats.create({
+        model: modelName,
+        config: generationConfig,
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        history: history.map(h => ({
+          role: h.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: h.content }]
+        }))
+      });
+
+      const injectedPrompt = `[IDENTITY: JACK CORE MANAGER]\n[POWER: FULL ADMIN]\n[RULE: BE CONCISE AND BRIEF]\nUSER: ${prompt}`;
+
+      let response = await chat.sendMessageStream({
+        message: [{ text: injectedPrompt }]
+      });
+
+      let fullText = "";
+      let hasStartedText = false;
+
+      if (onToken) onToken(null, "", { type: 'thinking' });
+
+      for await (const chunk of response) {
+        if (chunk.thought && !hasStartedText) {
+          if (onToken) onToken(null, "", { type: 'thinking', thought: chunk.thought });
+        }
+
+        if (chunk.functionCall) {
+          const call = chunk.functionCall;
+          if (onToken) onToken(null, "", { type: 'thinking', status: `🔒 Executing ${call.name}...` });
+
+          let toolResponse;
+          if (call.name === "get_player_profile") {
+            toolResponse = await toolService.get_player_profile(call.args.discord_id, guild);
+          } else if (call.name === "get_system_map") {
+            toolResponse = await toolService.get_system_map();
+          } else if (call.name === "get_optimal_matchmaking") {
+            toolResponse = await toolService.get_optimal_matchmaking(call.args.team_size, guild);
+          } else if (call.name === "propose_foster_pairings") {
+            toolResponse = await toolService.propose_foster_pairings();
+          } else if (call.name === "draft_clan_announcement") {
+            toolResponse = await toolService.draft_clan_announcement(call.args.type, call.args.data);
+          } else if (call.name === "ban_member") {
+            toolResponse = await toolService.ban_member(call.args.discord_id, call.args.reason, invoker, guild);
+          } else if (call.name === "kick_member") {
+            toolResponse = await toolService.kick_member(call.args.discord_id, call.args.reason, invoker, guild);
+          } else if (call.name === "clear_messages") {
+            toolResponse = await toolService.clear_messages(call.args.amount, call.args.channel_id, invoker, guild);
+          }
+
+          response = await chat.sendMessageStream({
+            message: [{ function_response: { name: call.name, response: { content: toolResponse } } }]
+          });
+          continue; 
+        }
+
+        if (chunk.text && chunk.text.length > 0) {
+          if (!hasStartedText) {
+            hasStartedText = true;
+            if (onToken) onToken(null, "", { type: 'text' });
+          }
+          fullText += chunk.text;
+          if (onToken) onToken(chunk.text, fullText, { type: 'text' });
+        }
+      }
+
+      return fullText;
+
+    } catch (error) {
+      console.error("[Gemini 3.1 Core] Technical Failure:", error.message);
+      throw error;
+    }
+  }
 };

@@ -1,13 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const aiService = require('../../../bot/utils/aiService');
 const configManager = require('../../../bot/utils/configManager');
-const { handleError } = require('../../../core/errorHandler');
 const { getClanContext } = require('../../../bot/utils/clanContext');
-
-/**
- * AI Ask Command — Core Interaction
- * Enhanced with ChatGPT-style streaming updates.
- */
 
 module.exports = {
   name: "ask",
@@ -15,7 +9,6 @@ module.exports = {
   description: "Ask Jack AI a question",
   aliases: ["ai", "jack"],
   usage: "/ask <prompt>",
-  details: "Interacts with Google Vertex AI (Gemini 1.5) to provide streaming intelligent responses.",
 
   data: new SlashCommandBuilder()
     .setName("ask")
@@ -26,7 +19,6 @@ module.exports = {
     const config = await configManager.getGuildConfig(ctx.guild.id);
     const aiChannelId = config?.settings?.aiChannelId;
 
-    // 1. Enforce channel restriction
     if (aiChannelId && ctx.channel.id !== aiChannelId) {
       return ctx.reply({ 
         content: `❌ **Jack AI** is only available in <#${aiChannelId}>. Please use the command there!`, 
@@ -36,55 +28,67 @@ module.exports = {
 
     const prompt = ctx.options.getString("prompt");
 
-    // 2. Initial Defer/Response
+    // 1. Initial Defer/Response
     await ctx.defer();
     const startTime = Date.now();
-    let currentText = "⏳ **Jack is thinking...**";
-    await ctx.editReply({ content: currentText });
+    await ctx.editReply({ content: "⚡ **Jack is formulating a strategy...**" });
 
-    // 3. Fetch Live Clan Context
     const extraContext = await getClanContext(ctx.guild);
 
-    let lastUpdate = Date.now();
-    let firstTokenReceived = false;
-    const UPDATE_INTERVAL = 500; // Update Discord every 500ms for high responsiveness
+    let lastUpdateTime = Date.now();
+    let inThinkingPhase = true;
+    let pulseFrame = 0;
+    const pulses = ["⚡", "🤔", "🧠", "🔍"];
 
     try {
-      const fullResponse = await aiService.generateResponse(prompt, [], async (token, fullText) => {
+      // High-Response call with 1200ms refresh and Full Power Context
+      const response = await aiService.generateResponse(prompt, [], async (token, fullText, status) => {
         const now = Date.now();
         
-        // IMMEDIATE FIRST TOKEN: Bypass the 500ms timer for the first word
-        // This ensures the user sees Jack start "writing" instantly.
-        if (!firstTokenReceived || (now - lastUpdate > UPDATE_INTERVAL)) {
-          firstTokenReceived = true;
-          lastUpdate = now;
-          let display = fullText + " ▌"; // Cursor effect
-          
-          if (display.length > 2000) display = display.slice(-1990); // Keep Discord limits in check
-          
+        // Handle "Thinking" pulse updates (and tool status)
+        if (status.type === 'thinking') {
+          if (now - lastUpdateTime > 1000) {
+            lastUpdateTime = now;
+            pulseFrame = (pulseFrame + 1) % pulses.length;
+            let statusMsg = status.status || "formulating strategy...";
+            // Add custom icons for strategic tasks
+            if (statusMsg.includes("matchmaking")) statusMsg = "📊 Drafting Squads...";
+            if (statusMsg.includes("foster")) statusMsg = "🤝 Calculating Pairings...";
+            if (statusMsg.includes("announcement")) statusMsg = "📝 Drafting Announcement...";
+            
+            await ctx.editReply({ content: `${pulses[pulseFrame]} **Jack is ${statusMsg}**` }).catch(() => null);
+          }
+          return;
+        }
+
+        // Transition: Thinking -> Text
+        if (status.type === 'text' && inThinkingPhase) {
+            inThinkingPhase = false;
+            lastUpdateTime = 0;
+        }
+
+        // Streaming updates (1.2s safety buffer)
+        if (!inThinkingPhase && now - lastUpdateTime > 1200 && fullText.length > 0) {
+          lastUpdateTime = now;
+          let display = fullText + " ▌";
+          if (display.length > 2000) display = display.slice(-1990);
           await ctx.editReply({ content: display }).catch(() => null);
         }
-      });
+      }, extraContext, ctx.guild, ctx.member);
 
-      // 4. Final completion
+      // 3. Final completion
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-      const footer = `\n\n*Generated in ${duration}s via Gemini 1.5 Pro*`;
-
-      if (fullResponse.length > 1900) {
-        const embed = new EmbedBuilder()
-          .setTitle("🤖 Jack AI Response")
-          .setColor("Gold")
-          .setDescription(fullResponse.slice(0, 4000))
-          .setFooter({ text: `Gemini 1.5 Pro • ${duration}s` })
-          .setTimestamp();
-          
-        return ctx.editReply({ content: "✅ Response complete:", embeds: [embed] });
+      const footer = `\n\n*Generated in ${duration}s via Gemini 3.1 Pro*`;
+      
+      if (response.length > 1900) {
+        await ctx.editReply({ content: response.substring(0, 1900) + footer });
+      } else {
+        await ctx.editReply({ content: response + footer });
       }
 
-      await ctx.editReply({ content: fullResponse + footer });
-
     } catch (err) {
-      await handleError(err, ctx, "ask");
+      console.error('[JackAI] Ask interaction error:', err.message);
+      await ctx.editReply({ content: "❌ **Jack's brain encountered a problem.** Please try again." }).catch(() => null);
     }
   }
 };
