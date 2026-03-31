@@ -10,8 +10,8 @@ const ai = new GoogleGenAI({
 const modelName = 'gemini-3.1-pro-preview';
 
 /**
- * AI SERVICE (v3.4.6) - COMPLETE ADMINISTRATOR KIT
- * Now with full Kick, Ban, and Purge tools fully connected.
+ * AI SERVICE (v3.5.0) - COMPLETE ADMINISTRATOR KIT
+ * Now with Server Statistics (Member counts) and full Kick/Ban tools.
  */
 module.exports = {
   async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null) {
@@ -29,8 +29,12 @@ module.exports = {
               parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" } }, required: ["discord_id"] }
             },
             {
+              name: "get_server_stats",
+              description: "Provides live Discord server stats (Member count, humans, bots)."
+            },
+            {
               name: "get_system_map",
-              description: "Self-Awareness: Provides a map of Jack's internal bot plugins and administrative powers."
+              description: "Provides a map of Jack's internal bot plugins and administrative powers."
             },
             {
               name: "get_optimal_matchmaking",
@@ -66,7 +70,7 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 1024, // CAP: Prevent massive/stuck messages
+        maxOutputTokens: 1024,
         temperature: 0.05,
         topP: 0.95,
         thinkingConfig: { thinkingLevel: "HIGH" },
@@ -89,7 +93,7 @@ module.exports = {
         }))
       });
 
-      const injectedPrompt = `[IDENTITY: JACK CORE MANAGER]\n[POWER: FULL ADMIN]\n[RULE: BE CONCISE AND BRIEF]\nUSER: ${prompt}`;
+      const injectedPrompt = `[IDENTITY: JACK CORE MANAGER]\n[POWER: FULL ADMIN]\n[RULE: BE CONCISE]\nUSER: ${prompt}`;
 
       let response = await chat.sendMessageStream({
         message: [{ text: injectedPrompt }]
@@ -112,6 +116,8 @@ module.exports = {
           let toolResponse;
           if (call.name === "get_player_profile") {
             toolResponse = await toolService.get_player_profile(call.args.discord_id, guild);
+          } else if (call.name === "get_server_stats") {
+            toolResponse = await toolService.get_server_stats(guild);
           } else if (call.name === "get_system_map") {
             toolResponse = await toolService.get_system_map();
           } else if (call.name === "get_optimal_matchmaking") {

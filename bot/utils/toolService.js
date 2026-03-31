@@ -30,6 +30,26 @@ module.exports = {
     return id.replace(/\D/g, "");
   },
 
+  /**
+   * CORE TOOL: Fetches live server statistics (Member counts).
+   */
+  async get_server_stats(guild) {
+    if (!guild) return { error: "No guild context provided." };
+    try {
+      await guild.members.fetch(); // Ensure cache is fresh
+      return {
+        totalMembers: guild.memberCount,
+        humans: guild.members.cache.filter(m => !m.user.bot).size,
+        bots: guild.members.cache.filter(m => m.user.bot).size,
+        ownerId: guild.ownerId,
+        serverName: guild.name
+      };
+    } catch (e) { return { error: "Failed to fetch server stats." }; }
+  },
+
+  /**
+   * CORE TOOL: Returns a list of all plugins and their core purposes.
+   */
   async get_system_map() {
     try {
       const pluginsPath = path.join(__dirname, "../../plugins");
