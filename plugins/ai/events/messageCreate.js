@@ -19,7 +19,18 @@ module.exports = {
     async execute(message, client) {
         if (message.author.bot || !message.guild) return;
 
+        // 1. Fetch Config & Check Channel
+        const config = await configManager.getGuildConfig(message.guild.id);
+        const aiChannelId = config?.settings?.aiChannelId;
+        const isMentioned = message.mentions.has(client.user) && !message.mentions.everyone;
+        const isAiChannel = aiChannelId && message.channel.id === aiChannelId;
+        
+        // 2. Logic Check: Ignore if not mentioned and not in AI channel
         if (!isAiChannel && !isMentioned) return;
+
+        // 3. Channel Stream Lock: Avoid overlapping responses
+        if (channelLocks.has(message.channel.id)) return;
+        channelLocks.set(message.channel.id, true);
 
         let prompt = message.content
             .replace(`<@!${client.user.id}>`, '')
@@ -27,14 +38,20 @@ module.exports = {
             .trim();
 
         if (!prompt && isMentioned) prompt = "Hello Jack!";
-        if (!prompt) return;
+        if (!prompt) {
+            channelLocks.delete(message.channel.id);
+            return;
+        }
 
         try { await message.channel.sendTyping(); } catch {}
 
         let streamingMessage = await message.reply("⚡ **Jack is formulating a strategy...**").catch(() => null);
-        if (!streamingMessage) return;
+        if (!streamingMessage) {
+            channelLocks.delete(message.channel.id);
+            return;
+        }
 
-        // 2. Fetch Live Clan Stats & Member Diary (Ground Truth)
+        // 4. Fetch Live Clan Stats & Member Diary (Ground Truth)
         const extraContext = await getClanContext(message.guild, message.member);
         
         const history = chatHistory.get(message.channel.id) || [];
@@ -45,17 +62,15 @@ module.exports = {
         const pulses = ["⚡", "🤔", "🧠", "🔍"];
 
         try {
-            // High-Response call with 1200ms refresh and Power Permission context
             const response = await aiService.generateResponse(prompt, history, async (token, fullText, status) => {
                 const now = Date.now();
                 
-                // Handle "Thinking" pulse updates (and tool status)
+                // Handle "Thinking" pulse updates
                 if (status.type === 'thinking') {
                     if (now - lastUpdateTime > 1000) {
                         lastUpdateTime = now;
                         pulseFrame = (pulseFrame + 1) % pulses.length;
                         let statusMsg = status.status || "thinking...";
-                        // Add custom icons for strategic tasks
                         if (statusMsg.includes("matchmaking")) statusMsg = "📊 Drafting Squads...";
                         if (statusMsg.includes("foster")) statusMsg = "🤝 Calculating Pairings...";
                         if (statusMsg.includes("announcement")) statusMsg = "📝 Drafting Announcement...";
@@ -65,13 +80,11 @@ module.exports = {
                     return;
                 }
 
-                // Transition: Thinking -> Text
                 if (status.type === 'text' && inThinkingPhase) {
                     inThinkingPhase = false;
                     lastUpdateTime = 0;
                 }
 
-                // Streaming updates (1.2s safety buffer)
                 if (!inThinkingPhase && now - lastUpdateTime > 1200 && fullText.length > 0) {
                     lastUpdateTime = now;
                     await streamingMessage.edit(fullText.substring(0, 1990) + " ▌").catch(() => null);
@@ -91,7 +104,7 @@ module.exports = {
             console.error("[Gemini 3.1 Neural] Failure:", error.message);
             if (streamingMessage) await streamingMessage.edit("❌ **Jack's brain encountered a problem. Please try again.**").catch(() => {});
         } finally {
-            channelLocks.delete(message.channel.id); // RELEASE THE LOCK: Boss is now listening.
+            channelLocks.delete(message.channel.id); // RELEASE THE LOCK
         }
     }
 };
