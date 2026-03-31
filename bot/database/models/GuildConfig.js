@@ -7,7 +7,7 @@ const guildConfigSchema = new mongoose.Schema({
   greetingData: {
     welcomeEnabled: { type: Boolean, default: false },
     welcomeChannelId: { type: String, default: null },
-    welcomeMessage: { type: String, default: 'Welcome to **{server}**, {user}!' },
+    welcomeMessage: { type: String, default: '⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘\nYou are the {memberCount}th member here.\n✦ Chatting Area ✦\n➤ <#1341978656096129065>\n✦ Read Rules ✦\n➤ <#1477894453300559957>\n✦ Self Roles ✦\n➤ <#1408839027771048148>\n✦ Server Info. ✦\n➤ <#1477894589565374667>\n⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘' },
     welcomeImage: { type: String, default: 'https://cdn.discordapp.com/attachments/1353964404378701916/1394935239557517322/standard_1.gif' },
     
     goodbyeEnabled: { type: Boolean, default: false },
