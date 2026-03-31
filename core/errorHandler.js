@@ -18,10 +18,11 @@ function generateRefId() {
  */
 async function handleError(error, ctx, commandName) {
     const refId = generateRefId();
-    const isTimeout = error.message === "COMMAND_TIMEOUT";
+    const safeError = error || new Error("Unknown error occurred");
+    const isTimeout = safeError.message === "COMMAND_TIMEOUT";
     
     // 1. Structured Logging
-    logger.error("ErrorHandler", error.message, {
+    logger.error("ErrorHandler", safeError.message, {
         refId: refId,
         command: commandName,
         guild: ctx?.guild?.id,

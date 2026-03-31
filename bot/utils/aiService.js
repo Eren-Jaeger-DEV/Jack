@@ -47,6 +47,9 @@ async function generateResponse(prompt, history = [], onToken = null, extraConte
       let fullText = "";
 
       for await (const item of streamingResp.stream) {
+        if (!item.candidates || item.candidates.length === 0) {
+          throw new Error("Gemini blocked this response for safety reasons.");
+        }
         const token = item.candidates[0].content.parts[0].text;
         fullText += token;
         onToken(token, fullText);
@@ -54,10 +57,13 @@ async function generateResponse(prompt, history = [], onToken = null, extraConte
       return fullText;
     } else {
       const resp = await generativeModel.generateContent(request);
+      if (!resp.response || !resp.response.candidates || resp.response.candidates.length === 0) {
+        throw new Error("Gemini returned no candidates.");
+      }
       return resp.response.candidates[0].content.parts[0].text;
     }
   } catch (error) {
-    console.error("[VertexAI] Generation Error:", error.message);
+    console.error("[VertexAI] Generation Error:", error ? error.message : "Unknown error");
     throw error;
   }
 }
