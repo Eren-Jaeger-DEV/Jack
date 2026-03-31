@@ -108,21 +108,22 @@ module.exports = {
             await existingJoin.save();
         }
 
-        // 6. Log Join
+        // 6. Log Invite Information
         if (logChannel) {
             const embed = new EmbedBuilder()
-                .setTitle("📥 Member Joined")
-                .setColor(flag ? 0xFFA500 : 0x00FF00)
-                .setThumbnail(member.user.displayAvatarURL())
+                .setAuthor({ name: "🎫 Invite Information", iconURL: member.user.displayAvatarURL() })
+                .setColor(flag ? 0xFFA500 : 0x2f3136) // Use neutral/aesthetic color unless flagged
                 .addFields(
-                    { name: "User", value: `${member.user.tag} (\`${member.id}\`)`, inline: false },
-                    { name: "Inviter", value: inviter ? `<@${inviter.id}> (\`${inviter.id}\`)` : `\`${joinType}\``, inline: true },
-                    { name: "Account Age", value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
-                    { name: "Rejoin", value: isRejoin ? "✅ Yes" : "❌ No", inline: true }
+                    { name: "👤 User joining", value: `${member.user.tag} (\`${member.id}\`)`, inline: false },
+                    { name: "🔗 Invite Link", value: usedInvite ? `\`${usedInvite.code}\`` : `\`${joinType}\``, inline: true },
+                    { name: "👑 Inviter", value: inviter ? `<@${inviter.id}> (\`${inviter.id}\`)` : `\`${joinType}\``, inline: true },
+                    { name: "📅 Join Status", value: isRejoin ? "✅ **Rejoined**" : "✨ **Newly Joined**", inline: true },
+                    { name: "🎂 Account Age", value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+                    { name: "📊 Total Members", value: `\`${guild.memberCount}\``, inline: true }
                 )
                 .setTimestamp();
 
-            if (flag) embed.addFields({ name: "Flags", value: flag, inline: false });
+            if (flag) embed.addFields({ name: "🚩 Verification Flag", value: flag, inline: false });
             
             logChannel.send({ embeds: [embed] }).catch(() => {});
         }

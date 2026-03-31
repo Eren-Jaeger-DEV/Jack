@@ -51,24 +51,6 @@ module.exports = {
             } else {
                 inviterName = `\`${joinRecord.inviterId}\``;
             }
-
-            // Log Leave
-            if (logChannel) {
-                const stayTime = Math.floor(timeDiff / 1000);
-                const embed = new EmbedBuilder()
-                    .setTitle("📤 Member Left")
-                    .setColor(classification.includes("Fake") ? 0xFF0000 : 0xCCCCCC)
-                    .setThumbnail(member.user.displayAvatarURL())
-                    .addFields(
-                        { name: "User", value: `${member.user.tag}`, inline: true },
-                        { name: "Inviter", value: inviterName, inline: true },
-                        { name: "Time Spent", value: `${stayTime} seconds`, inline: true },
-                        { name: "Classification", value: classification, inline: false }
-                    )
-                    .setTimestamp();
-
-                logChannel.send({ embeds: [embed] }).catch(() => {});
-            }
         }
     }
 };
