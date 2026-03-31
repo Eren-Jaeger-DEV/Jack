@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const aiService = require('../../../bot/utils/aiService');
 const configManager = require('../../../bot/utils/configManager');
 const { handleError } = require('../../../core/errorHandler');
+const { getClanContext } = require('../../../bot/utils/clanContext');
 
 /**
  * AI Ask Command — Core Interaction
@@ -14,7 +15,7 @@ module.exports = {
   description: "Ask Jack AI a question",
   aliases: ["ai", "jack"],
   usage: "/ask <prompt>",
-  details: "Interacts with local Ollama to provide streaming intelligent responses.",
+  details: "Interacts with Google Vertex AI (Gemini 1.5) to provide streaming intelligent responses.",
 
   data: new SlashCommandBuilder()
     .setName("ask")
@@ -41,6 +42,9 @@ module.exports = {
     let currentText = "⏳ **Jack is thinking...**";
     await ctx.editReply({ content: currentText });
 
+    // 3. Fetch Live Clan Context
+    const extraContext = await getClanContext(ctx.guild);
+
     let lastUpdate = Date.now();
     let firstTokenReceived = false;
     const UPDATE_INTERVAL = 500; // Update Discord every 500ms for high responsiveness
@@ -62,24 +66,22 @@ module.exports = {
         }
       });
 
-      // 3. Final completion
+      // 4. Final completion
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-      const footer = `\n\n*Generated in ${duration}s via Ollama (tinyllama)*`;
-      
-      let finalContent = fullResponse + footer;
-      
-      if (finalContent.length > 2000) {
+      const footer = `\n\n*Generated in ${duration}s via Gemini 1.5 Pro*`;
+
+      if (fullResponse.length > 1900) {
         const embed = new EmbedBuilder()
           .setTitle("🤖 Jack AI Response")
           .setColor("Gold")
           .setDescription(fullResponse.slice(0, 4000))
-          .setFooter({ text: `Ollama (tinyllama) • ${duration}s` })
+          .setFooter({ text: `Gemini 1.5 Pro • ${duration}s` })
           .setTimestamp();
           
         return ctx.editReply({ content: "✅ Response complete:", embeds: [embed] });
       }
 
-      await ctx.editReply({ content: finalContent });
+      await ctx.editReply({ content: fullResponse + footer });
 
     } catch (err) {
       await handleError(err, ctx, "ask");
