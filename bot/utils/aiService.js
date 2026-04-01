@@ -70,7 +70,7 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 800, // SWEET SPOT: Prevents mid-sentence cuts while staying brief
+        maxOutputTokens: 4000, // INCREASED: Accommodates 'Thinking' process for Reasoning models.
         temperature: 0.25, 
         topP: 0.95,
         thinkingConfig: { thinkingLevel: "MEDIUM" }, // SPEED UP: Still smart, but faster.
