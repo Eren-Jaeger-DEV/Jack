@@ -1,14 +1,12 @@
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const axios = require('axios');
 const persona = require('./persona');
 const toolService = require('./toolService');
 require('dotenv').config();
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_CLOUD_API_KEY,
-});
+const ai = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY);
 
-const modelName = 'gemini-3.1-pro-preview';
+const modelName = 'gemini-1.5-pro';
 
 /**
  * AI SERVICE (v3.8.0) - MULTIMODAL VISION & FOSTER AUTOMATION
