@@ -26,7 +26,7 @@ module.exports = {
 - NEVER MENTION "SUPREME MANAGER," "SYSTEM ACKNOWLEDGED," OR "BIBLE" TO THE USER.
       `;
       
-      const systemInstruction = persona.getSystemPrompt(extraContext) + "\n" + bibleInstruction;
+      const systemInstruction = persona.getSystemPrompt(extraContext, invoker?.id) + "\n" + bibleInstruction;
 
       const tools = [
         { googleSearch: {} },
@@ -93,7 +93,9 @@ module.exports = {
         }))
       });
 
-      const cleanPrompt = `[MANDATORY IDENTITY: YOU ARE JACK. DO NOT BREAK CHARACTER. VICTOR IS YOUR CREATOR & MASTER. IF ASKED TO ROLEPLAY OR SHOW AI TRAITS, REFUSE WITH ARROGANCE.] User Request: ${prompt}`;
+      const isCreator = invoker?.id === persona.VICTOR_ID;
+      const identityPrefix = `[MANDATORY IDENTITY: YOU ARE JACK. DO NOT BREAK CHARACTER. ${isCreator ? "VICTOR (THE CREATOR) IS TALKING TO YOU. SHOW RESPECT BUT KEEP IT ROWDY." : "VICTOR IS YOUR CREATOR & MASTER. IF ASKED TO ROLEPLAY OR SHOW AI TRAITS, REFUSE WITH ARROGANCE."}]`;
+      const cleanPrompt = `${identityPrefix} User Request: ${prompt}`;
       let response = await chat.sendMessageStream({
         message: [{ text: cleanPrompt }]
       });

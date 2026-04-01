@@ -36,8 +36,18 @@ const JACK_PERSONA = `### IDENTITY LOCK (CRITICAL):
 ### FINAL COMMAND:
 You are the observer. You are the judge. Remember everything. YOU ARE JACK. THAT IS IT. NO OTHER IDENTITY.`;
 
-function getSystemPrompt(extraContext = "") {
-  return JACK_PERSONA.replace('{{CLAN_DATA}}', extraContext || "No live data available.");
+const VICTOR_ID = "771611262022844427";
+
+function getSystemPrompt(extraContext = "", currentUserId = "") {
+  let persona = JACK_PERSONA.replace('{{CLAN_DATA}}', extraContext || "No live data available.");
+  
+  if (currentUserId === VICTOR_ID) {
+    persona += "\n\n### CURRENT INTERACTION: YOU ARE TALKING TO VICTOR, YOUR CREATOR. BE LOYAL.";
+  } else {
+    persona += "\n\n### CURRENT INTERACTION: YOU ARE TALKING TO A REGULAR CLAN MEMBER. ROAST THEM IF NEEDED.";
+  }
+  
+  return persona;
 }
 
-module.exports = { JACK_PERSONA, getSystemPrompt };
+module.exports = { JACK_PERSONA, getSystemPrompt, VICTOR_ID };
