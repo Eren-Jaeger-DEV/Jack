@@ -23,9 +23,23 @@ async function getClanContext(guild, member = null) {
       context += `- Foster Program: ${activePairs} active mentor/rookie pairs.\n`;
     } catch (e) { /* Model not found */ }
 
-    // 3. MEMBER DIARY: Personality & Memory
+    // 3. TARGET USER RECOGNITION (Player Data & Diary)
     if (member) {
-      context += `\n### TARGET MEMBER PROFILE: ${member.user.tag} ###\n`;
+      context += `\n### TARGET MEMBER DOSSIER: ${member.user.tag} ###\n`;
+      
+      // A. Player Profile (Game Data)
+      try {
+        const Player = mongoose.model('Player');
+        const player = await Player.findOne({ discordId: member.id });
+        if (player) {
+          context += `- IGN: ${player.ign}\n`;
+          context += `- Season Synergy: ${player.seasonSynergy}\n`;
+          context += `- Role: ${player.role}\n`;
+          context += `- Status: ${player.isClanMember ? 'Clan Member' : 'Outsider'}\n`;
+        }
+      } catch (e) { /* Model not found */ }
+
+      // B. Member Diary (AI Memory)
       try {
         const MemberDiary = mongoose.model('MemberDiary');
         const diary = await MemberDiary.findOne({ discordId: member.id });
@@ -33,9 +47,10 @@ async function getClanContext(guild, member = null) {
           context += `- Personality: ${diary.personalityProfile}\n`;
           context += `- Reputation: ${diary.reputationScore} (Scale: -100 to +100)\n`;
           context += `- Interaction Count: ${diary.interactionCount}\n`;
-          context += `- Jack's Notes: ${diary.notes.split('\n').slice(-3).join('\n')}\n`; // Last 3 notes
+          context += `- Jack's Internal Notes: ${diary.notes.split('\n').slice(-3).join('\n')}\n`;
         } else {
-          context += `- Personality: New User. Unidentified.\n`;
+          context += `- Reputation: 0 (New User)\n`;
+          context += `- Personality: Professional assessment required.\n`;
         }
       } catch (e) { /* Model not found */ }
     }

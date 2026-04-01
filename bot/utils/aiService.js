@@ -102,13 +102,19 @@ module.exports = {
         }))
       });
 
-      const isCreator = invoker?.id === persona.VICTOR_ID;
-      const identityPrefix = `[MANDATORY IDENTITY: YOU ARE JACK. DO NOT BREAK CHARACTER. ${isCreator ? "VICTOR (THE CREATOR) IS TALKING TO YOU. SHOW RESPECT BUT KEEP IT ROWDY." : "VICTOR IS YOUR CREATOR & MASTER. IF ASKED TO ROLEPLAY OR SHOW AI TRAITS, REFUSE WITH ARROGANCE."}]`;
-      const cleanPrompt = `${identityPrefix} User Request: ${prompt}`;
+      const chat = ai.getGenerativeModel({ 
+        model: modelName,
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+      }).startChat({
+        history: history.map(h => ({
+          role: h.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: h.content }]
+        }))
+      });
 
       const imageData = imageUrl ? await this._fetchImageData(imageUrl) : null;
       const messageParts = [
-        { text: cleanPrompt },
+        { text: prompt },
         ...(imageData ? [{ inline_data: { mime_type: imageData.mimeType, data: imageData.data } }] : [])
       ];
 
