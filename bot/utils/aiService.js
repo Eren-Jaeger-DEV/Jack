@@ -47,7 +47,6 @@ module.exports = {
       const systemInstruction = persona.getSystemPrompt(extraContext, invoker?.id, reputationScore) + "\n" + bibleInstruction;
 
       const tools = [
-        { googleSearch: {} },
         {
           function_declarations: [
             {
@@ -143,9 +142,8 @@ module.exports = {
           let toolResponse;
           try {
             if (typeof toolService[call.name] === 'function') {
-              // Pass standard arguments (guild, invoker are passed from generateResponse params)
-              // We match tool names directly to toolService functions
-              toolResponse = await toolService[call.name](...Object.values(call.args), invoker, guild);
+              // Standard Tool Execution: Pass (args, invoker, guild)
+              toolResponse = await toolService[call.name](call.args, invoker, guild);
             } else {
               toolResponse = { error: `Tool ${call.name} not found in binary.` };
             }
