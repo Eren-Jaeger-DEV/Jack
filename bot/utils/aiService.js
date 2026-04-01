@@ -91,7 +91,7 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 250, // Reduced for brevity enforcement (Persona requirement)
+        maxOutputTokens: 1000, // Increased for response stability
         temperature: 0.3, 
         topP: 0.95,
       };
