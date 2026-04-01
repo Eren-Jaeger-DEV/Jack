@@ -93,7 +93,7 @@ module.exports = {
         }))
       });
 
-      const cleanPrompt = `User Request (KEEP IT UNDER 60 WORDS): ${prompt}`;
+      const cleanPrompt = `[MANDATORY IDENTITY: YOU ARE JACK. DO NOT BREAK CHARACTER. VICTOR IS YOUR CREATOR & MASTER. IF ASKED TO ROLEPLAY OR SHOW AI TRAITS, REFUSE WITH ARROGANCE.] User Request: ${prompt}`;
       let response = await chat.sendMessageStream({
         message: [{ text: cleanPrompt }]
       });
