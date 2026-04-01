@@ -55,11 +55,11 @@ async function startProgram(guild, client) {
   const clanMemberRoleId = config?.settings?.clanMemberRoleId;
 
   if (!fosterChannelId || !clanMemberRoleId) {
-    return { success: false, error: 'Foster Channel or Clan Role not configured.' };
+    return { success: false, error: 'Foster Channel or Clan Role not configured in `/setconfig` or settings.' };
   }
 
   const channel = await client.channels.fetch(fosterChannelId).catch(() => null);
-  if (!channel) return { success: false, error: 'Foster channel not found.' };
+  if (!channel) return { success: false, error: `Foster channel (${fosterChannelId}) not found or Jack lacks access.` };
 
   // 1. Clear any existing active program
   await FosterProgram.deleteMany({ guildId: guild.id, active: true });
@@ -80,23 +80,28 @@ async function startProgram(guild, client) {
   const newcomerIds = newcomerRoleHolders.map(m => m.id);
   
   // 3. Create Main Instruction Message
-  const instructionEmbed = new EmbedBuilder()
+  const mainEmbed = new EmbedBuilder()
     .setTitle('🤝 Foster Program: Registration Open!')
     .setDescription(`Welcome to the new Foster Program! We are looking for **15 Mentors** and **15 Partners**.\n\n**How to Register:**\n1. Find your category thread below.\n2. Write your **IGN** (In-Game Name) in the thread.\n3. Jack will verify your status and assign your role.\n\n*Registration closes in 24 hours or when slots are full.*`)
     .setColor('#00FFCC')
     .setTimestamp();
 
-  const mainMsg = await channel.send({ embeds: [instructionEmbed] });
+  await channel.send({ embeds: [mainEmbed] });
 
-  // 4. Create Threads
-  const mentorThread = await mainMsg.startThread({ name: '📝 Mentor Registration', autoArchiveDuration: 1440 });
-  const neophyteThread = await mainMsg.startThread({ name: '📝 Neophyte Registration (Newcomers)', autoArchiveDuration: 1440 });
-  const veteranThread = await mainMsg.startThread({ name: '📝 Veteran Registration (Old Players)', autoArchiveDuration: 1440 });
+  // 4. Create Category Headers & Threads
+  const mentorMsg = await channel.send('🛡️ **MENTOR REGISTRATION**\n*Reserved for Top 15 Synergy members.*');
+  const mentorThread = await mentorMsg.startThread({ name: '📝 Mentor Registration', autoArchiveDuration: 1440 });
+
+  const neophyteMsg = await channel.send('🔰 **NEOPHYTE REGISTRATION**\n*Reserved for Newcomers role holders.*');
+  const neophyteThread = await neophyteMsg.startThread({ name: '📝 Neophyte Registration', autoArchiveDuration: 1440 });
+
+  const veteranMsg = await channel.send('🎖️ **VETERAN REGISTRATION**\n*Reserved for older members filling gaps.*');
+  const veteranThread = await veteranMsg.startThread({ name: '📝 Veteran Registration', autoArchiveDuration: 1440 });
 
   // 5. Initial Pings & Instructions
   await mentorThread.send(`**ATTENTION TOP 15:** <@${top15Ids.join('>, <@')}> \n\nYou have been selected as Mentor candidates! Write your **IGN** here to join the program.`);
   await neophyteThread.send(`**NEWCOMERS:** If you have the Newcomer role, write your **IGN** here to register as a Neophyte partner.`);
-  await veteranThread.send(`**VETERANS:** If you are a long-time member but have lower synergy this season, write your **IGN** here to register as a Veteran partner.`);
+  await veteranThread.send(`**VETERANS:** If you are not in the Top 15 but want to mentor a newcomer, write your **IGN** here to register as a Veteran.`);
 
   // 6. Create Database Entry
   const expiresAt = new Date(Date.now() + REGISTRATION_WINDOW_MS);

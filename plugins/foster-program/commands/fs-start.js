@@ -25,10 +25,10 @@ module.exports = {
       const result = await fosterService.startProgram(ctx.guild, ctx.client);
 
       if (!result.success) {
-        return ctx.reply(`❌ **Jack ERROR:** ${result.error}`);
+        return ctx.reply(`❌ **Jack ERROR:** ${result.error}\n\n**Tip:** Ensure the foster channel is set with \`j setfoster #channel\`.`);
       }
 
-      await ctx.editReply(`✅ **Foster Program Registration is now OPEN!** Threads have been created in the foster channel.`);
+      await ctx.reply(`✅ **Foster Program Registration is now OPEN!** Threads have been created in the foster channel.`);
 
     } catch (err) {
       console.error('[FosterProgram] fs-start error:', err);
