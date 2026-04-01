@@ -95,7 +95,11 @@ module.exports = {
         maxOutputTokens: 250, // Reduced for brevity enforcement (Persona requirement)
         temperature: 0.3, 
         topP: 0.95,
-        thinkingConfig: { thinkingLevel: "MEDIUM" },
+      };
+
+      const model = ai.getGenerativeModel({ 
+        model: modelName,
+        systemInstruction: { parts: [{ text: systemInstruction }] },
         tools: tools,
         safetySettings: [
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
@@ -103,11 +107,6 @@ module.exports = {
           { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
         ],
-      };
-
-      const model = ai.getGenerativeModel({ 
-        model: modelName,
-        systemInstruction: { parts: [{ text: systemInstruction }] },
         generationConfig
       });
 
