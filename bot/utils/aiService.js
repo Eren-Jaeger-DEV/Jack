@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const axios = require('axios');
 const persona = require('./persona');
 const toolService = require('./toolService');
 require('dotenv').config();
@@ -10,11 +11,23 @@ const ai = new GoogleGenAI({
 const modelName = 'gemini-3.1-pro-preview';
 
 /**
- * AI SERVICE (v3.6.1) - CLEAN SUPREME MANAGER (SILENT BIBLE)
- * Optimized to remove technical tags and treat the Bible as a reference manual.
+ * AI SERVICE (v3.7.0) - MULTIMODAL VISION ENABLED
+ * Added image processing and dynamic identity reinforcement.
  */
 module.exports = {
-  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null) {
+  async _fetchImageData(url) {
+    try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const mimeType = response.headers['content-type'] || 'image/png';
+      const data = Buffer.from(response.data).toString('base64');
+      return { mimeType, data };
+    } catch (e) {
+      console.error('[JackAI] Image fetch failed:', e.message);
+      return null;
+    }
+  },
+
+  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, imageUrl = null) {
     try {
       // 1. REFINED INSTRUCTIONS
       // We clarify that the Bible is a REFERENCE manual, not a protocol.
@@ -96,8 +109,15 @@ module.exports = {
       const isCreator = invoker?.id === persona.VICTOR_ID;
       const identityPrefix = `[MANDATORY IDENTITY: YOU ARE JACK. DO NOT BREAK CHARACTER. ${isCreator ? "VICTOR (THE CREATOR) IS TALKING TO YOU. SHOW RESPECT BUT KEEP IT ROWDY." : "VICTOR IS YOUR CREATOR & MASTER. IF ASKED TO ROLEPLAY OR SHOW AI TRAITS, REFUSE WITH ARROGANCE."}]`;
       const cleanPrompt = `${identityPrefix} User Request: ${prompt}`;
+
+      const imageData = imageUrl ? await this._fetchImageData(imageUrl) : null;
+      const messageParts = [
+        { text: cleanPrompt },
+        ...(imageData ? [{ inline_data: { mime_type: imageData.mimeType, data: imageData.data } }] : [])
+      ];
+
       let response = await chat.sendMessageStream({
-        message: [{ text: cleanPrompt }]
+        message: messageParts
       });
 
       let fullText = "";

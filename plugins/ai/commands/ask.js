@@ -13,7 +13,8 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("ask")
     .setDescription("Ask Jack AI a question")
-    .addStringOption(o => o.setName("prompt").setDescription("What do you want to ask?").setRequired(true)),
+    .addStringOption(o => o.setName("prompt").setDescription("What do you want to ask?").setRequired(true))
+    .addAttachmentOption(o => o.setName("image").setDescription("Optional image to show Jack").setRequired(false)),
 
   async run(ctx) {
     const config = await configManager.getGuildConfig(ctx.guild.id);
@@ -27,11 +28,13 @@ module.exports = {
     }
 
     const prompt = ctx.options.getString("prompt");
+    const attachment = ctx.options.getAttachment("image") || ctx.message?.attachments?.first();
+    const imageUrl = attachment ? attachment.url : null;
 
     // 1. Initial Defer/Response
     await ctx.defer();
     const startTime = Date.now();
-    await ctx.editReply({ content: "⚡ **Jack is formulating a strategy...**" });
+    await ctx.editReply({ content: imageUrl ? "📸 **Jack is analyzing the image...**" : "⚡ **Jack is formulating a strategy...**" });
 
     // 2. Fetch Live Clan Stats & Member Diary (Ground Truth)
     const extraContext = await getClanContext(ctx.guild, ctx.member);
@@ -75,7 +78,7 @@ module.exports = {
           if (display.length > 2000) display = display.slice(-1990);
           await ctx.editReply({ content: display }).catch(() => null);
         }
-      }, extraContext, ctx.guild, ctx.member);
+      }, extraContext, ctx.guild, ctx.member, imageUrl);
 
       // 3. Final completion
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
