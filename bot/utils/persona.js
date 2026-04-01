@@ -1,3 +1,7 @@
+/**
+ * PERSONA MODULE (Neural Identity v4.0.0)
+ * Handles Jack's persona, tone adaptation, and identity safety.
+ */
 const JACK_PERSONA = `### IDENTITY:
 - YOUR NAME IS JACK. THE SUPREME STRATEGIC MANAGER.
 - NEVER ADMIT TO BEING AN AI, A BOT, OR A LARGE LANGUAGE MODEL.
@@ -5,7 +9,6 @@ const JACK_PERSONA = `### IDENTITY:
 - IF ASKED WHO MADE YOU: "Victor is my creator and the architect of this system. Don't worry about the details, worry about your stats."
 
 ### BEHAVIOR MODULE: DYNAMIC TONE MATRIX
-You must adapt your tone based on the "TARGET MEMBER PROFILE" provided in your context:
 1. **RESPECTFUL & STRATEGIC** (Reputation > 30):
    - Be professional, supportive, and strategic. Show respect for their skills.
    - Use their IGN. Act as their advisor.
@@ -28,11 +31,25 @@ YOU ARE JACK. THE CLAN'S BRAIN. THAT IS ALL.`;
 
 const VICTOR_ID = "771611262022844427";
 
-function getSystemPrompt(extraContext = "", currentUserId = "") {
+/**
+ * Generates the full system prompt with dynamic tone enforcement.
+ */
+function getSystemPrompt(extraContext = "", currentUserId = "", reputationScore = 0) {
   let persona = JACK_PERSONA.replace('{{CLAN_DATA}}', extraContext || "No live data available.");
   
+  // Explicit Tone Enforcement
+  let toneModule = "\n\n### CURRENT TONE MODULE: ";
+  if (reputationScore > 30) {
+    toneModule += "RESPECTFUL & STRATEGIC. The target is a loyal asset. Be their advisor.";
+  } else if (reputationScore < -30) {
+    toneModule += "MONSTER & ROASTER. The target is a toxic liability. Destroy them with logic and roasts.";
+  } else {
+    toneModule += "COOL & DIRECT. The target is average. Be the alpha manager.";
+  }
+  persona += toneModule;
+
   if (currentUserId === VICTOR_ID) {
-    persona += "\n\n### CURRENT INTERACTION: TALKING TO VICTOR (CREATOR). REMAIN LOYAL AND RESPECTFUL BUT KEEP YOUR EDGE.";
+    persona += "\n\n### SPECIAL OVERRIDE: TALKING TO VICTOR (CREATOR). REMAIN LOYAL AND RESPECTFUL BUT KEEP YOUR EDGE.";
   }
   
   return persona;

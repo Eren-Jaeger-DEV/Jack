@@ -25,7 +25,16 @@ module.exports = {
     }
   },
 
-  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, imageUrl = null) {
+  /**
+   * Post-processes the AI response to ensure persona safety and remove system leaks.
+   */
+  _postProcess(text) {
+    if (!text) return "";
+    // Remove bracketed system identifiers like [REPUTATION: LOW] or [JACK_BIBLE]
+    return text.replace(/\[[A-Z0-9_\s:]+\]/gi, '').trim();
+  },
+
+  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, imageUrl = null, reputationScore = 0) {
     try {
       const bibleInstruction = `
 [INFORMATION REFERENCE: ACTIVE]
@@ -35,7 +44,7 @@ module.exports = {
 - NEVER MENTION "SUPREME MANAGER," "SYSTEM ACKNOWLEDGED," OR "BIBLE" TO THE USER.
       `;
       
-      const systemInstruction = persona.getSystemPrompt(extraContext, invoker?.id) + "\n" + bibleInstruction;
+      const systemInstruction = persona.getSystemPrompt(extraContext, invoker?.id, reputationScore) + "\n" + bibleInstruction;
 
       const tools = [
         { googleSearch: {} },
@@ -83,8 +92,8 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 4000,
-        temperature: 0.25, 
+        maxOutputTokens: 250, // Reduced for brevity enforcement (Persona requirement)
+        temperature: 0.3, 
         topP: 0.95,
         thinkingConfig: { thinkingLevel: "MEDIUM" },
         tools: tools,
@@ -96,20 +105,13 @@ module.exports = {
         ],
       };
 
-      const chat = ai.getGenerativeModel({ 
+      const model = ai.getGenerativeModel({ 
         model: modelName,
         systemInstruction: { parts: [{ text: systemInstruction }] },
-      }).startChat({
-        history: history.map(h => ({
-          role: h.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: h.content }]
-        }))
+        generationConfig
       });
 
-      const chat = ai.getGenerativeModel({ 
-        model: modelName,
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-      }).startChat({
+      const chat = model.startChat({
         history: history.map(h => ({
           role: h.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: h.content }]
@@ -134,27 +136,22 @@ module.exports = {
           if (onToken) onToken(null, "", { type: 'thinking', thought: chunk.thought });
         }
 
+        // TOOL CALL REGISTRY (Refactored to dynamic mapping)
         if (chunk.candidates?.[0]?.content?.parts?.some(p => p.functionCall)) {
           const call = chunk.candidates[0].content.parts.find(p => p.functionCall).functionCall;
-          if (onToken) onToken(null, "", { type: 'thinking', status: `⚙️ Managing ${call.name.replace(/_/g, ' ')}...` });
+          if (onToken) onToken(null, "", { type: 'thinking', status: `⚙️ Executing ${call.name.replace(/_/g, ' ')}...` });
 
           let toolResponse;
-          if (call.name === "get_player_profile") {
-            toolResponse = await toolService.get_player_profile(call.args.discord_id, guild);
-          } else if (call.name === "get_server_stats") {
-            toolResponse = await toolService.get_server_stats(guild);
-          } else if (call.name === "get_server_map") {
-            toolResponse = await toolService.get_server_map(guild);
-          } else if (call.name === "record_personality_trait") {
-            toolResponse = await toolService.record_personality_trait(call.args.discord_id, call.args.note, call.args.reputation_change || 0);
-          } else if (call.name === "get_system_map") {
-            toolResponse = await toolService.get_system_map();
-          } else if (call.name === "get_optimal_matchmaking") {
-            toolResponse = await toolService.get_optimal_matchmaking(call.args.team_size, guild);
-          } else if (call.name === "ban_member") {
-            toolResponse = await toolService.ban_member(call.args.discord_id, call.args.reason, invoker, guild);
-          } else if (call.name === "kick_member") {
-            toolResponse = await toolService.kick_member(call.args.discord_id, call.args.reason, invoker, guild);
+          try {
+            if (typeof toolService[call.name] === 'function') {
+              // Pass standard arguments (guild, invoker are passed from generateResponse params)
+              // We match tool names directly to toolService functions
+              toolResponse = await toolService[call.name](...Object.values(call.args), invoker, guild);
+            } else {
+              toolResponse = { error: `Tool ${call.name} not found in binary.` };
+            }
+          } catch (e) {
+            toolResponse = { error: `Execution failed: ${e.message}` };
           }
 
           result = await chat.sendMessageStream([
@@ -163,18 +160,20 @@ module.exports = {
           continue; 
         }
 
-        const text = chunk.text();
-        if (text && text.length > 0) {
-          if (!hasStartedText) {
-            hasStartedText = true;
-            if (onToken) onToken(null, "", { type: 'text' });
+        try {
+          const text = chunk.text();
+          if (text && text.length > 0) {
+            if (!hasStartedText) {
+              hasStartedText = true;
+              if (onToken) onToken(null, "", { type: 'text' });
+            }
+            fullText += text;
+            if (onToken) onToken(text, fullText, { type: 'text' });
           }
-          fullText += text;
-          if (onToken) onToken(text, fullText, { type: 'text' });
-        }
+        } catch (e) { /* Part might not contain text if it's a thought/tool */ }
       }
 
-      return fullText;
+      return this._postProcess(fullText);
 
     } catch (error) {
       console.error("[JackAI] generateResponse Failure:", error.message);

@@ -1,16 +1,26 @@
 const aiService = require('../../../bot/utils/aiService');
 const configManager = require('../../../bot/utils/configManager');
 const { getClanContext } = require('../../../bot/utils/clanContext');
+const ConversationHistory = require('../../../bot/database/models/ConversationHistory');
 
-// In-memory history cache
-const chatHistory = new Map();
 const channelLocks = new Map(); // PROTECTOR: One stream at a time per channel
 
-function updateHistory(channelId, role, content) {
-    if (!chatHistory.has(channelId)) chatHistory.set(channelId, []);
-    const history = chatHistory.get(channelId);
-    history.push({ role, content });
-    if (history.length > 20) history.shift(); 
+/**
+ * Persists chat history to MongoDB.
+ */
+async function updateHistory(channelId, role, content) {
+    try {
+        let history = await ConversationHistory.findOne({ channelId });
+        if (!history) history = new ConversationHistory({ channelId, messages: [] });
+        
+        history.messages.push({ role, content });
+        if (history.messages.length > 20) history.messages.shift();
+        
+        history.lastActive = Date.now();
+        await history.save();
+    } catch (e) {
+        console.error("[JackAI History] Failed to save:", e.message);
+    }
 }
 
 module.exports = {
@@ -52,9 +62,16 @@ module.exports = {
         }
 
         // 4. Fetch Live Clan Stats & Member Diary (Ground Truth)
-        const extraContext = await getClanContext(message.guild, message.member);
+        const { context: extraContext, reputationScore } = await getClanContext(message.guild, message.member);
         
-        const history = chatHistory.get(message.channel.id) || [];
+        // 5. Fetch History from DB
+        let history = [];
+        try {
+            const historyDoc = await ConversationHistory.findOne({ channelId: message.channel.id });
+            if (historyDoc) {
+                history = historyDoc.messages.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.content }));
+            }
+        } catch (e) { console.error("[JackAI History] Fetch error:", e.message); }
         
         let lastUpdateTime = Date.now();
         let inThinkingPhase = true;
@@ -90,19 +107,21 @@ module.exports = {
                     lastUpdateTime = now;
                     await streamingMessage.edit(fullText.substring(0, 1990) + " ▌").catch(() => null);
                 }
-            }, extraContext, message.guild, message.member);
+            }, extraContext, message.guild, message.member, null, reputationScore);
 
-            if (response.length > 1900) {
-                await streamingMessage.edit(response.substring(0, 1990)).catch(() => {});
+            const finalResponse = response || "❌ Jack is speechless.";
+            if (finalResponse.length > 1900) {
+                await streamingMessage.edit(finalResponse.substring(0, 1990)).catch(() => {});
             } else {
-                await streamingMessage.edit(response).catch(() => {});
+                await streamingMessage.edit(finalResponse).catch(() => {});
             }
 
-            updateHistory(message.channel.id, 'user', prompt);
-            updateHistory(message.channel.id, 'assistant', response);
+            // Persistence
+            await updateHistory(message.channel.id, 'user', prompt);
+            await updateHistory(message.channel.id, 'model', finalResponse);
 
         } catch (error) {
-            console.error("[Gemini 3.1 Neural] Failure:", error.message);
+            console.error("[JackAI Neural] Failure:", error.message);
             if (streamingMessage) await streamingMessage.edit("❌ **Jack's brain encountered a problem. Please try again.**").catch(() => {});
         } finally {
             channelLocks.delete(message.channel.id); // RELEASE THE LOCK

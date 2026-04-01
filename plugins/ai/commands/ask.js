@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const aiService = require('../../../bot/utils/aiService');
 const configManager = require('../../../bot/utils/configManager');
 const { getClanContext } = require('../../../bot/utils/clanContext');
+const ConversationHistory = require('../../../bot/database/models/ConversationHistory');
 
 module.exports = {
   name: "ask",
@@ -27,7 +28,7 @@ module.exports = {
       });
     }
 
-    const prompt = ctx.options.getString("prompt");
+    const prompt = ctx.options.getString("prompt") || ctx.message?.content;
     const attachment = ctx.options.getAttachment("image") || ctx.message?.attachments?.first();
     const imageUrl = attachment ? attachment.url : null;
 
@@ -37,7 +38,16 @@ module.exports = {
     await ctx.editReply({ content: imageUrl ? "📸 **Jack is analyzing the image...**" : "⚡ **Jack is formulating a strategy...**" });
 
     // 2. Fetch Live Clan Stats & Member Diary (Ground Truth)
-    const extraContext = await getClanContext(ctx.guild, ctx.member);
+    const { context: extraContext, reputationScore } = await getClanContext(ctx.guild, ctx.member);
+
+    // 3. Fetch History from DB
+    let history = [];
+    try {
+        const historyDoc = await ConversationHistory.findOne({ channelId: ctx.channel.id });
+        if (historyDoc) {
+            history = historyDoc.messages.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.content }));
+        }
+    } catch (e) { console.error("[JackAI History] Fetch error:", e.message); }
 
     let lastUpdateTime = Date.now();
     let inThinkingPhase = true;
@@ -45,8 +55,7 @@ module.exports = {
     const pulses = ["⚡", "🤔", "🧠", "🔍"];
 
     try {
-      // High-Response call with 1200ms refresh and Full Power Context
-      const response = await aiService.generateResponse(prompt, [], async (token, fullText, status) => {
+      const response = await aiService.generateResponse(prompt, history, async (token, fullText, status) => {
         const now = Date.now();
         
         // Handle "Thinking" pulse updates (and tool status)
@@ -55,7 +64,6 @@ module.exports = {
             lastUpdateTime = now;
             pulseFrame = (pulseFrame + 1) % pulses.length;
             let statusMsg = status.status || "formulating strategy...";
-            // Add custom icons for strategic tasks
             if (statusMsg.includes("matchmaking")) statusMsg = "📊 Drafting Squads...";
             if (statusMsg.includes("foster")) statusMsg = "🤝 Calculating Pairings...";
             if (statusMsg.includes("announcement")) statusMsg = "📝 Drafting Announcement...";
@@ -78,16 +86,28 @@ module.exports = {
           if (display.length > 2000) display = display.slice(-1990);
           await ctx.editReply({ content: display }).catch(() => null);
         }
-      }, extraContext, ctx.guild, ctx.member, imageUrl);
+      }, extraContext, ctx.guild, ctx.member, imageUrl, reputationScore);
 
-      // 3. Final completion
+      // 4. Persistence
+      try {
+          let historyDoc = await ConversationHistory.findOne({ channelId: ctx.channel.id });
+          if (!historyDoc) historyDoc = new ConversationHistory({ channelId: ctx.channel.id, messages: [] });
+          historyDoc.messages.push({ role: 'user', content: prompt });
+          historyDoc.messages.push({ role: 'model', content: response || "" });
+          if (historyDoc.messages.length > 20) historyDoc.messages.shift();
+          historyDoc.lastActive = Date.now();
+          await historyDoc.save();
+      } catch (e) { console.error("[JackAI History] Save error:", e.message); }
+
+      // 5. Final completion
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       const footer = `\n\n*Generated in ${duration}s via Gemini 3.1 Pro*`;
       
-      if (response.length > 1900) {
-        await ctx.editReply({ content: response.substring(0, 1900) + footer });
+      const finalResponse = response || "❌ Jack is speechless.";
+      if (finalResponse.length > 1900) {
+        await ctx.editReply({ content: finalResponse.substring(0, 1900) + footer });
       } else {
-        await ctx.editReply({ content: response + footer });
+        await ctx.editReply({ content: finalResponse + footer });
       }
 
     } catch (err) {

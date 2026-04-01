@@ -8,6 +8,7 @@ const { BIBLE } = require('./systemBible');
 async function getClanContext(guild, member = null) {
   try {
     let context = "### JACK'S HOLY BIBLE (Plugin Summary) ###\n";
+    let reputationScore = 0;
     
     // 1. SYSTEM BIBLE: Integrated System Knowledge
     Object.entries(BIBLE).forEach(([category, plugins]) => {
@@ -44,6 +45,7 @@ async function getClanContext(guild, member = null) {
         const MemberDiary = mongoose.model('MemberDiary');
         const diary = await MemberDiary.findOne({ discordId: member.id });
         if (diary) {
+          reputationScore = diary.reputationScore;
           context += `- Personality: ${diary.personalityProfile}\n`;
           context += `- Reputation: ${diary.reputationScore} (Scale: -100 to +100)\n`;
           context += `- Interaction Count: ${diary.interactionCount}\n`;
@@ -58,10 +60,10 @@ async function getClanContext(guild, member = null) {
     context += `\n- CURRENT TIME: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\n`;
     context += `- Members in Server: ${guild.memberCount}\n`;
 
-    return context;
+    return { context, reputationScore };
   } catch (err) {
     console.error("[ClanContext] Neural Failure:", err.message);
-    return "Memory Access Error.";
+    return { context: "Memory Access Error.", reputationScore: 0 };
   }
 }
 
