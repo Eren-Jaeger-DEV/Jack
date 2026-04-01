@@ -11,8 +11,8 @@ const ai = new GoogleGenAI({
 const modelName = 'gemini-3.1-pro-preview';
 
 /**
- * AI SERVICE (v3.7.0) - MULTIMODAL VISION ENABLED
- * Added image processing and dynamic identity reinforcement.
+ * AI SERVICE (v3.8.0) - MULTIMODAL VISION & FOSTER AUTOMATION
+ * Added image processing, synergy extraction, and dynamic identity reinforcement.
  */
 module.exports = {
   async _fetchImageData(url) {
@@ -29,8 +29,6 @@ module.exports = {
 
   async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, imageUrl = null) {
     try {
-      // 1. REFINED INSTRUCTIONS
-      // We clarify that the Bible is a REFERENCE manual, not a protocol.
       const bibleInstruction = `
 [INFORMATION REFERENCE: ACTIVE]
 - You have access to the "JACK BIBLE" in your context.
@@ -83,10 +81,10 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 4000, // INCREASED: Accommodates 'Thinking' process for Reasoning models.
+        maxOutputTokens: 4000,
         temperature: 0.25, 
         topP: 0.95,
-        thinkingConfig: { thinkingLevel: "MEDIUM" }, // SPEED UP: Still smart, but faster.
+        thinkingConfig: { thinkingLevel: "MEDIUM" },
         tools: tools,
         safetySettings: [
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
@@ -96,10 +94,10 @@ module.exports = {
         ],
       };
 
-      const chat = ai.chats.create({
+      const chat = ai.getGenerativeModel({ 
         model: modelName,
-        config: generationConfig,
         systemInstruction: { parts: [{ text: systemInstruction }] },
+      }).startChat({
         history: history.map(h => ({
           role: h.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: h.content }]
@@ -116,22 +114,20 @@ module.exports = {
         ...(imageData ? [{ inline_data: { mime_type: imageData.mimeType, data: imageData.data } }] : [])
       ];
 
-      let response = await chat.sendMessageStream({
-        message: messageParts
-      });
+      let result = await chat.sendMessageStream(messageParts);
 
       let fullText = "";
       let hasStartedText = false;
 
       if (onToken) onToken(null, "", { type: 'thinking' });
 
-      for await (const chunk of response) {
+      for await (const chunk of result.stream) {
         if (chunk.thought && !hasStartedText) {
           if (onToken) onToken(null, "", { type: 'thinking', thought: chunk.thought });
         }
 
-        if (chunk.functionCall) {
-          const call = chunk.functionCall;
+        if (chunk.candidates?.[0]?.content?.parts?.some(p => p.functionCall)) {
+          const call = chunk.candidates[0].content.parts.find(p => p.functionCall).functionCall;
           if (onToken) onToken(null, "", { type: 'thinking', status: `⚙️ Managing ${call.name.replace(/_/g, ' ')}...` });
 
           let toolResponse;
@@ -151,27 +147,51 @@ module.exports = {
             toolResponse = await toolService.kick_member(call.args.discord_id, call.args.reason, invoker, guild);
           }
 
-          response = await chat.sendMessageStream({
-            message: [{ function_response: { name: call.name, response: { content: toolResponse } } }]
-          });
+          result = await chat.sendMessageStream([
+            { function_response: { name: call.name, response: { content: toolResponse } } }
+          ]);
           continue; 
         }
 
-        if (chunk.text && chunk.text.length > 0) {
+        const text = chunk.text();
+        if (text && text.length > 0) {
           if (!hasStartedText) {
             hasStartedText = true;
             if (onToken) onToken(null, "", { type: 'text' });
           }
-          fullText += chunk.text;
-          if (onToken) onToken(chunk.text, fullText, { type: 'text' });
+          fullText += text;
+          if (onToken) onToken(text, fullText, { type: 'text' });
         }
       }
 
       return fullText;
 
     } catch (error) {
-      console.error("[Gemini 3.1 Clean] Failure:", error.message);
+      console.error("[JackAI] generateResponse Failure:", error.message);
       throw error;
+    }
+  },
+
+  async extractSynergyPoints(imageUrl) {
+    if (!imageUrl) return 0;
+    try {
+      const imageData = await this._fetchImageData(imageUrl);
+      if (!imageData) return 0;
+
+      const prompt = "Extract the TOTAL SYNERGY POINTS shown in this game screenshot. This is usually a number next to a heart icon or labeled synergy. Return ONLY the numerical digits. If no points are found, return '0'.";
+      
+      const model = ai.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent([
+        { text: prompt },
+        { inline_data: { mime_type: imageData.mimeType, data: imageData.data } }
+      ]);
+
+      const text = result.response.text().trim();
+      const points = parseInt(text.replace(/[^0-9]/g, ''));
+      return isNaN(points) ? 0 : points;
+    } catch (e) {
+      console.error('[JackAI] Synergy extraction failed:', e.message);
+      return 0;
     }
   }
 };

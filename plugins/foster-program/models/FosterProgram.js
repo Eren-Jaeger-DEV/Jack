@@ -17,6 +17,27 @@ const pairSchema = new mongoose.Schema({
 const fosterProgramSchema = new mongoose.Schema({
   guildId:              { type: String, required: true },
   active:               { type: Boolean, default: true },
+  status: { 
+    type: String, 
+    enum: ['REGISTRATION', 'ACTIVE', 'ENDED'], 
+    default: 'ACTIVE' 
+  },
+  
+  // REGISTRATION (Phase 0)
+  registration: {
+    mentorThreadId:   { type: String },
+    neophyteThreadId: { type: String },
+    veteranThreadId:  { type: String },
+    
+    registeredMentors:   { type: [String], default: [] },
+    registeredNeophytes: { type: [String], default: [] },
+    registeredVeterans:  { type: [String], default: [] },
+    
+    mentorPoolSize:      { type: Number, default: 15 },
+    lastPoolExpansion:   { type: Date, default: Date.now },
+    expiresAt:           { type: Date }
+  },
+
   phase:                { type: Number, default: 1 },       // 1 or 2
   rotationIndex:        { type: Number, default: 0 },       // 0, 1, 2
   startedAt:            { type: Date, default: Date.now },

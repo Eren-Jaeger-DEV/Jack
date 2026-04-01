@@ -14,9 +14,19 @@ const configManager = require('../../../bot/utils/configManager');
 const ROTATION_DAYS       = 5;
 const PHASE_DAYS          = 15;
 const SUBMISSION_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const REGISTRATION_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+const POOL_EXPANSION_MS      = 6 * 60 * 60 * 1000;  // 6 hours
 const PLAYERS_PER_PAGE    = 10;
 const MENTOR_COUNT        = 15;
-const ROOKIE_COUNT        = 10;
+const PARTNER_COUNT       = 15;
+
+/* ── Role Configuration ── */
+const ROLES = {
+  MENTOR:   '1484354630140821705',
+  NEWCOMER: '1488835349571702935', // Input
+  NEOPHYTE: '1484348917079478454', // Assigned
+  VETERAN:  '1486183048247509123'  // Assigned
+};
 
 /**
  * Get current date/time in IST.
@@ -34,108 +44,200 @@ async function getActiveProgram(guildId) {
 }
 
 /**
- * Start the foster program:
- * 1. Fetch eligible players sorted by seasonSynergy
- * 2. Assign top 15 as Mentors, bottom 10 as Rookies
- * 3. Include Newbie-role holders as additional low-tier partners
- * 4. Create pairs and store
+ * Initiate the Foster Program Registration Phase:
+ * 1. Identify initial candidates (Top 15 Mentors, Newcomers, Bottom Veterans).
+ * 2. Create 3 registration threads in the foster channel.
+ * 3. Set expiration (24h).
  */
 async function startProgram(guild, client) {
-  // Fetch all registered clan members
-  await guild.members.fetch().catch(() => {});
-
   const config = await configManager.getGuildConfig(guild.id);
+  const fosterChannelId = config?.settings?.fosterChannelId;
   const clanMemberRoleId = config?.settings?.clanMemberRoleId;
-  const mentorRoleId = config?.settings?.mentorRoleId;
-  const rookieRoleId = config?.settings?.rookieRoleId;
-  const newbieRoleId = config?.settings?.newbieRoleId;
 
-  if (!clanMemberRoleId) {
-    return { success: false, error: 'Clan Member Role ID not configured in GuildConfig settings.' };
+  if (!fosterChannelId || !clanMemberRoleId) {
+    return { success: false, error: 'Foster Channel or Clan Role not configured.' };
   }
 
-  const clanMembers = guild.members.cache.filter(m =>
-    m.roles.cache.has(clanMemberRoleId) && !m.user.bot
-  );
+  const channel = await client.channels.fetch(fosterChannelId).catch(() => null);
+  if (!channel) return { success: false, error: 'Foster channel not found.' };
 
-  // Get registered players with seasonSynergy, sorted desc
+  // 1. Clear any existing active program
+  await FosterProgram.deleteMany({ guildId: guild.id, active: true });
+
+  // 2. Fetch candidates
+  await guild.members.fetch().catch(() => {});
+  const clanMembers = guild.members.cache.filter(m => m.roles.cache.has(clanMemberRoleId) && !m.user.bot);
   const playerIds = clanMembers.map(m => m.id);
-  const players = await Player.find({ discordId: { $in: playerIds }, ign: { $exists: true, $ne: '' } })
-    .sort({ seasonSynergy: -1 });
+  const players = await Player.find({ discordId: { $in: playerIds }, ign: { $exists: true, $ne: '' } }).sort({ seasonSynergy: -1 });
 
-  if (players.length < 2) {
-    return { success: false, error: 'Not enough registered clan members to start the program.' };
+  if (players.length < 30) {
+    return { success: false, error: 'Not enough registered players (need at least 30) for a 15-pair program.' };
   }
 
-  // Top N → Mentors, Bottom N → Rookies
-  const mentorCount = Math.min(MENTOR_COUNT, Math.floor(players.length / 2));
-  const mentorPlayers = players.slice(0, mentorCount);
-  const mentorIds = new Set(mentorPlayers.map(p => p.discordId));
+  // Initial pools
+  const top15Ids = players.slice(0, MENTOR_COUNT).map(p => p.discordId);
+  const newcomerRoleHolders = clanMembers.filter(m => m.roles.cache.has(ROLES.NEWCOMER));
+  const newcomerIds = newcomerRoleHolders.map(m => m.id);
+  
+  // 3. Create Main Instruction Message
+  const instructionEmbed = new EmbedBuilder()
+    .setTitle('🤝 Foster Program: Registration Open!')
+    .setDescription(`Welcome to the new Foster Program! We are looking for **15 Mentors** and **15 Partners**.\n\n**How to Register:**\n1. Find your category thread below.\n2. Write your **IGN** (In-Game Name) in the thread.\n3. Jack will verify your status and assign your role.\n\n*Registration closes in 24 hours or when slots are full.*`)
+    .setColor('#00FFCC')
+    .setTimestamp();
 
-  // Rookies: remaining registered players + anyone with Newbie role (not already a mentor)
-  const rookieCandidates = players.filter(p => !mentorIds.has(p.discordId));
+  const mainMsg = await channel.send({ embeds: [instructionEmbed] });
 
-  // Also include members with Newbie role who are registered but not already in the list
-  const newbieMembers = newbieRoleId ? clanMembers.filter(m =>
-    m.roles.cache.has(newbieRoleId) && !mentorIds.has(m.id)
-  ) : [];
-  const existingRookieIds = new Set(rookieCandidates.map(p => p.discordId));
-  for (const [, m] of newbieMembers) {
-    if (!existingRookieIds.has(m.id)) {
-      const p = await Player.findOne({ discordId: m.id, ign: { $exists: true, $ne: '' } });
-      if (p) rookieCandidates.push(p);
+  // 4. Create Threads
+  const mentorThread = await mainMsg.startThread({ name: '📝 Mentor Registration', autoArchiveDuration: 1440 });
+  const neophyteThread = await mainMsg.startThread({ name: '📝 Neophyte Registration (Newcomers)', autoArchiveDuration: 1440 });
+  const veteranThread = await mainMsg.startThread({ name: '📝 Veteran Registration (Old Players)', autoArchiveDuration: 1440 });
+
+  // 5. Initial Pings & Instructions
+  await mentorThread.send(`**ATTENTION TOP 15:** <@${top15Ids.join('>, <@')}> \n\nYou have been selected as Mentor candidates! Write your **IGN** here to join the program.`);
+  await neophyteThread.send(`**NEWCOMERS:** If you have the Newcomer role, write your **IGN** here to register as a Neophyte partner.`);
+  await veteranThread.send(`**VETERANS:** If you are a long-time member but have lower synergy this season, write your **IGN** here to register as a Veteran partner.`);
+
+  // 6. Create Database Entry
+  const expiresAt = new Date(Date.now() + REGISTRATION_WINDOW_MS);
+  const program = await FosterProgram.create({
+    guildId: guild.id,
+    active: true,
+    status: 'REGISTRATION',
+    registration: {
+      mentorThreadId: mentorThread.id,
+      neophyteThreadId: neophyteThread.id,
+      veteranThreadId: veteranThread.id,
+      mentorPoolSize: 15,
+      lastPoolExpansion: new Date(),
+      expiresAt: expiresAt
+    }
+  });
+
+  return { success: true, program };
+}
+
+/**
+ * Handle IGN verification inside registration threads.
+ */
+async function processThreadRegistration(message, roleType) {
+  const guild = message.guild;
+  const userId = message.author.id;
+  const ignInput = message.content.trim();
+
+  // 1. Verify Player in DB
+  const player = await Player.findOne({ discordId: userId });
+  if (!player || player.ign.toLowerCase() !== ignInput.toLowerCase()) {
+    return message.reply(`❌ **Jack:** I don't recognize that IGN for you. Make sure you typed it exactly as it appears in your \`/profile\`.`).then(m => setTimeout(() => m.delete().catch(() => {}), 5000));
+  }
+
+  // 2. Fetch Program
+  const program = await getActiveProgram(guild.id);
+  if (!program || program.status !== 'REGISTRATION') return;
+
+  // 3. Category Checks
+  let canJoin = false;
+  let targetRole = null;
+  let regList = null;
+
+  if (roleType === 'MENTOR') {
+    // Must be in top pool
+    const clanMemberRoleId = (await configManager.getGuildConfig(guild.id))?.settings?.clanMemberRoleId;
+    const clanMembers = guild.members.cache.filter(m => m.roles.cache.has(clanMemberRoleId));
+    const topPlayers = await Player.find({ discordId: { $in: [...clanMembers.keys()] } }).sort({ seasonSynergy: -1 }).limit(program.registration.mentorPoolSize);
+    if (topPlayers.some(p => p.discordId === userId)) {
+      canJoin = true;
+      targetRole = ROLES.MENTOR;
+      regList = program.registration.registeredMentors;
+    }
+  } else if (roleType === 'NEOPHYTE') {
+    if (message.member.roles.cache.has(ROLES.NEWCOMER)) {
+      canJoin = true;
+      targetRole = ROLES.NEOPHYTE;
+      regList = program.registration.registeredNeophytes;
+    }
+  } else if (roleType === 'VETERAN') {
+    // Everyone else can be a veteran if newcomers are low, but for simplicity we verify if they aren't mentors
+    if (!program.registration.registeredMentors.includes(userId)) {
+      canJoin = true;
+      targetRole = ROLES.VETERAN;
+      regList = program.registration.registeredVeterans;
     }
   }
 
-  // Cap rookies
-  const rookiePlayers = rookieCandidates.slice(0, Math.max(ROOKIE_COUNT, rookieCandidates.length));
-
-  if (rookiePlayers.length === 0) {
-    return { success: false, error: 'No eligible rookies/newbies found.' };
+  if (!canJoin) {
+    return message.reply(`❌ **Jack:** You are not eligible for this category.`).then(m => setTimeout(() => m.delete().catch(() => {}), 5000));
   }
 
-  // Assign roles
-  for (const p of mentorPlayers) {
-    const member = guild.members.cache.get(p.discordId);
-    if (member) {
-      if (mentorRoleId) await member.roles.add(mentorRoleId).catch(() => {});
-      if (rookieRoleId) await member.roles.remove(rookieRoleId).catch(() => {});
-    }
-  }
-  for (const p of rookiePlayers) {
-    const member = guild.members.cache.get(p.discordId);
-    if (member) {
-      if (rookieRoleId) await member.roles.add(rookieRoleId).catch(() => {});
-      if (mentorRoleId) await member.roles.remove(mentorRoleId).catch(() => {});
-    }
+  if (regList.includes(userId)) {
+    return message.reply(`⚠️ **Jack:** You are already registered, stop wasting my time.`).then(m => setTimeout(() => m.delete().catch(() => {}), 5000));
   }
 
-  // Create pairs
-  const pairCount = Math.min(mentorPlayers.length, rookiePlayers.length);
+  // 4. Success!
+  regList.push(userId);
+  await message.member.roles.add(targetRole).catch(() => {});
+  await program.save();
+
+  await message.react('✅');
+  await message.reply(`✅ **Jack:** Registration confirmed. You are now a **${roleType}**. Wait for pairing.`).then(m => setTimeout(() => m.delete().catch(() => {}), 10000));
+
+  // 5. Auto-Start Check
+  if (program.registration.registeredMentors.length >= 15 && 
+     (program.registration.registeredNeophytes.length + program.registration.registeredVeterans.length) >= 15) {
+    await startActiveProgram(guild, message.client, program);
+  }
+}
+
+/**
+ * Transition from Registration to Active.
+ */
+async function startActiveProgram(guild, client, program) {
+  console.log(`[FosterProgram] Finalizing registration for guild ${guild.id}`);
+
+  const mentors = program.registration.registeredMentors;
+  const partners = [...program.registration.registeredNeophytes, ...program.registration.registeredVeterans];
+
+  // Equalize
+  const pairCount = Math.min(mentors.length, partners.length);
+  const finalMentors = mentors.slice(0, pairCount);
+  const finalPartners = partners.slice(0, pairCount);
+
   const pairs = [];
   for (let i = 0; i < pairCount; i++) {
     pairs.push({
-      mentorId: mentorPlayers[i].discordId,
-      partnerId: rookiePlayers[i].discordId,
+      mentorId: finalMentors[i],
+      partnerId: finalPartners[i],
       points: 0
     });
   }
 
-  const now = getIST();
-  const program = await FosterProgram.create({
-    guildId: guild.id,
-    active: true,
-    phase: 1,
-    rotationIndex: 0,
-    startedAt: now,
-    lastRotation: now,
-    pairs,
-    pendingSubmissions: [],
-    submittedThisCycle: []
-  });
+  // Setup program
+  program.status = 'ACTIVE';
+  program.pairs = pairs;
+  program.startedAt = getIST();
+  program.lastRotation = getIST();
+  await program.save();
 
-  console.log(`[FosterProgram] Started with ${pairs.length} pairs (${mentorPlayers.length} mentors, ${rookiePlayers.length} rookies).`);
-  return { success: true, program };
+  // Archive Threads
+  const channelId = (await configManager.getGuildConfig(guild.id))?.settings?.fosterChannelId;
+  const channel = await client.channels.fetch(channelId).catch(() => null);
+  if (channel) {
+    const threadIds = [program.registration.mentorThreadId, program.registration.neophyteThreadId, program.registration.veteranThreadId];
+    for (const tid of threadIds) {
+      if (!tid) continue;
+      const thread = await channel.threads.fetch(tid).catch(() => null);
+      if (thread) {
+        await thread.setLocked(true);
+        await thread.setArchived(true);
+      }
+    }
+  }
+
+  // Post Pairing List
+  const { results } = await buildFinalResults(guild, program);
+  if (channel) await channel.send(`🚀 **Foster Program is now ACTIVE!**\nRegistration closed. Here are your pairings:\n${results.replace('🏆 Foster Program Final Results', '🤝 Active Pairings')}`);
+
+  await refreshLeaderboard(client, program);
 }
 
 /**
@@ -364,22 +466,41 @@ async function checkRotationAndPhase(client) {
 
   for (const program of programs) {
     try {
+      const guild = client.guilds.cache.get(program.guildId);
+      if (!guild) continue;
+
       const now = getIST();
-      const lastRot = new Date(program.lastRotation);
-      const daysSinceRotation = (now.getTime() - lastRot.getTime()) / (1000 * 60 * 60 * 24);
 
-      const started = new Date(program.startedAt);
-      const daysSinceStart = (now.getTime() - started.getTime()) / (1000 * 60 * 60 * 24);
+      // 0. HANDLE REGISTRATION PROGRESS
+      if (program.status === 'REGISTRATION') {
+        // A. Pool Expansion (Every 6 hours)
+        const timeSinceExpansion = now.getTime() - new Date(program.registration.lastPoolExpansion).getTime();
+        if (timeSinceExpansion >= POOL_EXPANSION_MS && program.registration.registeredMentors.length < MENTOR_COUNT) {
+          program.registration.mentorPoolSize += 5;
+          program.registration.lastPoolExpansion = now;
+          await program.save();
 
-      // Phase transition at 15 days
-      if (program.phase === 1 && daysSinceStart >= PHASE_DAYS) {
-        const guild = client.guilds.cache.get(program.guildId);
-        if (guild) {
-          await advancePhase(guild, client, program);
-          await refreshLeaderboard(client, program);
+          const clanMemberRoleId = (await configManager.getGuildConfig(guild.id))?.settings?.clanMemberRoleId;
+          const clanMembers = guild.members.cache.filter(m => m.roles.cache.has(clanMemberRoleId));
+          const players = await Player.find({ discordId: { $in: [...clanMembers.keys()] } }).sort({ seasonSynergy: -1 }).limit(program.registration.mentorPoolSize);
+          
+          const newCandidates = players.slice(program.registration.mentorPoolSize - 5, program.registration.mentorPoolSize);
+          if (newCandidates.length > 0) {
+            const thread = await guild.channels.fetch(program.registration.mentorThreadId).catch(() => null);
+            if (thread) {
+              await thread.send(`**⚠️ POOL EXPANSION:** <@${newCandidates.map(c => c.discordId).join('>, <@')}> \n\nYou are now eligible as Mentor candidates! Type your **IGN** here to register.`);
+            }
+          }
+        }
+
+        // B. Expiration (24 hours)
+        if (now.getTime() >= new Date(program.registration.expiresAt).getTime()) {
+           await startActiveProgram(guild, client, program);
         }
         continue;
       }
+
+      // 1. PHASE TRANSITION...
 
       // Auto-end at 30 days
       if (daysSinceStart >= PHASE_DAYS * 2) {
@@ -559,6 +680,8 @@ module.exports = {
   rotatePairs,
   advancePhase,
   submitPoints,
+  processThreadRegistration,
+  startActiveProgram,
   checkRotationAndPhase,
   getLeaderboardPage,
   buildButtons,

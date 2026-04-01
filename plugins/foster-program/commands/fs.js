@@ -48,15 +48,30 @@ module.exports = {
       // Screenshot check
       let screenshotUrl = null;
       if (ctx.isInteraction) {
-        // Slash commands can't have attachments — check if the message has one in the channel
-        // For slash commands, user must provide URL or we skip screenshot requirement via admin
         screenshotUrl = 'slash-command-submission';
       } else {
         const attachment = ctx.message?.attachments?.first();
         if (!attachment) {
-          return ctx.reply({ content: '❌ You must attach a screenshot with your submission.', ephemeral: isEphemeral });
+          return ctx.reply({ content: '❌ **Jack:** You must attach a screenshot with your submission, noob.', ephemeral: isEphemeral });
         }
         screenshotUrl = attachment.url;
+      }
+
+      // AI VISION VERIFICATION
+      if (screenshotUrl && screenshotUrl !== 'slash-command-submission') {
+        const statusMsg = await ctx.reply({ content: '📸 **Jack is verifying your synergy screenshot...**', ephemeral: isEphemeral });
+        
+        const aiPoints = await aiService.extractSynergyPoints(screenshotUrl);
+        
+        if (aiPoints === 0) {
+          return ctx.editReply({ content: '❌ **Jack:** I couldn\'t find any synergy points in that image. Upload a clearer screenshot.' });
+        }
+
+        if (Math.abs(aiPoints - points) > 5) { // Allow tiny 5pt buffer for OCR noise
+          return ctx.editReply({ content: `❌ **Jack:** That screenshot shows **${aiPoints}** points, but you claimed **${points}**. Don't try to lie to me.` });
+        }
+
+        await ctx.editReply({ content: `✅ **Jack:** Screenshot verified (**${aiPoints}** points detected). Processing...` });
       }
 
       // Clan member check
