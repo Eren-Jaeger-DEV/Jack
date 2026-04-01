@@ -75,7 +75,7 @@ module.exports = {
             {
               name: "get_optimal_matchmaking",
               description: "STRATEGIC: Analyzes player stats to propose the most balanced squads for tournaments.",
-              parameters: { type: "OBJECT", properties: { team_size: { type: "INTEGER", enum: [2, 4] } }, required: ["team_size"] }
+              parameters: { type: "OBJECT", properties: { team_size: { type: "STRING", enum: ["2", "4"] } }, required: ["team_size"] }
             },
             {
               name: "ban_member",
