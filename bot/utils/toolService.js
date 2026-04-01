@@ -158,5 +158,24 @@ module.exports = {
       if (!player) return { error: "Not registered." };
       return { ign: player.ign, uid: player.uid, level: player.accountLevel };
     } catch (e) { return { error: "Fetch failed." }; }
+  },
+
+  /**
+   * SERVER VISION: Provides a full map of the server's channels and roles.
+   */
+  async get_server_map(guild) {
+    if (!guild) return { error: "No guild context." };
+    try {
+      const channels = guild.channels.cache.map(c => ({ name: c.name, id: c.id, type: c.type }));
+      const roles = guild.roles.cache.map(r => ({ name: r.name, id: r.id, color: r.hexColor }));
+      
+      return {
+        serverName: guild.name,
+        totalChannels: channels.length,
+        totalRoles: roles.length,
+        channels: channels.slice(0, 25), // Limited to avoid token bloat
+        roles: roles.slice(0, 20)
+      };
+    } catch (e) { return { error: "Vision failed." }; }
   }
 };

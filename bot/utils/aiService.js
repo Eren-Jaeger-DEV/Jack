@@ -60,6 +60,10 @@ module.exports = {
               description: "SELF-AWARENESS: Provides a map of Jack's internal bot plugins and administrative powers."
             },
             {
+              name: "get_server_map",
+              description: "SERVER VISION: Provides a full map of the server's channels, roles, and current structure."
+            },
+            {
               name: "get_optimal_matchmaking",
               description: "STRATEGIC: Analyzes player stats to propose the most balanced squads for tournaments.",
               parameters: { type: "OBJECT", properties: { team_size: { type: "INTEGER", enum: [2, 4] } }, required: ["team_size"] }
@@ -139,6 +143,8 @@ module.exports = {
             toolResponse = await toolService.get_player_profile(call.args.discord_id, guild);
           } else if (call.name === "get_server_stats") {
             toolResponse = await toolService.get_server_stats(guild);
+          } else if (call.name === "get_server_map") {
+            toolResponse = await toolService.get_server_map(guild);
           } else if (call.name === "record_personality_trait") {
             toolResponse = await toolService.record_personality_trait(call.args.discord_id, call.args.note, call.args.reputation_change || 0);
           } else if (call.name === "get_system_map") {
