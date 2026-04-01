@@ -6,7 +6,7 @@ require('dotenv').config();
 
 const ai = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY);
 
-const modelName = 'gemini-1.5-pro';
+const modelName = 'gemini-3.1-pro-preview';
 
 /**
  * AI SERVICE (v3.8.0) - MULTIMODAL VISION & FOSTER AUTOMATION
