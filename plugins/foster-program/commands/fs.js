@@ -33,22 +33,18 @@ module.exports = {
     try {
       const isEphemeral = ctx.isInteraction;
 
-      // Parse points
-      let points;
+      // Parse points (Now Optional)
+      let pointsInput;
       if (ctx.isInteraction) {
-        points = ctx.options.getInteger('points');
+        pointsInput = ctx.options.getInteger('points');
       } else {
-        points = parseInt(ctx.args?.[0]);
-      }
-
-      if (isNaN(points) || points <= 0) {
-        return ctx.reply({ content: '❌ Please provide valid points.', ephemeral: isEphemeral });
+        pointsInput = parseInt(ctx.args?.[0]);
       }
 
       // Screenshot check
       let screenshotUrl = null;
       if (ctx.isInteraction) {
-        screenshotUrl = 'slash-command-submission';
+        screenshotUrl = 'slash-command-submission'; // Slash commands have an attachment option, but for now we fallback
       } else {
         const attachment = ctx.message?.attachments?.first();
         if (!attachment) {
@@ -57,6 +53,8 @@ module.exports = {
         screenshotUrl = attachment.url;
       }
 
+      let finalPoints = pointsInput;
+
       // AI VISION VERIFICATION
       if (screenshotUrl && screenshotUrl !== 'slash-command-submission') {
         const statusMsg = await ctx.reply({ content: '📸 **Jack is verifying your synergy screenshot...**', ephemeral: isEphemeral });
@@ -64,15 +62,32 @@ module.exports = {
         const aiPoints = await aiService.extractSynergyPoints(screenshotUrl);
         
         if (aiPoints === 0) {
-          return ctx.editReply({ content: '❌ **Jack:** I couldn\'t find any synergy points in that image. Upload a clearer screenshot.' });
+          if (!finalPoints || isNaN(finalPoints)) {
+             return ctx.editReply({ content: '❌ **Jack:** I couldn\'t find any synergy points in that image and you didn\'t provide any. Provide valid points or a clearer screenshot.' });
+          }
+          // If user provided points but AI failed, we can either trust user or reject.
+          // For now, let's trust if user input exists but warn.
+          await ctx.editReply({ content: '⚠️ **Jack:** I couldn\'t read the points from the image, but I\'ll trust your input for now...' });
+        } else {
+          // If user didn't provide points, use the AI points!
+          if (!finalPoints || isNaN(finalPoints)) {
+            finalPoints = aiPoints;
+            await ctx.editReply({ content: `✅ **Jack:** Detected **${aiPoints}** points from your screenshot. Processing...` });
+          } else {
+            // Both provided - Verify!
+            if (Math.abs(aiPoints - finalPoints) > 5) {
+              return ctx.editReply({ content: `❌ **Jack:** That screenshot shows **${aiPoints}** points, but you claimed **${finalPoints}**. Don't try to lie to me.` });
+            }
+            await ctx.editReply({ content: `✅ **Jack:** Screenshot verified (**${aiPoints}** points detected). Processing...` });
+          }
         }
-
-        if (Math.abs(aiPoints - points) > 5) { // Allow tiny 5pt buffer for OCR noise
-          return ctx.editReply({ content: `❌ **Jack:** That screenshot shows **${aiPoints}** points, but you claimed **${points}**. Don't try to lie to me.` });
-        }
-
-        await ctx.editReply({ content: `✅ **Jack:** Screenshot verified (**${aiPoints}** points detected). Processing...` });
       }
+
+      if (isNaN(finalPoints) || finalPoints <= 0) {
+        return ctx.reply({ content: '❌ **Jack:** I need a number of points to record. Either type them or upload a clearer screenshot.', ephemeral: isEphemeral });
+      }
+
+      const points = finalPoints;
 
       // Clan member check
       const config = await configManager.getGuildConfig(ctx.guild.id);
