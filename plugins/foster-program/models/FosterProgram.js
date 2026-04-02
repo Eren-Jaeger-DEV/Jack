@@ -4,7 +4,7 @@ const pendingSubmissionSchema = new mongoose.Schema({
   pairIndex:     { type: Number, required: true },
   userId:        { type: String, required: true },
   value:         { type: Number, required: true },
-  type:          { type: String, enum: ['initial', 'final'], required: true }, // Bug 1 fix: was missing
+  type:          { type: String, enum: ['initial', 'final'], default: 'initial' }, // Bug 1 fix: added default to handle stale data validation
   screenshotUrl: { type: String, default: '' },
   timestamp:     { type: Date, default: Date.now }
 }, { _id: false });
