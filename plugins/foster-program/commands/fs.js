@@ -5,7 +5,7 @@
  * /fs submit <type> <points> <screenshot>
  */
 
-const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const fosterService = require('../services/fosterService');
 const configManager = require('../../../bot/utils/configManager');
 
@@ -13,11 +13,14 @@ module.exports = {
   name: 'fs',
   category: 'foster-program',
   description: 'Submit foster synergy points with screenshot verification',
-  usage: '/fs submit <initial/final> <points> (with screenshot attached)',
+  usage: '/fs submit <initial/final> <points> (with screenshot attached) or j fs submit ...',
+  aliases: ['fostersynergy'],
   
   data: new SlashCommandBuilder()
     .setName('fs')
     .setDescription('Submit foster synergy points')
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
     .addSubcommand(sub => 
       sub.setName('submit')
         .setDescription('Submit your stats card for verification')
