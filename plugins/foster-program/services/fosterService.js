@@ -161,14 +161,16 @@ async function postOrientation(client, program) {
     // Create Thread
     const thread = await msg.startThread({ name: `📌 Stat Cards (T${program.term} C${program.cycle})`, autoArchiveDuration: ThreadAutoArchiveDuration.OneDay });
     program.submissionThreadId = thread.id;
-    await thread.send(`👋 **Foster Participants!** Use this thread to submit your stats cards.\n\n` +
-      `**How to Submit:**\n` +
-      `1️⃣ Use the command: \`/fs submit\`\n` +
-      `2️⃣ Choose **Type**: \`Initial\` (Day 1) or \`Final\` (Day 5).\n` +
-      `3️⃣ Enter **Points**: The "Team-up points earned" value from your card.\n` +
-      `4️⃣ Attach **Screenshot**: Screenshot of your "All Data" stats card.\n\n` +
-      `**Reference Image (What to send):** https://cdn.discordapp.com/attachments/1341978656096129065/1489205554621714482/Screenshot_20260402-153333.Battlegrounds_India.png\n\n` +
-      `Points are calculated as \`Final - Initial\`. Both partners must submit the same value and screenshot!`);
+    await thread.send(
+      `👋 **Foster Participants!** Submit your stats directly in this thread — no commands needed.\n\n` +
+      `**How to submit:**\n` +
+      `1️⃣ Type \`initial 450\` *(Day 1)* or \`final 600\` *(Day 5)* — use your actual points number\n` +
+      `2️⃣ Attach your **"All Data"** stats card screenshot in the same message\n` +
+      `3️⃣ Send — Jack will verify and record automatically ✅\n\n` +
+      `**Reference (what screenshot to send):**\n` +
+      `https://cdn.discordapp.com/attachments/1341978656096129065/1489205554621714482/Screenshot_20260402-153333.Battlegrounds_India.png\n\n` +
+      `> Points are calculated as **(Final − Initial)**. Both partners must submit the same value.`
+    );
     await program.save();
     return msg;
   } catch (err) { console.error('[FosterProgram] postOrientation error:', err); }
@@ -218,19 +220,8 @@ async function refreshLeaderboard(client, program) {
 }
 
 async function submitSynergyCard(userId, value, type, screenshotUrl, program) {
-  // 1. AI Screenshot Verification — null = unreadable, 0 = genuinely no points earned
-  const extracted = await aiService.extractSynergyPoints(screenshotUrl);
-
-  if (extracted === null || extracted === undefined) {
-    return { success: false, error: "AI could not read the screenshot. Make sure the **'All Data'** stats card is fully visible with the **'Team-up points earned'** row clearly readable." };
-  }
-
-  if (extracted !== value) {
-    return {
-      success: false,
-      error: `Points mismatch! You entered **${value}** but Jack read **${extracted}** from your screenshot.\n\nPlease double-check the **"Team-up points earned"** value and run \`/fs submit\` again.`
-    };
-  }
+  // Note: AI screenshot verification is done in messageCreate.js before calling this function.
+  // This function handles only pair matching and DB persistence.
 
   // 2. Identify pair and partner
   const pix = program.pairs.findIndex(p => p.mentorId === userId || p.partnerId === userId);
