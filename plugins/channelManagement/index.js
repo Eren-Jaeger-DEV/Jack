@@ -4,8 +4,9 @@ const configManager = require('../../bot/utils/configManager');
 
 // Precise regex for links, including common TLDs and discord.gg
 const LINK_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(discord\.gg\/[^\s]+)|([^\s]+\.(com|net|org|io|me|xyz)([^\s]*)?)/i;
-// Regex for GIF links from Tenor and Giphy
-const GIF_REGEX = /(tenor\.com\/view\/|giphy\.com\/gifs\/|media\.giphy\.com\/media\/)/i;
+// Regex for GIF links from Tenor, Giphy, and direct .gif extensions
+const GIF_REGEX = /(tenor\.com\/[^\s]+)|([^\s]+\.gif(\?[^\s]*)?)|(giphy\.com\/gifs\/[^\s]+)|(media\.giphy\.com\/media\/[^\s]+)|(giphy\.com\/media\/[^\s]+)/i;
+const DIRECT_GIF_REGEX = /\.gif(\?[^\s]*)?$/i;
 
 async function sendWarning(message, text) {
   try {
