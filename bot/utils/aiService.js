@@ -4,15 +4,26 @@ const persona = require('./persona');
 const toolService = require('./toolService');
 require('dotenv').config();
 
-const ai = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY);
-
+const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
+let currentKeyIndex = 0;
 const modelName = 'gemini-3.1-pro-preview';
 
 /**
- * AI SERVICE (v4.1.0) - STABILITY RESTORATION
- * Reverted to single-model architecture for project compatibility.
+ * AI SERVICE (v4.2.0) - MULTI-KEY ROTATION
+ * Implements automatic failover between multiple API keys on 429 errors.
  */
 module.exports = {
+  _getGenAI() {
+    const key = API_KEYS[currentKeyIndex] || API_KEYS[0];
+    return new GoogleGenerativeAI(key);
+  },
+
+  _rotateKey() {
+    if (API_KEYS.length <= 1) return false;
+    currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+    console.log(`[JackAI] 🔄 System Rotation: Switching to API Key #${currentKeyIndex + 1}`);
+    return true;
+  },
   async _fetchImageData(url) {
     try {
       const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -97,33 +108,46 @@ module.exports = {
         topP: 0.95,
       };
 
-      const model = ai.getGenerativeModel({ 
-        model: modelName,
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        tools: tools,
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
-        ],
-        generationConfig
-      });
+      const executeRequest = async (retryCount = 0) => {
+        try {
+          const genAI = this._getGenAI();
+          const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            tools: tools,
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
+            ],
+            generationConfig
+          });
 
-      const chat = model.startChat({
-        history: history.map(h => ({
-          role: h.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: h.content }]
-        }))
-      });
+          const chat = model.startChat({
+            history: history.map(h => ({
+              role: h.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: h.content }]
+            }))
+          });
 
-      const imageData = imageUrl ? await this._fetchImageData(imageUrl) : null;
-      const messageParts = [
-        { text: prompt },
-        ...(imageData ? [{ inline_data: { mime_type: imageData.mimeType, data: imageData.data } }] : [])
-      ];
+          const imageData = imageUrl ? await this._fetchImageData(imageUrl) : null;
+          const messageParts = [
+            { text: prompt },
+            ...(imageData ? [{ inline_data: { mime_type: imageData.mimeType, data: imageData.data } }] : [])
+          ];
 
-      let result = await chat.sendMessageStream(messageParts);
+          return await chat.sendMessageStream(messageParts);
+        } catch (error) {
+          if (error.message.includes("429") && retryCount < API_KEYS.length - 1) {
+            this._rotateKey();
+            return await executeRequest(retryCount + 1);
+          }
+          throw error;
+        }
+      };
+
+      let result = await executeRequest();
 
       let fullText = "";
       let hasStartedText = false;
@@ -189,11 +213,24 @@ module.exports = {
 
       const prompt = "Extract the TOTAL SYNERGY POINTS shown in this game screenshot. This is usually a number next to a heart icon or labeled synergy. Return ONLY the numerical digits. If no points are found, return '0'.";
       
-      const model = ai.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent([
-        { text: prompt },
-        { inline_data: { mime_type: imageData.mimeType, data: imageData.data } }
-      ]);
+      const executeExtraction = async (retryCount = 0) => {
+        try {
+          const genAI = this._getGenAI();
+          const model = genAI.getGenerativeModel({ model: modelName });
+          return await model.generateContent([
+            { text: prompt },
+            { inline_data: { mime_type: imageData.mimeType, data: imageData.data } }
+          ]);
+        } catch (error) {
+          if (error.message.includes("429") && retryCount < API_KEYS.length - 1) {
+            this._rotateKey();
+            return await executeExtraction(retryCount + 1);
+          }
+          throw error;
+        }
+      };
+
+      const result = await executeExtraction();
 
       const text = result.response.text().trim();
       const points = parseInt(text.replace(/[^0-9]/g, ''));
