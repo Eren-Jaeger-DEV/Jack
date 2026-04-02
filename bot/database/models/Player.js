@@ -58,6 +58,11 @@ const playerSchema = new mongoose.Schema({
 
   clanJoinDate: Date,
 
+  lastSeasonSynergy: {
+    type: Number,
+    default: 0
+  },
+
   seasonSynergy: {
     type: Number,
     default: 0

@@ -146,11 +146,21 @@ async function resetWeeklyEnergy() {
  * Full season reset: zero weekly + season energy, clear submissions.
  */
 async function resetAllEnergy() {
+  // Use updateMany with aggregation pipeline to copy seasonSynergy to lastSeasonSynergy
   await Player.updateMany(
     {},
-    { $set: { weeklySynergy: 0, seasonSynergy: 0, lastWeeklySubmission: '' } }
+    [
+      {
+        $set: {
+          lastSeasonSynergy: "$seasonSynergy",
+          weeklySynergy: 0,
+          seasonSynergy: 0,
+          lastWeeklySubmission: ''
+        }
+      }
+    ]
   );
-  console.log('[SeasonalSynergy] All energy reset (season end).');
+  console.log('[SeasonalSynergy] All energy archived and reset (season end).');
 }
 
 /**
