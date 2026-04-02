@@ -104,7 +104,7 @@ module.exports = {
 
       const generationConfig = {
         maxOutputTokens: 1000,
-        temperature: 0.3, 
+        temperature: 0.7, 
         topP: 0.95,
       };
 
