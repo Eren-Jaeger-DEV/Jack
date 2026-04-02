@@ -1,124 +1,151 @@
 /**
  * fs.js — Foster Synergy Point Submission
- * 
- * Users must submit their "Team-up points earned" from the All Data card.
- * /fs submit <type> <points> <screenshot>
+ *
+ * 2-Step Flow (mirrors Player Profile system):
+ *  Step 1 → /fs submit <type> <points>  (or: j fs submit <type> <points>)
+ *  Step 2 → Jack prompts user to drop screenshot in thread; waits 3 min for attachment.
  */
 
-const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const fosterService = require('../services/fosterService');
-const configManager = require('../../../bot/utils/configManager');
+const {
+  SlashCommandBuilder,
+  AttachmentBuilder,
+  EmbedBuilder,
+  PermissionFlagsBits
+} = require('discord.js');
+
+const fosterService  = require('../services/fosterService');
+const configManager  = require('../../../bot/utils/configManager');
+
+// In-memory map: userId → { type, points, channelId, timestamp }
+const pendingScreenshots = new Map();
+const SCREENSHOT_WAIT_MS = 3 * 60 * 1000; // 3 minutes
 
 module.exports = {
   name: 'fs',
   category: 'foster-program',
-  description: 'Submit foster synergy points with screenshot verification',
-  usage: '/fs submit <initial/final> <points> (with screenshot attached) or j fs submit ...',
-  aliases: ['fostersynergy'],
-  
+  description: 'Submit foster synergy points — Jack will ask for the screenshot separately',
+  usage: '/fs submit <initial/final> <points>   |   j fs submit <initial/final> <points>',
+  aliases: ['fstats'],
+
   data: new SlashCommandBuilder()
     .setName('fs')
-    .setDescription('Submit foster synergy points')
+    .setDescription('Foster synergy point submission')
     .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
-    .addSubcommand(sub => 
+    .addSubcommand(sub =>
       sub.setName('submit')
-        .setDescription('Submit your stats card for verification')
-        .addStringOption(o => 
+        .setDescription('Submit your Team-up points for this cycle')
+        .addStringOption(o =>
           o.setName('type')
-            .setDescription('Submission type: Initial (Baseline) or Final (End of Cycle)')
+            .setDescription('Initial (Day 1 baseline) or Final (Day 5 result)')
             .setRequired(true)
             .addChoices(
               { name: 'Initial (Day 1)', value: 'initial' },
-              { name: 'Final (Day 5)', value: 'final' }
+              { name: 'Final (Day 5)',   value: 'final'   }
             )
         )
-        .addIntegerOption(o => 
+        .addIntegerOption(o =>
           o.setName('points')
-            .setDescription('The "Team-up points earned" value from your card')
+            .setDescription('The "Team-up points earned" number from your All Data card')
             .setRequired(true)
             .setMinValue(0)
         )
-        .addAttachmentOption(o => 
-          o.setName('screenshot')
-            .setDescription('Screenshot of your "All Data" stats card')
-            .setRequired(true)
-        )
     ),
+
+  /* ────────────────────────────────────────────── */
+  /*  Expose the pending map so the message handler */
+  /*  in the plugin index can resolve screenshots.  */
+  /* ────────────────────────────────────────────── */
+  pendingScreenshots,
 
   async run(ctx) {
     try {
-      const isInteraction = ctx.isInteraction;
+      const user  = ctx.user;
       const guild = ctx.guild;
-      const user = ctx.user;
 
-      // 1. Parse Inputs
-      let type, points, screenshotUrl;
+      /* ── Parse subcommand & args ── */
+      let type, points;
 
-      if (isInteraction) {
-        type = ctx.options.getString('type');
+      if (ctx.isInteraction) {
+        const sub = ctx.options.getSubcommand(false);
+        if (sub !== 'submit') {
+          return ctx.reply({ content: '❌ Use `/fs submit`', ephemeral: true });
+        }
+        type   = ctx.options.getString('type');
         points = ctx.options.getInteger('points');
-        const attachment = ctx.options.getAttachment('screenshot');
-        screenshotUrl = attachment?.url;
       } else {
-        // Prefix command support (j fs submit <type> <points>)
-        const sub = ctx.args?.[0]?.toLowerCase();
-        if (sub !== 'submit') return ctx.reply('❌ **Jack:** Use `/fs submit` or `j fs submit`.');
-        
-        type = ctx.args?.[1]?.toLowerCase();
-        points = parseInt(ctx.args?.[2]);
-        const attachment = ctx.message?.attachments?.first();
-        screenshotUrl = attachment?.url;
-
-        if (!['initial', 'final'].includes(type) || isNaN(points) || !screenshotUrl) {
-          return ctx.reply('❌ **Jack:** Invalid usage. `j fs submit <initial/final> <points>` (attach screenshot).');
+        // Prefix: j fs submit <type> <points>
+        //         j fstats submit <type> <points>
+        const args = ctx.args || [];
+        const sub  = args[0]?.toLowerCase();
+        if (sub !== 'submit') {
+          return ctx.reply('❌ Usage: `j fs submit <initial/final> <points>`');
+        }
+        type   = args[1]?.toLowerCase();
+        points = parseInt(args[2], 10);
+        if (!['initial', 'final'].includes(type) || isNaN(points)) {
+          return ctx.reply('❌ Usage: `j fs submit <initial/final> <points>`');
         }
       }
 
-      // 2. Initial Checks
+      /* ── Program guard ── */
       const program = await fosterService.getActiveProgram(guild.id);
       if (!program || program.status !== 'ACTIVE') {
-        return ctx.reply({ content: '❌ **Jack:** There is no active foster program running right now.', ephemeral: true });
+        return ctx.reply({ content: '❌ **Jack:** No active foster program right now.', ephemeral: true });
       }
 
-      // 3. Process via Service
-      const result = await fosterService.submitSynergyCard(user.id, points, type, screenshotUrl, program);
-
-      if (!result.success) {
-        return ctx.reply({ content: `❌ **Jack:** ${result.error}`, ephemeral: true });
+      /* ── Verify this user is a participant ── */
+      const pix = program.pairs.findIndex(p => p.mentorId === user.id || p.partnerId === user.id);
+      if (pix === -1) {
+        return ctx.reply({ content: '❌ **Jack:** You are not in an active pair.', ephemeral: true });
       }
 
-      // 4. Respond
-      if (result.matched) {
-        const embed = new EmbedBuilder()
-          .setTitle('✅ Synergy Verified!')
-          .setColor('#00FFCC')
-          .setTimestamp();
+      /* ── Step 1 acknowledgement ── */
+      const embed = new EmbedBuilder()
+        .setColor('#FFD700')
+        .setTitle('📸 Screenshot Required')
+        .setDescription(
+          `Got it <@${user.id}>!\n\n` +
+          `**Type:** \`${type === 'initial' ? 'Initial (Day 1)' : 'Final (Day 5)'}\`\n` +
+          `**Team-up Points:** \`${points}\`\n\n` +
+          `Now **drop your "All Data" stats card screenshot** in this thread.\n` +
+          `Jack will capture and verify it.\n\n` +
+          `⏱️ You have **3 minutes** to send the screenshot.`
+        )
+        .setFooter({ text: 'Make sure the "Team-up points earned" is clearly visible.' })
+        .setTimestamp();
 
-        if (type === 'initial') {
-          embed.setDescription(`**Success!** Both partners have submitted their initial baseline of **${points}** points. \n\nJack will use this to calculate your growth on Day 5.`);
-        } else {
-          embed.setDescription(`**Cycle Complete!** Both partners matched their final stats.\n\n` +
-            `▫️ **Total Pair Points:** ${result.points}\n` +
-            `▫️ **Your Individual Split (50%):** ${result.split}\n\n` +
-            `The Global Rankings have been updated.`);
-            
-          // Refresh leaderboard in channel
-          await fosterService.refreshLeaderboard(ctx.client, program);
+      // Reply publicly so the user knows exactly where to upload the screenshot (Bug 5 fix)
+      await ctx.reply({ embeds: [embed], ephemeral: false });
+
+      /* ── Register pending screenshot state ── */
+      // Resolve channelId reliably for both slash and prefix (Bug 6 fix)
+      const channelId = ctx.channel?.id ?? ctx.message?.channel?.id;
+      if (!channelId) {
+        console.warn('[FosterProgram] Could not resolve channelId for user', user.id);
+        return;
+      }
+
+      pendingScreenshots.set(user.id, {
+        type,
+        points,
+        channelId,
+        guildId:   guild.id,
+        pairIndex: pix,
+        timestamp: Date.now()
+      });
+
+      // Auto-expire after SCREENSHOT_WAIT_MS
+      setTimeout(() => {
+        const entry = pendingScreenshots.get(user.id);
+        if (entry && Date.now() - entry.timestamp >= SCREENSHOT_WAIT_MS - 5000) {
+          pendingScreenshots.delete(user.id);
         }
-
-        return ctx.reply({ embeds: [embed] });
-      } else {
-        // Waiting for partner
-        return ctx.reply({ 
-          content: `⏳ **Jack:** Recorded your **${type}** submission of **${points}** points. \n\nWaiting for your partner (<@${result.waitingFor}>) to submit the same value with their screenshot within 15 minutes.`,
-          ephemeral: false // Better for thread visibility
-        });
-      }
+      }, SCREENSHOT_WAIT_MS);
 
     } catch (err) {
       console.error('[FosterProgram] fs command error:', err);
-      await ctx.reply({ content: '❌ **Jack:** Something went wrong during submission.', ephemeral: true }).catch(() => {});
+      await ctx.reply({ content: '❌ **Jack:** Something went wrong.', ephemeral: true }).catch(() => {});
     }
   }
 };

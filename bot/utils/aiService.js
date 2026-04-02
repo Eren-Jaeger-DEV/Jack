@@ -211,7 +211,10 @@ module.exports = {
       const imageData = await this._fetchImageData(imageUrl);
       if (!imageData) return 0;
 
-      const prompt = "Extract the TOTAL SYNERGY POINTS shown in this game screenshot. This is usually a number next to a heart icon or labeled synergy. Return ONLY the numerical digits. If no points are found, return '0'.";
+      const prompt = "Analyze this BGMI 'All Data' stats card screenshot. Your goal is to extract the number for 'Team-up points earned'. \n\n" +
+                     "Look specifically for the text 'Team-up points earned' and return ONLY the numeric value found next to or below it. \n" +
+                     "If you see multiple numbers, provide the one associated with synergy or team-up points. \n" +
+                     "Return ONLY the numerical digits (e.g., '450'). If no points are readable, return '0'.";
       
       const executeExtraction = async (retryCount = 0) => {
         try {
@@ -233,11 +236,13 @@ module.exports = {
       const result = await executeExtraction();
 
       const text = result.response.text().trim();
-      const points = parseInt(text.replace(/[^0-9]/g, ''));
-      return isNaN(points) ? 0 : points;
+      const match = text.match(/\d+/);
+      if (!match) return null; // null = unreadable, distinct from 0 points
+      const points = parseInt(match[0], 10);
+      return isNaN(points) ? null : points;
     } catch (e) {
       console.error('[JackAI] Synergy extraction failed:', e.message);
-      return 0;
+      return null; // null = error, distinct from 0 points
     }
   }
 };

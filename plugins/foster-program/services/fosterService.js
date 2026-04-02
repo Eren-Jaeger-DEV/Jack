@@ -10,6 +10,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBu
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 const configManager = require('../../../bot/utils/configManager');
 const { generatePairingImage, generateDualLeaderboardImage } = require('../utils/fosterCanvas');
+const aiService = require('../../../bot/utils/aiService');
 
 /* ── Constants ── */
 const ROTATION_DAYS       = 5;
@@ -98,10 +99,12 @@ function rotatePairs(program) {
   for (let i = 0; i < program.pairs.length; i++) {
     program.pairs[i].partnerId = partners[i];
     program.pairs[i].initialPoints = 0;
+    program.pairs[i].points = 0; // reset cycle points
   }
   program.cycle += 1; if (program.cycle > 3) program.cycle = 1;
   program.rotationIndex += 1; program.lastRotation = getIST();
   program.submittedThisCycle = [];
+  program.pendingSubmissions = []; // Bug 7 fix: clear stale submissions on rotation
 }
 
 async function advancePhase(guild, client, program) {
@@ -181,20 +184,23 @@ async function refreshLeaderboard(client, program) {
     if (!channel) return;
     const guild = await client.guilds.fetch(program.guildId).catch(() => null);
 
+    // Bug 4 fix: always re-fetch from DB so we use saved data, not a stale in-memory copy
+    const fresh = await FosterProgram.findById(program._id) || program;
+
     const mentorList = []; const newbieList = [];
-    for (const [id, points] of program.mentorPoints) {
+    for (const [id, points] of fresh.mentorPoints) {
         const mm = await guild.members.fetch(id).catch(() => null);
         const mp = await Player.findOne({ discordId: id });
         mentorList.push({ name: mp?.ign || mm?.displayName || 'Unknown', points, avatarURL: mm?.user.displayAvatarURL({ extension: 'png' }) || '' });
     }
-    for (const [id, points] of program.newbiePoints) {
+    for (const [id, points] of fresh.newbiePoints) {
         const nm = await guild.members.fetch(id).catch(() => null);
         const np = await Player.findOne({ discordId: id });
         newbieList.push({ name: np?.ign || nm?.displayName || 'Unknown', points, avatarURL: nm?.user.displayAvatarURL({ extension: 'png' }) || '' });
     }
     mentorList.sort((a,b) => b.points-a.points); newbieList.sort((a,b) => b.points-a.points);
 
-    const buffer = await generateDualLeaderboardImage({ mentors: mentorList, newbies: newbieList }, { term: program.term, cycle: program.cycle });
+    const buffer = await generateDualLeaderboardImage({ mentors: mentorList, newbies: newbieList }, { term: fresh.term, cycle: fresh.cycle });
     const attachment = new AttachmentBuilder(buffer, { name: 'foster-rankings.png' });
 
     const embed = new EmbedBuilder()
@@ -203,15 +209,30 @@ async function refreshLeaderboard(client, program) {
         .setImage('attachment://foster-rankings.png')
         .setColor('#2F3136').setTimestamp();
 
-    await deleteOldLeaderboardMessage(client, program);
+    await deleteOldLeaderboardMessage(client, fresh);
     const msg = await channel.send({ embeds: [embed], files: [attachment] });
-    program.leaderboardMessageId = msg.id;
-    await program.save();
+    fresh.leaderboardMessageId = msg.id;
+    await fresh.save();
     return msg;
   } catch (err) { console.error('[FosterProgram] refreshLeaderboard error:', err); }
 }
 
 async function submitSynergyCard(userId, value, type, screenshotUrl, program) {
+  // 1. AI Screenshot Verification — null = unreadable, 0 = genuinely no points earned
+  const extracted = await aiService.extractSynergyPoints(screenshotUrl);
+
+  if (extracted === null || extracted === undefined) {
+    return { success: false, error: "AI could not read the screenshot. Make sure the **'All Data'** stats card is fully visible with the **'Team-up points earned'** row clearly readable." };
+  }
+
+  if (extracted !== value) {
+    return {
+      success: false,
+      error: `Points mismatch! You entered **${value}** but Jack read **${extracted}** from your screenshot.\n\nPlease double-check the **"Team-up points earned"** value and run \`/fs submit\` again.`
+    };
+  }
+
+  // 2. Identify pair and partner
   const pix = program.pairs.findIndex(p => p.mentorId === userId || p.partnerId === userId);
   if (pix === -1) return { success: false, error: 'You are not in an active pair.' };
   const pair = program.pairs[pix]; const pid = pair.mentorId === userId ? pair.partnerId : pair.mentorId;
