@@ -159,8 +159,11 @@ async function postOrientation(client, program) {
     const thread = await msg.startThread({ name: `📌 Stat Cards (T${program.term} C${program.cycle})`, autoArchiveDuration: ThreadAutoArchiveDuration.OneDay });
     program.submissionThreadId = thread.id;
     await thread.send(`👋 **Foster Participants!** Use this thread to submit your stats cards.\n\n` +
-      `1️⃣ **Day 1**: Submit your **Initial Stat Card** (Baseline).\n` +
-      `2️⃣ **Day 5**: Submit your **Final Stat Card** (End of Cycle).\n\n` +
+      `**How to Submit:**\n` +
+      `1️⃣ Use the command: \`/fs submit\`\n` +
+      `2️⃣ Choose **Type**: \`Initial\` (Day 1) or \`Final\` (Day 5).\n` +
+      `3️⃣ Enter **Points**: The "Team-up points earned" value from your card.\n` +
+      `4️⃣ Attach **Screenshot**: Screenshot of your "All Data" stats card.\n\n` +
       `**Reference Image (What to send):** https://cdn.discordapp.com/attachments/1341978656096129065/1489205554621714482/Screenshot_20260402-153333.Battlegrounds_India.png\n\n` +
       `Points are calculated as \`Final - Initial\`. Both partners must submit the same value and screenshot!`);
     await program.save();

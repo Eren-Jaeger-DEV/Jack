@@ -1,149 +1,121 @@
 /**
  * fs.js — Foster Synergy Point Submission
- *
- * Hybrid: /fs <points> or j fs <points>
- * Must include a screenshot attachment.
- * Both pair members must submit same value within 10 minutes.
+ * 
+ * Users must submit their "Team-up points earned" from the All Data card.
+ * /fs submit <type> <points> <screenshot>
  */
 
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const fosterService = require('../services/fosterService');
 const configManager = require('../../../bot/utils/configManager');
-
 
 module.exports = {
   name: 'fs',
   category: 'foster-program',
-  description: 'Submit foster synergy points with screenshot',
-  aliases: ['fostersynergy'],
-  usage: '/fs <points>  |  j fs <points> (with screenshot)',
-  details: 'Submit points for your foster pair. Both members must submit the same value with a screenshot within 10 minutes.',
-
+  description: 'Submit foster synergy points with screenshot verification',
+  usage: '/fs submit <initial/final> <points> (with screenshot attached)',
+  
   data: new SlashCommandBuilder()
     .setName('fs')
     .setDescription('Submit foster synergy points')
-    .addIntegerOption(o =>
-      o.setName('points')
-        .setDescription('Synergy points to submit')
-        .setRequired(true)
-        .setMinValue(1)
+    .addSubcommand(sub => 
+      sub.setName('submit')
+        .setDescription('Submit your stats card for verification')
+        .addStringOption(o => 
+          o.setName('type')
+            .setDescription('Submission type: Initial (Baseline) or Final (End of Cycle)')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Initial (Day 1)', value: 'initial' },
+              { name: 'Final (Day 5)', value: 'final' }
+            )
+        )
+        .addIntegerOption(o => 
+          o.setName('points')
+            .setDescription('The "Team-up points earned" value from your card')
+            .setRequired(true)
+            .setMinValue(0)
+        )
+        .addAttachmentOption(o => 
+          o.setName('screenshot')
+            .setDescription('Screenshot of your "All Data" stats card')
+            .setRequired(true)
+        )
     ),
 
   async run(ctx) {
     try {
-      const isEphemeral = ctx.isInteraction;
+      const isInteraction = ctx.isInteraction;
+      const guild = ctx.guild;
+      const user = ctx.user;
 
-      // Parse points (Now Optional)
-      let pointsInput;
-      if (ctx.isInteraction) {
-        pointsInput = ctx.options.getInteger('points');
-      } else {
-        pointsInput = parseInt(ctx.args?.[0]);
-      }
+      // 1. Parse Inputs
+      let type, points, screenshotUrl;
 
-      // Screenshot check
-      let screenshotUrl = null;
-      if (ctx.isInteraction) {
-        screenshotUrl = 'slash-command-submission'; // Slash commands have an attachment option, but for now we fallback
+      if (isInteraction) {
+        type = ctx.options.getString('type');
+        points = ctx.options.getInteger('points');
+        const attachment = ctx.options.getAttachment('screenshot');
+        screenshotUrl = attachment?.url;
       } else {
+        // Prefix command support (j fs submit <type> <points>)
+        const sub = ctx.args?.[0]?.toLowerCase();
+        if (sub !== 'submit') return ctx.reply('❌ **Jack:** Use `/fs submit` or `j fs submit`.');
+        
+        type = ctx.args?.[1]?.toLowerCase();
+        points = parseInt(ctx.args?.[2]);
         const attachment = ctx.message?.attachments?.first();
-        if (!attachment) {
-          return ctx.reply({ content: '❌ **Jack:** You must attach a screenshot with your submission, noob.', ephemeral: isEphemeral });
-        }
-        screenshotUrl = attachment.url;
-      }
+        screenshotUrl = attachment?.url;
 
-      let finalPoints = pointsInput;
-
-      // AI VISION VERIFICATION
-      if (screenshotUrl && screenshotUrl !== 'slash-command-submission') {
-        const statusMsg = await ctx.reply({ content: '📸 **Jack is verifying your synergy screenshot...**', ephemeral: isEphemeral });
-        
-        const aiPoints = await aiService.extractSynergyPoints(screenshotUrl);
-        
-        if (aiPoints === 0) {
-          if (!finalPoints || isNaN(finalPoints)) {
-             return ctx.editReply({ content: '❌ **Jack:** I couldn\'t find any synergy points in that image and you didn\'t provide any. Provide valid points or a clearer screenshot.' });
-          }
-          // If user provided points but AI failed, we can either trust user or reject.
-          // For now, let's trust if user input exists but warn.
-          await ctx.editReply({ content: '⚠️ **Jack:** I couldn\'t read the points from the image, but I\'ll trust your input for now...' });
-        } else {
-          // If user didn't provide points, use the AI points!
-          if (!finalPoints || isNaN(finalPoints)) {
-            finalPoints = aiPoints;
-            await ctx.editReply({ content: `✅ **Jack:** Detected **${aiPoints}** points from your screenshot. Processing...` });
-          } else {
-            // Both provided - Verify!
-            if (Math.abs(aiPoints - finalPoints) > 5) {
-              return ctx.editReply({ content: `❌ **Jack:** That screenshot shows **${aiPoints}** points, but you claimed **${finalPoints}**. Don't try to lie to me.` });
-            }
-            await ctx.editReply({ content: `✅ **Jack:** Screenshot verified (**${aiPoints}** points detected). Processing...` });
-          }
+        if (!['initial', 'final'].includes(type) || isNaN(points) || !screenshotUrl) {
+          return ctx.reply('❌ **Jack:** Invalid usage. `j fs submit <initial/final> <points>` (attach screenshot).');
         }
       }
 
-      if (isNaN(finalPoints) || finalPoints <= 0) {
-        return ctx.reply({ content: '❌ **Jack:** I need a number of points to record. Either type them or upload a clearer screenshot.', ephemeral: isEphemeral });
+      // 2. Initial Checks
+      const program = await fosterService.getActiveProgram(guild.id);
+      if (!program || program.status !== 'ACTIVE') {
+        return ctx.reply({ content: '❌ **Jack:** There is no active foster program running right now.', ephemeral: true });
       }
 
-      const points = finalPoints;
-
-      // Clan member check
-      const config = await configManager.getGuildConfig(ctx.guild.id);
-      const clanMemberRoleId = config?.settings?.clanMemberRoleId;
-
-      if (clanMemberRoleId && !ctx.member.roles.cache.has(clanMemberRoleId)) {
-        return ctx.reply({ content: '❌ You must be a clan member to participate.', ephemeral: isEphemeral });
-      }
-
-      // Active program check
-      const program = await fosterService.getActiveProgram(ctx.guild.id);
-      if (!program) {
-        return ctx.reply({ content: '❌ No active foster program.', ephemeral: isEphemeral });
-      }
-
-      // PATCH 6: Check for duplicate submission before processing
-      const pairIndex = program.pairs.findIndex(
-        p => p.mentorId === ctx.user.id || p.partnerId === ctx.user.id
-      );
-      if (pairIndex >= 0) {
-        const existingSub = program.pendingSubmissions.find(
-          s => s.userId === ctx.user.id && s.pairIndex === pairIndex
-        );
-        if (existingSub) {
-          return ctx.reply({ content: '❌ You have already submitted for this cycle. Wait for your partner.', ephemeral: isEphemeral });
-        }
-      }
-
-      // Submit
-      const result = await fosterService.submitPoints(ctx.user.id, points, screenshotUrl, program);
+      // 3. Process via Service
+      const result = await fosterService.submitSynergyCard(user.id, points, type, screenshotUrl, program);
 
       if (!result.success) {
-        return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
+        return ctx.reply({ content: `❌ **Jack:** ${result.error}`, ephemeral: true });
       }
 
+      // 4. Respond
       if (result.matched) {
-        await ctx.reply({
-          content: `✅ **${result.points}** foster points awarded to your pair! Both submissions matched.`,
-          ephemeral: isEphemeral
-        });
+        const embed = new EmbedBuilder()
+          .setTitle('✅ Synergy Verified!')
+          .setColor('#00FFCC')
+          .setTimestamp();
 
-        // Refresh leaderboard
-        const freshProgram = await fosterService.getActiveProgram(ctx.guild.id);
-        if (freshProgram) {
-          await fosterService.refreshLeaderboard(ctx.client, freshProgram);
+        if (type === 'initial') {
+          embed.setDescription(`**Success!** Both partners have submitted their initial baseline of **${points}** points. \n\nJack will use this to calculate your growth on Day 5.`);
+        } else {
+          embed.setDescription(`**Cycle Complete!** Both partners matched their final stats.\n\n` +
+            `▫️ **Total Pair Points:** ${result.points}\n` +
+            `▫️ **Your Individual Split (50%):** ${result.split}\n\n` +
+            `The Global Rankings have been updated.`);
+            
+          // Refresh leaderboard in channel
+          await fosterService.refreshLeaderboard(ctx.client, program);
         }
+
+        return ctx.reply({ embeds: [embed] });
       } else {
-        await ctx.reply({
-          content: `⏳ Your submission of **${points}** points is recorded. Waiting for your partner (<@${result.waitingFor}>) to submit the same value within 10 minutes.`,
-          ephemeral: isEphemeral
+        // Waiting for partner
+        return ctx.reply({ 
+          content: `⏳ **Jack:** Recorded your **${type}** submission of **${points}** points. \n\nWaiting for your partner (<@${result.waitingFor}>) to submit the same value with their screenshot within 15 minutes.`,
+          ephemeral: false // Better for thread visibility
         });
       }
 
     } catch (err) {
       console.error('[FosterProgram] fs command error:', err);
-      await ctx.reply({ content: '❌ Something went wrong.', ephemeral: true }).catch(() => {});
+      await ctx.reply({ content: '❌ **Jack:** Something went wrong during submission.', ephemeral: true }).catch(() => {});
     }
   }
 };
