@@ -10,15 +10,12 @@ const { PermissionFlagsBits } = require("discord.js");
  */
 module.exports = {
   
-  async _checkPower(member, guild) {
+  async _checkPower(member, guild, requiredPerms = [PermissionFlagsBits.ManageGuild]) {
     if (!member || !guild) return false;
     if (member.id === guild.ownerId) return true;
     
-    const managerRoles = ["Manager", "Staff", "Moderator", "Admin"];
-    const hasRole = member.roles.cache.some(r => managerRoles.includes(r.name));
-    const hasPerm = member.permissions.has(PermissionFlagsBits.ManageGuild) || member.permissions.has(PermissionFlagsBits.KickMembers);
-    
-    return hasRole || hasPerm;
+    // REQUISITE: Use Permission flags instead of role names (Admin/Manager strings)
+    return requiredPerms.some(perm => member.permissions.has(perm)) || member.permissions.has(PermissionFlagsBits.Administrator);
   },
 
   _sanitizeId(id) {
@@ -41,8 +38,8 @@ module.exports = {
       diary.lastInteraction = Date.now();
       
       await diary.save();
-      return { success: `Memory Updated: ${note} (Total Rep: ${diary.reputationScore})` };
-    } catch (e) { return { error: "Failed to record trait." }; }
+      return { success: true, message: `Memory Updated: ${note} (Total Rep: ${diary.reputationScore})` };
+    } catch (e) { return { success: false, message: "Failed to record personality trait." }; }
   },
 
   /**
@@ -53,31 +50,41 @@ module.exports = {
     const rawId = this._sanitizeId(discord_id || args.discordId);
     try {
       const player = await Player.findOne({ discordId: rawId });
-      if (!player) return { error: "Player not found in database." };
+      if (!player) return { success: false, message: "Player not found in database." };
       return { 
-        ign: player.ign, 
-        uid: player.uid, 
-        level: player.accountLevel, 
-        synergy: player.seasonSynergy,
-        role: player.role 
+        success: true,
+        message: `Profile retrieved for ${player.ign}`,
+        data: {
+          ign: player.ign, 
+          uid: player.uid, 
+          level: player.accountLevel, 
+          synergy: player.seasonSynergy,
+          role: player.role 
+        }
       };
-    } catch (e) { return { error: "Fetch failed." }; }
+    } catch (e) { return { success: false, message: "Failed to fetch player profile." }; }
   },
 
   /**
    * SERVER VISION: Live Discord stats.
    */
   async get_server_stats(args, invoker, guild) {
-    if (!guild) return { error: "No guild context." };
+    if (!guild) return { success: false, message: "No guild context available." };
     try {
+      const humans = guild.members.cache.filter(m => !m.user.bot).size;
+      const bots = guild.members.cache.filter(m => m.user.bot).size;
       return {
-        serverName: guild.name,
-        totalMembers: guild.memberCount,
-        humans: guild.members.cache.filter(m => !m.user.bot).size,
-        bots: guild.members.cache.filter(m => m.user.bot).size,
-        online: guild.members.cache.filter(m => m.presence?.status !== 'offline').size
+        success: true,
+        message: `Server stats for ${guild.name} compiled.`,
+        data: {
+          serverName: guild.name,
+          totalMembers: guild.memberCount,
+          humans,
+          bots,
+          online: guild.members.cache.filter(m => m.presence?.status !== 'offline').size
+        }
       };
-    } catch (e) { return { error: "Stats failed." }; }
+    } catch (e) { return { success: false, message: "Failed to compile server statistics." }; }
   },
 
   /**
@@ -87,20 +94,28 @@ module.exports = {
     try {
       const pluginsPath = path.join(__dirname, "../../plugins");
       const plugins = fs.readdirSync(pluginsPath).filter(f => fs.statSync(path.join(pluginsPath, f)).isDirectory());
-      return { active_plugins: plugins, core: "Neural Identity V4" };
-    } catch (e) { return { error: "Mapping failed." }; }
+      return { 
+        success: true, 
+        message: "System capability map generated.",
+        data: { active_plugins: plugins, core: "Neural Identity V4" }
+      };
+    } catch (e) { return { success: false, message: "Failed to map system capabilities." }; }
   },
 
   /**
    * SERVER VISION: Channel/Role map.
    */
   async get_server_map(args, invoker, guild) {
-    if (!guild) return { error: "No guild context." };
+    if (!guild) return { success: false, message: "No guild context available." };
     try {
-      const channels = guild.channels.cache.map(c => ({ name: c.name, type: c.type })).slice(0, 30);
-      const roles = guild.roles.cache.map(r => r.name).slice(0, 20);
-      return { channels, roles, totalChannels: guild.channels.cache.size };
-    } catch (e) { return { error: "Vision failed." }; }
+      const channels = guild.channels.cache.map(c => ({ name: c.name, type: c.type })).slice(0, 20);
+      const roles = guild.roles.cache.map(r => r.name).slice(0, 15);
+      return { 
+        success: true,
+        message: `Visual map of ${guild.name} exported.`,
+        data: { channels, roles, totalChannels: guild.channels.cache.size }
+      };
+    } catch (e) { return { success: false, message: "Failed to generate server map." }; }
   },
 
   /**
@@ -110,11 +125,15 @@ module.exports = {
     const { team_size = "4" } = args;
     try {
       const players = await Player.find({ isClanMember: true }).sort({ seasonSynergy: -1 }).limit(12);
-      if (players.length < parseInt(team_size)) return { error: "Not enough online members for a squad." };
+      if (players.length < parseInt(team_size)) return { success: false, message: "Insufficient clan members available for optimization." };
       
       const squad = players.slice(0, parseInt(team_size)).map(p => p.ign);
-      return { recommended_squad: squad, strategy: "High-Synergy Aggressive Push" };
-    } catch (e) { return { error: "Matchmaking failed." }; }
+      return { 
+        success: true,
+        message: "Strategic squad optimization complete.",
+        data: { recommended_squad: squad, strategy: "High-Synergy Aggressive Push" }
+      };
+    } catch (e) { return { success: false, message: "Matchmaking optimization failed." }; }
   },
 
   /**
@@ -122,13 +141,13 @@ module.exports = {
    */
   async ban_member(args, invoker, guild) {
     const { discord_id, reason } = args;
-    if (!(await this._checkPower(invoker, guild))) return { error: "Unauthorized." };
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.BanMembers]))) return { success: false, message: "Unauthorized. Insufficient permissions for Root Authority (Ban)." };
     const rawId = this._sanitizeId(discord_id);
     try {
       const member = await guild.members.fetch(rawId);
       await member.ban({ reason: `[JACK AI] ${reason}` });
-      return { success: `Banned ${member.user.tag}` };
-    } catch (e) { return { error: e.message }; }
+      return { success: true, message: `Banned user ${member.user.tag} for: ${reason}` };
+    } catch (e) { return { success: false, message: `Ban failed: ${e.message}` }; }
   },
 
   /**
@@ -136,12 +155,35 @@ module.exports = {
    */
   async kick_member(args, invoker, guild) {
     const { discord_id, reason } = args;
-    if (!(await this._checkPower(invoker, guild))) return { error: "Unauthorized." };
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.KickMembers]))) return { success: false, message: "Unauthorized. Insufficient permissions for Root Authority (Kick)." };
     const rawId = this._sanitizeId(discord_id);
     try {
       const member = await guild.members.fetch(rawId);
       await member.kick(`[JACK AI] ${reason}`);
-      return { success: `Kicked ${member.user.tag}` };
-    } catch (e) { return { error: e.message }; }
+      return { success: true, message: `Kicked user ${member.user.tag} for: ${reason}` };
+    } catch (e) { return { success: false, message: `Kick failed: ${e.message}` }; }
+  },
+
+  /**
+   * SERVER VISION: Fetch the current server roles of a user.
+   */
+  async get_user_roles(args, invoker, guild) {
+    const { discord_id } = args;
+    const rawId = this._sanitizeId(discord_id || invoker.id);
+    if (!guild) return { success: false, message: "No guild context available." };
+    try {
+      const member = await guild.members.fetch(rawId);
+      if (!member) return { success: false, message: "User not found in this guild." };
+      
+      const roles = member.roles.cache
+        .filter(r => r.name !== "@everyone")
+        .map(r => r.name);
+        
+      return {
+        success: true,
+        message: `Roles retrieved for ${member.user.tag}: ${roles.join(", ") || "No roles"}`,
+        data: { roles }
+      };
+    } catch (e) { return { success: false, message: "Failed to fetch user roles." }; }
   }
 };

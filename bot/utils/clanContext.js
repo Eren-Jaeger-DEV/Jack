@@ -1,60 +1,49 @@
 const mongoose = require('mongoose');
 const { BIBLE } = require('./systemBible');
+const userProfile = require('../../core/memory/userProfile');
+const systemContext = require('../../core/systemContext');
 
 /**
- * CLAN CONTEXT (v3.0.0) - SUPREME MEMORY INTEGRATION
- * Aggregates live data, Bible rules, and Personality Diary for the AI.
+ * CLAN CONTEXT (v5.0.0) - ADAPTIVE SYSTEM AWARENESS
+ * Aggregates live data, Bible rules, Unified User Profiles, and System Awareness.
  */
 async function getClanContext(guild, member = null) {
   try {
     let context = "### JACK'S HOLY BIBLE (Plugin Summary) ###\n";
     let reputationScore = 0;
     
-    // 1. SYSTEM BIBLE: Integrated System Knowledge
+    // 0. SYSTEM AWARENESS (New Component)
+    const sys = systemContext.getSystemContext();
+    context = `### SYSTEM AWARENESS: ${sys.name} v${sys.version} ###\n`;
+    context += `[Capabilities]: ${Object.keys(sys.capabilities).join(', ')}\n\n`;
+    
+    context += "### JACK'S HOLY BIBLE (Plugin Summary) ###\n";
+    
+    // 1. SYSTEM BIBLE
     Object.entries(BIBLE).forEach(([category, plugins]) => {
       context += `[${category}]: ${Object.values(plugins).join('; ')}\n`;
     });
 
     context += "\n### LIVE CLAN STATUS ###\n";
 
-    // 2. Battle & Foster Status (Aggregated)
+    // 2. Battle & Foster Status
     try {
       const FosterProgram = mongoose.model('FosterProgram');
       const activePairs = await FosterProgram.countDocuments({ status: 'active' });
       context += `- Foster Program: ${activePairs} active mentor/rookie pairs.\n`;
-    } catch (e) { /* Model not found */ }
+    } catch (e) {}
 
-    // 3. TARGET USER RECOGNITION (Player Data & Diary)
+    // 3. UNIFIED USER DOSSIER
     if (member) {
-      context += `\n### TARGET MEMBER DOSSIER: ${member.user.tag} ###\n`;
+      const profile = await userProfile.getFullProfile(member.id, guild);
       
-      // A. Player Profile (Game Data)
-      try {
-        const Player = mongoose.model('Player');
-        const player = await Player.findOne({ discordId: member.id });
-        if (player) {
-          context += `- IGN: ${player.ign}\n`;
-          context += `- Season Synergy: ${player.seasonSynergy}\n`;
-          context += `- Role: ${player.role}\n`;
-          context += `- Status: ${player.isClanMember ? 'Clan Member' : 'Outsider'}\n`;
-        }
-      } catch (e) { /* Model not found */ }
-
-      // B. Member Diary (AI Memory)
-      try {
-        const MemberDiary = mongoose.model('MemberDiary');
-        const diary = await MemberDiary.findOne({ discordId: member.id });
-        if (diary) {
-          reputationScore = diary.reputationScore;
-          context += `- Personality: ${diary.personalityProfile}\n`;
-          context += `- Reputation: ${diary.reputationScore} (Scale: -100 to +100)\n`;
-          context += `- Interaction Count: ${diary.interactionCount}\n`;
-          context += `- Jack's Internal Notes: ${diary.notes.split('\n').slice(-3).join('\n')}\n`;
-        } else {
-          context += `- Reputation: 0 (New User)\n`;
-          context += `- Personality: Professional assessment required.\n`;
-        }
-      } catch (e) { /* Model not found */ }
+      if (!profile.error) {
+        reputationScore = profile.personality?.reputation || 0;
+        context += `\n### TARGET MEMBER DOSSIER: ${profile.basic.username} ###\n`;
+        context += "```json\n" + JSON.stringify(profile, null, 2) + "\n```\n";
+      } else {
+        context += `\n### TARGET MEMBER: ${member.user.tag} (Profile Unavailable) ###\n`;
+      }
     }
 
     context += `\n- CURRENT TIME: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\n`;

@@ -99,6 +99,10 @@ const guildConfigSchema = new mongoose.Schema({
     intraWinnerRoleId: { type: String },
     clanBattleWinnerRoleId: { type: String },
     teamupRoleId: { type: String },
+    
+    // HYBRID AI CONTROLLER
+    aiEnabled: { type: Boolean, default: true },
+    aiChannelId: { type: String },
 
     // Maps
     levelRoles: { type: Map, of: String, default: {

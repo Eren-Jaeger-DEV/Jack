@@ -1,6 +1,8 @@
 const afkHandler = require("../handlers/afkHandler");
 const screenshotHandler = require("../handlers/screenshotHandler");
 const prefixHandler = require("../handlers/prefixHandler");
+const aiController = require("../../core/aiController");
+const observer = require("../../core/observer");
 
 module.exports = {
   name: "messageCreate",
@@ -11,10 +13,20 @@ module.exports = {
     if (message.author?.bot) return;
     if (!message.guild) return;
 
+    // PASSIVE OBSERVATION (Non-blocking)
+    observer.recordActivity(message).catch(() => {});
+
     try {
 
       await afkHandler(message);
       await screenshotHandler(message);
+
+      // HYBRID AI CONTROLLER LAYER
+      const isAIChannel = await aiController.shouldProcess(message, client);
+      if (isAIChannel) {
+        const handled = await aiController.process(message, client);
+        if (handled) return; // Full stop if AI handles it
+      }
 
       await prefixHandler(message, client);
 

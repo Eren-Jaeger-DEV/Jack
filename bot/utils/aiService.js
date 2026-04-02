@@ -9,8 +9,8 @@ const ai = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY);
 const modelName = 'gemini-3.1-pro-preview';
 
 /**
- * AI SERVICE (v3.8.0) - MULTIMODAL VISION & FOSTER AUTOMATION
- * Added image processing, synergy extraction, and dynamic identity reinforcement.
+ * AI SERVICE (v4.1.0) - STABILITY RESTORATION
+ * Reverted to single-model architecture for project compatibility.
  */
 module.exports = {
   async _fetchImageData(url) {
@@ -25,16 +25,12 @@ module.exports = {
     }
   },
 
-  /**
-   * Post-processes the AI response to ensure persona safety and remove system leaks.
-   */
   _postProcess(text) {
     if (!text) return "";
-    // Remove bracketed system identifiers like [REPUTATION: LOW] or [JACK_BIBLE]
     return text.replace(/\[[A-Z0-9_\s:]+\]/gi, '').trim();
   },
 
-  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, imageUrl = null, reputationScore = 0) {
+  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, imageUrl = null, reputationScore = 0, activityData = {}, isOwner = false) {
     try {
       const bibleInstruction = `
 [INFORMATION REFERENCE: ACTIVE]
@@ -44,7 +40,7 @@ module.exports = {
 - NEVER MENTION "SUPREME MANAGER," "SYSTEM ACKNOWLEDGED," OR "BIBLE" TO THE USER.
       `;
       
-      const systemInstruction = persona.getSystemPrompt(extraContext, invoker?.id, reputationScore) + "\n" + bibleInstruction;
+      const systemInstruction = persona.getSystemPrompt(extraContext, invoker?.id, reputationScore, activityData, isOwner) + "\n" + bibleInstruction;
 
       const tools = [
         {
@@ -77,6 +73,11 @@ module.exports = {
               parameters: { type: "OBJECT", properties: { team_size: { type: "STRING", enum: ["2", "4"] } }, required: ["team_size"] }
             },
             {
+              name: "get_user_roles",
+              description: "SERVER VISION: Fetch the current server roles of a user by their Discord ID.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" } }, required: ["discord_id"] }
+            },
+            {
               name: "ban_member",
               description: "ROOT AUTHORITY: Ban a member from the server.",
               parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
@@ -91,7 +92,7 @@ module.exports = {
       ];
 
       const generationConfig = {
-        maxOutputTokens: 1000, // Increased for response stability
+        maxOutputTokens: 1000,
         temperature: 0.3, 
         topP: 0.95,
       };
@@ -126,6 +127,7 @@ module.exports = {
 
       let fullText = "";
       let hasStartedText = false;
+      let toolCall = null;
 
       if (onToken) onToken(null, "", { type: 'thinking' });
 
@@ -134,27 +136,14 @@ module.exports = {
           if (onToken) onToken(null, "", { type: 'thinking', thought: chunk.thought });
         }
 
-        // TOOL CALL REGISTRY (Refactored to dynamic mapping)
-        if (chunk.candidates?.[0]?.content?.parts?.some(p => p.functionCall)) {
-          const call = chunk.candidates[0].content.parts.find(p => p.functionCall).functionCall;
-          if (onToken) onToken(null, "", { type: 'thinking', status: `⚙️ Executing ${call.name.replace(/_/g, ' ')}...` });
-
-          let toolResponse;
-          try {
-            if (typeof toolService[call.name] === 'function') {
-              // Standard Tool Execution: Pass (args, invoker, guild)
-              toolResponse = await toolService[call.name](call.args, invoker, guild);
-            } else {
-              toolResponse = { error: `Tool ${call.name} not found in binary.` };
-            }
-          } catch (e) {
-            toolResponse = { error: `Execution failed: ${e.message}` };
-          }
-
-          result = await chat.sendMessageStream([
-            { function_response: { name: call.name, response: { content: toolResponse } } }
-          ]);
-          continue; 
+        const functionCallPart = chunk.candidates?.[0]?.content?.parts?.find(p => p.functionCall);
+        if (functionCallPart) {
+          const call = functionCallPart.functionCall;
+          toolCall = {
+            type: 'tool',
+            tool: call.name,
+            args: call.args
+          };
         }
 
         try {
@@ -167,10 +156,24 @@ module.exports = {
             fullText += text;
             if (onToken) onToken(text, fullText, { type: 'text' });
           }
-        } catch (e) { /* Part might not contain text if it's a thought/tool */ }
+        } catch (e) {}
       }
 
-      return this._postProcess(fullText);
+      const processedText = this._postProcess(fullText);
+
+      if (toolCall) {
+        return {
+          ...toolCall,
+          text: processedText || "Initiating strategic protocol...",
+          model: modelName
+        };
+      }
+
+      return {
+        type: 'response',
+        text: processedText || "Analysis complete. Strategic link stable.",
+        model: modelName
+      };
 
     } catch (error) {
       console.error("[JackAI] generateResponse Failure:", error.message);

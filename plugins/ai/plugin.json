@@ -1,9 +1,0 @@
-{
-  "name": "ai",
-  "version": "1.0.0",
-  "id": "ai",
-  "description": "Jack AI - An intelligent manager for your clan with Gemini integration.",
-  "main": "index.js",
-  "author": "Jack Dev",
-  "enabledByDefault": true
-}
