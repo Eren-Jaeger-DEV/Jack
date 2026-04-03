@@ -15,7 +15,15 @@ const guildConfigSchema = new mongoose.Schema({
     goodbyeMessage: { type: String, default: '**Goodbye Mate!!**\n\nThank You for spending time with us.' },
     goodbyeImage: { type: String, default: 'https://cdn.discordapp.com/attachments/1353964404378701916/1402495184943452170/standard_2.gif' }
   },
-  
+
+  moderation: {
+    antiLink: { type: Boolean, default: false },
+    antiSpam: { type: Boolean, default: false },
+    blacklistedWords: { type: [String], default: [] },
+    maxMentions: { type: Number, default: 5 },
+    muteRoleId: { type: String, default: null }
+  },
+
   plugins: {
     clan: { type: Boolean, default: true },
     moderation: { type: Boolean, default: true },

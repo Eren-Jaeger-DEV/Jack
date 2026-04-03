@@ -311,6 +311,51 @@ app.post("/api/welcome", express.json(), async (req, res) => {
   }
 });
 
+/* MODERATION SETTINGS API */
+
+app.get("/api/moderation", async (req, res) => {
+  const guildId = req.query.guildId || process.env.GUILD_ID;
+  try {
+    const GuildConfig = require("../../bot/database/models/GuildConfig");
+    let config = await GuildConfig.findOne({ guildId });
+    if (!config) config = await GuildConfig.create({ guildId });
+    
+    res.json({
+      antiLink: config.moderation?.antiLink || false,
+      antiSpam: config.moderation?.antiSpam || false,
+      blacklistedWords: config.moderation?.blacklistedWords || [],
+      maxMentions: config.moderation?.maxMentions || 5,
+      muteRoleId: config.moderation?.muteRoleId || '',
+      modLogChannelId: config.settings?.modLogChannelId || ''
+    });
+  } catch (err) {
+    console.error("Error fetching moderation settings:", err);
+    res.status(500).json({ error: "Failed to fetch settings" });
+  }
+});
+
+app.post("/api/moderation", express.json(), async (req, res) => {
+  const guildId = req.body.guildId || process.env.GUILD_ID;
+  try {
+    const { antiLink, antiSpam, blacklistedWords, maxMentions, muteRoleId, modLogChannelId } = req.body;
+    
+    const updates = {
+      "moderation.antiLink": antiLink,
+      "moderation.antiSpam": antiSpam,
+      "moderation.blacklistedWords": blacklistedWords,
+      "moderation.maxMentions": maxMentions,
+      "moderation.muteRoleId": muteRoleId,
+      "settings.modLogChannelId": modLogChannelId
+    };
+
+    await configManager.updateGuildConfig(guildId, updates);
+    res.json({ status: "success" });
+  } catch (err) {
+    console.error("Error saving moderation settings:", err);
+    res.status(500).json({ error: "Failed to save settings" });
+  }
+});
+
 /* PLUGINS API */
 
 app.get("/api/plugins", (req, res) => {
