@@ -25,8 +25,10 @@ client.serverMap = new ServerMapManager(client);
 
 /* Load Handlers */
 
-require("./handlers/commandHandler")(client);
-require("./handlers/eventHandler")(client);
+if (process.env.name !== "dashboard") {
+  require("./handlers/commandHandler")(client);
+  require("./handlers/eventHandler")(client);
+}
 
 /* Mongo */
 
