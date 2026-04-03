@@ -18,6 +18,7 @@ import Triggers from './pages/Triggers'
 import FosterManagement from './pages/FosterManagement'
 import SynergyAnalytics from './pages/SynergyAnalytics'
 import AIBrainControl from './pages/AIBrainControl'
+import WelcomeSettings from './pages/WelcomeSettings'
 import Sidebar from './components/Sidebar'
 import ServerLayout from './layouts/ServerLayout'
 import './index.css'
@@ -68,6 +69,7 @@ function App() {
               <Route index element={<ServerOverview />} />
               <Route path="plugins" element={<Plugins />} />
               <Route path="plugins/leveling" element={<LevelingSettings />} />
+              <Route path="plugins/greeting" element={<WelcomeSettings />} />
               <Route path="plugins/:pluginName" element={<PluginSettings />} />
               <Route path="clan" element={<ClanManagement />} />
               <Route path="battles" element={<ClanBattles />} />

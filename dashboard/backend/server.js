@@ -277,7 +277,13 @@ app.get("/api/welcome", async (req, res) => {
     if (!config) {
       config = await GuildConfig.create({ guildId });
     }
-    res.json(config.welcome || {});
+    res.json({
+      enabled: config.greetingData?.welcomeEnabled || false,
+      channelId: config.greetingData?.welcomeChannelId || '',
+      message: config.greetingData?.welcomeMessage || '',
+      imageCardEnabled: !!config.greetingData?.welcomeImage,
+      backgroundImageUrl: config.greetingData?.welcomeImage || ''
+    });
   } catch (err) {
     console.error("Error fetching welcome config:", err);
     res.json({});
@@ -290,7 +296,14 @@ app.post("/api/welcome", express.json(), async (req, res) => {
   const guildId = req.body.guildId || process.env.GUILD_ID;
 
   try {
-    await configManager.updateGuildConfig(guildId, { welcome: req.body });
+    const payload = req.body;
+    const greetingData = {
+      welcomeEnabled: payload.enabled,
+      welcomeChannelId: payload.channelId,
+      welcomeMessage: payload.message,
+      welcomeImage: payload.imageCardEnabled ? payload.backgroundImageUrl : ''
+    };
+    await configManager.updateGuildConfig(guildId, { greetingData });
     res.json({ status: "saved" });
   } catch (err) {
     console.error("Error saving welcome config:", err);
@@ -313,16 +326,18 @@ app.get("/api/plugins", (req, res) => {
   const PLUGIN_METADATA = {
     admin: { category: "Moderation", icon: "Shield" },
     audit: { category: "Moderation", icon: "Activity" },
-    moderation: { category: "Moderation", icon: "Gavel" },
+    moderation: { category: "Moderation", icon: "Gavel", hasSettings: true },
     'member-classification': { category: "Moderation", icon: "UserCheck" },
     utility: { category: "Utility", icon: "Wrench" },
-    roles: { category: "Utility", icon: "UserPlus" },
+    roles: { category: "Utility", icon: "UserPlus", hasSettings: true },
     emoji: { category: "Utility", icon: "Smile" },
     sticker: { category: "Utility", icon: "Image" },
     tempvc: { category: "Utility", icon: "Mic" },
     channelManagement: { category: "Utility", icon: "Hash" },
+    tickets: { category: "Utility", icon: "MessageSquare", hasSettings: true },
     triggers: { category: "Utility", icon: "Zap", hasSettings: true },
     leveling: { category: "Engagement", icon: "TrendingUp", hasSettings: true },
+    greeting: { category: "Engagement", icon: "Users", hasSettings: true },
     counting: { category: "Engagement", icon: "Hash" },
     'seasonal-synergy': { category: "Engagement", icon: "BarChart" },
     clan: { category: "Engagement", icon: "Users", hasSettings: true },
