@@ -11,12 +11,38 @@
  *  and awards points when both partners post the same value.
  */
 
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const fosterService = require('../services/fosterService');
 const aiService     = require('../../../bot/utils/aiService');
+const configManager = require('../../../bot/utils/configManager');
 
 module.exports = async (client, message) => {
   if (message.author.bot || !message.guild) return;
+
+  // V2 TRIGGER: Admin Announcement Detection
+  const isAdmin = message.member?.permissions.has(PermissionFlagsBits.Administrator);
+  const content = message.content.trim().toLowerCase();
+
+  // Debug trigger
+  if (content.includes('foster program starts') || content === 'h manual' || content === 'h refresh') {
+    console.log(`[FosterV2] Potential trigger from ${message.author.tag} | Admin: ${isAdmin} | Channel: ${message.channel.id}`);
+  }
+
+  if (isAdmin && (content.includes('foster program starts') || content === 'h manual' || content === 'h refresh')) {
+    const config = await configManager.getGuildConfig(message.guild.id);
+    if (message.channel.id === config?.settings?.fosterChannelId || content === 'h manual' || content === 'h refresh') {
+      if (content === 'h refresh') {
+        const program = await fosterService.getActiveProgram(message.guild.id).catch(() => null);
+        if (program) {
+          await fosterService.refreshLeaderboard(client, program);
+          await message.react('✅');
+        }
+        return;
+      }
+      await fosterService.sendStartConfirmation(message);
+      return;
+    }
+  }
 
   const program = await fosterService.getActiveProgram(message.guild.id).catch(() => null);
   if (!program) return;
@@ -24,7 +50,7 @@ module.exports = async (client, message) => {
   /* ────────────────────────────────────────────────
    *  ACTIVE PHASE: Thread-only submission capture
    * ──────────────────────────────────────────────── */
-  if (program.status === 'ACTIVE') {
+  if (program.status === 'ACTIVE' || program.status === 'PAIRING_VERIFICATION') {
     // Only process messages in the designated submission thread
     if (program.submissionThreadId && message.channel.id === program.submissionThreadId) {
       await handleSubmission(client, message, program);
@@ -47,9 +73,22 @@ module.exports = async (client, message) => {
     if (!roleType) return;
 
     try {
+      // Process registration (IGN verification)
       await fosterService.processThreadRegistration(message, roleType);
     } catch (err) {
       console.error('[FosterProgram] Thread registration error:', err.message);
+    }
+  }
+
+  /* ──────────────────────────────────────
+   *  WILDCARD PHASE: Foster Channel
+   * ────────────────────────────────────── */
+  const config = await configManager.getGuildConfig(message.guild.id);
+  if (program.status === 'REGISTRATION' && message.channel.id === config?.settings?.fosterChannelId) {
+    const content = message.content.trim();
+    if (content.length > 2 && !content.includes(' ')) {
+      // Logic for wildcard entry
+      await fosterService.processWildcardEntry(message);
     }
   }
 };

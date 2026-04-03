@@ -137,7 +137,7 @@ async function generateDualLeaderboardImage(data, info = { term: 1, cycle: 1 }) 
   ctx.fillStyle = '#00f2fe';
   ctx.fillText('🏆 TOP ADAPT (MENTORS)', width / 4, headerHeight);
   ctx.fillStyle = '#4facfe';
-  ctx.fillText('🏆 TOP NEOPHYTE (NEWBIES)', (width / 4) * 3, headerHeight);
+  ctx.fillText('🏆 TOP PARTNERS (NEWBIE/VETERAN)', (width / 4) * 3, headerHeight);
 
   const drawCategory = async (list, startX, startY) => {
     let currentY = startY + 40;

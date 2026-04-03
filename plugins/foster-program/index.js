@@ -77,5 +77,36 @@ module.exports = {
         console.error('[FosterProgram] Pagination error:', err);
       }
     });
+
+    /* ═══════════════════════════════════════════
+     *  BUTTON HANDLER — Foster Start Confirmation
+     * ═══════════════════════════════════════════ */
+    client.on('interactionCreate', async (interaction) => {
+      if (!interaction.isButton()) return;
+      if (!interaction.customId.startsWith('foster_start_')) return;
+
+      const { PermissionFlagsBits } = require('discord.js');
+      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: '❌ **Jack:** Only administrators can confirm program start.', flags: [MessageFlags.Ephemeral] });
+      }
+
+      try {
+        const action = interaction.customId.split('_')[2]; // 'confirm' or 'cancel'
+
+        if (action === 'cancel') {
+          return interaction.update({ content: '❌ **Foster V2 start cancelled.**', embeds: [], components: [] });
+        }
+
+        await interaction.update({ content: '⚡ **Jack: Initiating Foster Program v2 — Registration Phase Start...**', embeds: [], components: [] });
+        
+        const result = await fosterService.initiateRegistration(interaction.guild, client);
+        if (!result.success) {
+          return interaction.followUp({ content: `❌ **Jack ERROR:** ${result.error}`, flags: [MessageFlags.Ephemeral] });
+        }
+
+      } catch (err) {
+        console.error('[FosterProgram] Start confirmation error:', err);
+      }
+    });
   }
 };
