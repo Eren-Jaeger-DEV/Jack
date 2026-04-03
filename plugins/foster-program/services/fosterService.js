@@ -128,7 +128,7 @@ async function advancePhase(guild, client, program) {
 /**
  * PHASE 1: Post the Pairing orientation board and create the submission thread.
  */
-async function postOrientation(client, program) {
+async function postOrientation(client, program, silent = false) {
   try {
     const config = await configManager.getGuildConfig(program.guildId);
     const channel = await client.channels.fetch(config?.settings?.fosterChannelId).catch(() => null);
@@ -156,7 +156,8 @@ async function postOrientation(client, program) {
         .setImage('attachment://foster-pairings.png')
         .setColor('#FFD700').setTimestamp();
 
-    const msg = await channel.send({ content: `<@&${ROLES.ADEPT}> <@&${ROLES.NEOPHYTE}>`, embeds: [embed], files: [attachment] });
+    const content = silent ? null : `<@&${ROLES.ADEPT}> <@&${ROLES.NEOPHYTE}>`;
+    const msg = await channel.send({ content, embeds: [embed], files: [attachment] });
     
     // Create Thread
     const thread = await msg.startThread({ name: `📌 Stat Cards (T${program.term} C${program.cycle})`, autoArchiveDuration: ThreadAutoArchiveDuration.OneDay });
