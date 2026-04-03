@@ -36,11 +36,6 @@ module.exports = async function afkHandler(message) {
 
     await Afk.deleteOne({ userId: message.author.id });
 
-    /* remove AFK nickname */
-    if (member && member.nickname && member.nickname.startsWith("[AFK]")) {
-      const newNick = member.nickname.replace("[AFK] ", "");
-      await member.setNickname(newNick).catch(() => {});
-    }
 
     let response = `Welcome back! You were AFK for **${duration}**`;
     if (pings > 0) {

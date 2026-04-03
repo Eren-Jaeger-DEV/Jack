@@ -48,13 +48,6 @@ module.exports = {
       { upsert: true }
     );
 
-    if (!member.nickname || !member.nickname.startsWith("[AFK]")) {
-
-      const newNick = `[AFK] ${member.displayName.replace("[AFK] ", "")}`;
-
-      await member.setNickname(newNick).catch(() => {});
-
-    }
 
     ctx.reply(`You are now AFK: **${reason}**`);
 
