@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
-import { LayoutDashboard, Zap, Shield, TrendingUp, Settings, Users, User, Activity, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Zap, Shield, TrendingUp, Settings, Users, User, Activity, Trash2, GraduationCap, Brain, BarChart3, Swords } from 'lucide-react';
 
 const Sidebar = ({ id: propId }) => {
   const { id: paramId } = useParams();
@@ -23,6 +23,10 @@ const Sidebar = ({ id: propId }) => {
     { name: 'Moderation', path: `/server/${id}/moderation`, icon: <Shield size={20} />, disabled: true },
     { name: 'Leveling', path: `/server/${id}/plugins/leveling`, icon: <TrendingUp size={20} /> },
     { name: 'Clan', path: `/server/${id}/clan`, icon: <Users size={20} /> },
+    { name: 'Clan Battles', path: `/server/${id}/battles`, icon: <Swords size={20} /> },
+    { name: 'Foster Program', path: `/server/${id}/foster`, icon: <GraduationCap size={20} /> },
+    { name: 'Synergy Stats', path: `/server/${id}/synergy`, icon: <BarChart3 size={20} /> },
+    { name: 'AI Brain', path: `/server/${id}/ai`, icon: <Brain size={20} /> },
     { name: 'Players', path: `/server/${id}/players`, icon: <User size={20} /> },
     { name: 'General Settings', path: `/server/${id}/settings/general`, icon: <Settings size={20} /> },
     { name: 'Role Mapping', path: `/server/${id}/settings/roles`, icon: <Shield size={20} /> },

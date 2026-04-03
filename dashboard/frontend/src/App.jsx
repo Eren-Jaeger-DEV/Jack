@@ -8,12 +8,16 @@ import Plugins from './pages/Plugins'
 import PluginSettings from './pages/PluginSettings'
 import LevelingSettings from './pages/LevelingSettings'
 import ClanManagement from './pages/ClanManagement'
+import ClanBattles from './pages/ClanBattles'
 import Players from './pages/Players'
 import AdminLogs from './pages/AdminLogs'
 import DeletedPlayers from './pages/DeletedPlayers'
 import GeneralSettings from './pages/GeneralSettings'
 import RoleMapping from './pages/RoleMapping'
 import Triggers from './pages/Triggers'
+import FosterManagement from './pages/FosterManagement'
+import SynergyAnalytics from './pages/SynergyAnalytics'
+import AIBrainControl from './pages/AIBrainControl'
 import Sidebar from './components/Sidebar'
 import ServerLayout from './layouts/ServerLayout'
 import './index.css'
@@ -66,6 +70,10 @@ function App() {
               <Route path="plugins/leveling" element={<LevelingSettings />} />
               <Route path="plugins/:pluginName" element={<PluginSettings />} />
               <Route path="clan" element={<ClanManagement />} />
+              <Route path="battles" element={<ClanBattles />} />
+              <Route path="foster" element={<FosterManagement />} />
+              <Route path="synergy" element={<SynergyAnalytics />} />
+              <Route path="ai" element={<AIBrainControl />} />
               <Route path="players" element={<Players user={user} />} />
               <Route path="triggers" element={<Triggers />} />
               <Route path="settings/general" element={<GeneralSettings />} />

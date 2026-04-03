@@ -591,8 +591,23 @@ app.use("/api", logsRoute);
 const insightsRoute = require("./routes/insights");
 app.use("/api", insightsRoute);
 
-/* TRIGGER ENDPOINT */
+/* FOSTER PROGRAM ENDPOINT */
+const fosterRoute = require("./routes/foster");
+app.use("/api/foster", fosterRoute);
 
+/* SYNERGY ENDPOINT */
+const synergyRoute = require("./routes/synergy");
+app.use("/api/synergy", synergyRoute);
+
+/* AI ENDPOINT */
+const aiRoute = require("./routes/ai");
+app.use("/api/ai", aiRoute);
+
+/* BATTLES ENDPOINT */
+const battlesRoute = require("./routes/battles");
+app.use("/api/battles", battlesRoute);
+
+/* TRIGGER ENDPOINT */
 const triggersRoute = require("./routes/triggers");
 app.use("/api", triggersRoute);
 

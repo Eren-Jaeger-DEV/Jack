@@ -1,40 +1,59 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-color: #0d1117;
-  --panel-bg: rgba(22, 27, 34, 0.7);
-  --text-primary: #c9d1d9;
+  --bg-color: #050510;
+  --panel-bg: rgba(15, 15, 35, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --text-primary: #f0f6fc;
   --text-secondary: #8b949e;
-  --accent-color: #5865F2; /* Discord Blurple */
-  --accent-hover: #4752C4;
-  --success: #2ea043;
-  --danger: #da3633;
-  --border-color: rgba(240, 246, 252, 0.1);
+  --accent-color: #00f2fe; 
+  --accent-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+  --success: #00f5a0;
+  --danger: #ff4b2b;
+  --border-color: rgba(255, 255, 255, 0.1);
   --glass-border: rgba(255, 255, 255, 0.05);
+  --sidebar-width: 280px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
   background-color: var(--bg-color);
   color: var(--text-primary);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  overflow-x: hidden;
   background-image: 
-    radial-gradient(circle at 15% 50%, rgba(88, 101, 242, 0.15), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(46, 160, 67, 0.1), transparent 25%);
+    radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.05), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(79, 172, 254, 0.05), transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(15, 15, 35, 1), rgba(5, 5, 16, 1));
+  background-attachment: fixed;
 }
 
 .app-container {
   display: flex;
-  flex-direction: column;
   min-height: 100vh;
+}
+
+/* Glass Card Component */
+.glass-card {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
 }
 
 /* Navbar */
@@ -42,12 +61,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background: rgba(13, 17, 23, 0.8);
-  backdrop-filter: blur(10px);
+  padding: 1.25rem 3rem;
+  background: rgba(5, 5, 16, 0.7);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: var(--sidebar-width);
+  right: 0;
   z-index: 100;
 }
 
