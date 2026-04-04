@@ -25,6 +25,7 @@ const {
   EmbedBuilder,
   MessageFlags
 } = require('discord.js');
+const TicTacToeStats = require('../../../bot/database/models/TicTacToeStats');
 
 /* ══════════════════════════════════════════════════════════════════════════
  *  CONSTANTS
@@ -202,6 +203,50 @@ function buildEmbed(game, status, winnerId = null, gifUrl = null) {
                           0x5865F2     // blurple (playing)
     )
     .setFooter({ text: status === 'timedout' ? 'This game has expired due to inactivity.' : 'Use the buttons below to make your move!' });
+}
+
+/**
+ * Update player statistics in the database.
+ * Only records games between two human players.
+ *
+ * @param {string[]} playerIds - [p1Id, p2Id]
+ * @param {string|null} winnerId - ID of the winner, or null for draw
+ * @param {import('discord.js').Client} client - Discord client to identify bots
+ */
+async function recordResult(playerIds, winnerId, client) {
+  const [p1Id, p2Id] = playerIds;
+
+  // Skip if either player is a bot
+  const p1 = await client.users.fetch(p1Id).catch(() => null);
+  const p2 = await client.users.fetch(p2Id).catch(() => null);
+  if (p1?.bot || p2?.bot) return;
+
+  if (winnerId) {
+    const loserId = p1Id === winnerId ? p2Id : p1Id;
+
+    // Update winner
+    await TicTacToeStats.findOneAndUpdate(
+      { userId: winnerId },
+      { $inc: { wins: 1 } },
+      { upsert: true, new: true }
+    );
+
+    // Update loser
+    await TicTacToeStats.findOneAndUpdate(
+      { userId: loserId },
+      { $inc: { losses: 1 } },
+      { upsert: true, new: true }
+    );
+  } else {
+    // Update both for draw
+    for (const id of playerIds) {
+      await TicTacToeStats.findOneAndUpdate(
+        { userId: id },
+        { $inc: { draws: 1 } },
+        { upsert: true, new: true }
+      );
+    }
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -534,6 +579,9 @@ function registerHandler(client) {
         gifUrl = data?.results?.[0]?.url;
       } catch {}
 
+      // Record result (PvP only)
+      recordResult(game.players, winnerId, interaction.client);
+
       return interaction.update({
         embeds     : [buildEmbed(game, 'win', winnerId, gifUrl)],
         components : buildGrid(channelId, game.board, true) // all disabled
@@ -547,6 +595,9 @@ function registerHandler(client) {
       game.active = false;
       if (game.timeout) clearTimeout(game.timeout);
       games.delete(channelId);
+
+      // Record result (PvP only)
+      recordResult(game.players, null, interaction.client);
 
       return interaction.update({
         embeds     : [buildEmbed(game, 'draw')],
