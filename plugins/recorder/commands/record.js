@@ -55,7 +55,17 @@ module.exports = {
         console.log(`[Recorder Debug] Connection state change: ${oldState.status} -> ${newState.status}`);
       });
 
+      connection.on('debug', (message) => {
+        console.log(`[Recorder Debug] DEBUG: ${message}`);
+      });
+
       try {
+        // Log libsodium status precisely
+        const sodium = require("libsodium-wrappers");
+        console.log("[Recorder Debug] Waiting for libsodium...");
+        await sodium.ready;
+        console.log("[Recorder Debug] libsodium is READY.");
+
         // Increase timeout to 45s for VM network stabilization
         await entersState(connection, VoiceConnectionStatus.Ready, 45e3);
 
