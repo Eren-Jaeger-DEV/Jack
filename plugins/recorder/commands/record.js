@@ -40,6 +40,7 @@ module.exports = {
         return ctx.reply("⚠️ A recording is already in progress in this server.");
       }
 
+      await ctx.interaction.deferReply();
       await ctx.interaction.editReply("📡 **Initializing voice connection...**");
 
       const connection = joinVoiceChannel({
