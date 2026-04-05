@@ -59,12 +59,16 @@ module.exports = {
         console.log(`[Recorder Debug] DEBUG: ${message}`);
       });
 
+      connection.on('error', (error) => {
+        console.error(`[Recorder Error] Voice connection error:`, error);
+      });
+
       try {
         // Log libsodium status precisely
         const sodium = require("libsodium-wrappers");
         console.log("[Recorder Debug] Waiting for libsodium...");
         await sodium.ready;
-        console.log("[Recorder Debug] libsodium is READY.");
+        console.log("[Recorder Debug] libsodium is READY. Random test: " + sodium.randombytes_buf(1).toString("hex"));
 
         // Increase timeout to 45s for VM network stabilization
         await entersState(connection, VoiceConnectionStatus.Ready, 45e3);
@@ -141,7 +145,7 @@ module.exports = {
         }, 2 * 60 * 60 * 1000);
 
       } catch (error) {
-        console.error("Recording start error:", error);
+        console.error("[Recorder Debug] Failed to reach Ready state.", error);
         // CRITICAL: Ensure connection is destroyed if we fail to reach Ready
         if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
           connection.destroy();
