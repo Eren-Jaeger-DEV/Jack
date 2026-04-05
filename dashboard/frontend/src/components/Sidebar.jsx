@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
-import { LayoutDashboard, Zap, Shield, TrendingUp, Settings, Users, User, Activity, Trash2, GraduationCap, Brain, BarChart3, Swords } from 'lucide-react';
+import { LayoutDashboard, Zap, Shield, TrendingUp, Settings, Users, User, Activity, Trash2, GraduationCap, Brain, BarChart3, Swords, Mic } from 'lucide-react';
 
 const Sidebar = ({ id: propId }) => {
   const { id: paramId } = useParams();
@@ -31,6 +31,7 @@ const Sidebar = ({ id: propId }) => {
     { name: 'General Settings', path: `/server/${id}/settings/general`, icon: <Settings size={20} /> },
     { name: 'Role Mapping', path: `/server/${id}/settings/roles`, icon: <Shield size={20} /> },
     { name: 'Auto Triggers', path: `/server/${id}/triggers`, icon: <Zap size={20} /> },
+    { name: 'Recordings', path: `/server/${id}/recordings`, icon: <Mic size={20} /> },
     { name: 'Logs', path: `/server/${id}/logs`, icon: <Activity size={20} /> },
     { name: 'Trash', path: `/server/${id}/trash`, icon: <Trash2 size={20} /> },
   ];

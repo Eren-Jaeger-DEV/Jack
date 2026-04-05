@@ -631,6 +631,68 @@ app.post("/api/guilds/:guildId/plugin/:pluginName", express.json(), verifyGuildP
   }
 });
 
+/* RECORDINGS API */
+
+app.get("/api/guilds/:guildId/recordings", verifyGuildPermission, async (req, res) => {
+  const { guildId } = req.params;
+  const recordingsDir = path.join(__dirname, "../../data/recordings");
+
+  if (!fs.existsSync(recordingsDir)) {
+    return res.json([]);
+  }
+
+  try {
+    const folders = fs.readdirSync(recordingsDir).filter(f => f.endsWith(guildId));
+    const recordings = [];
+
+    for (const folder of folders) {
+      const folderPath = path.join(recordingsDir, folder);
+      const metadataPath = path.join(folderPath, "metadata.json");
+      
+      if (fs.existsSync(metadataPath)) {
+        try {
+          const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+          recordings.push({
+            id: folder,
+            ...metadata
+          });
+        } catch (e) {
+          console.error(`Error parsing metadata for ${folder}:`, e);
+        }
+      }
+    }
+
+    // Sort by start time descending
+    recordings.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+    res.json(recordings);
+  } catch (err) {
+    console.error("Error fetching recordings:", err);
+    res.status(500).json({ error: "Failed to fetch recordings" });
+  }
+});
+
+app.get("/api/guilds/:guildId/recordings/download/:folder/:filename", verifyGuildPermission, async (req, res) => {
+  const { guildId, folder, filename } = req.params;
+  
+  // Security check: ensure folder belongs to this guild
+  if (!folder.endsWith(guildId)) {
+    return res.status(403).json({ error: "Access denied to this recording" });
+  }
+
+  const filePath = path.join(__dirname, "../../data/recordings", folder, filename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "File not found" });
+  }
+
+  // Force download as per user request
+  res.download(filePath, filename, (err) => {
+    if (err) {
+      console.error("Error downloading file:", err);
+    }
+  });
+});
+
 /* CLAN ANALYTICS ENDPOINT */
 
 const clanRoute = require("./routes/clan");
