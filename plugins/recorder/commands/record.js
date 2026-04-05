@@ -40,7 +40,7 @@ module.exports = {
         return ctx.reply("⚠️ A recording is already in progress in this server.");
       }
 
-      await ctx.interaction.deferReply();
+      await ctx.interaction.editReply("📡 **Initializing voice connection...**");
 
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
@@ -50,7 +50,7 @@ module.exports = {
         selfMute: false,
       });
 
-      // Debugging listeners to identify VM networking issues
+      // ATTACH LISTENERS IMMEDIATELY
       connection.on('stateChange', (oldState, newState) => {
         console.log(`[Recorder Debug] Connection state change: ${oldState.status} -> ${newState.status}`);
       });
@@ -64,11 +64,12 @@ module.exports = {
       });
 
       try {
-        // Log libsodium status precisely
         const sodium = require("libsodium-wrappers");
-        console.log("[Recorder Debug] Waiting for libsodium...");
         await sodium.ready;
-        console.log("[Recorder Debug] libsodium is READY. Random test: " + sodium.randombytes_buf(1).toString("hex"));
+        console.log("[Recorder Debug] libsodium Ready.");
+
+        // Wait 1s for Gateway to stabilize before the UDP Handshake
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Increase timeout to 45s for VM network stabilization
         await entersState(connection, VoiceConnectionStatus.Ready, 45e3);
