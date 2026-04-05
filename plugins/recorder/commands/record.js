@@ -42,16 +42,22 @@ module.exports = {
 
       await ctx.interaction.deferReply();
 
-      try {
-        const connection = joinVoiceChannel({
-          channelId: voiceChannel.id,
-          guildId: guildId,
-          adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-          selfDeaf: false,
-          selfMute: false,
-        });
+      const connection = joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: guildId,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        selfDeaf: false,
+        selfMute: false,
+      });
 
-        await entersState(connection, VoiceConnectionStatus.Ready, 20e3);
+      // Debugging listeners to identify VM networking issues
+      connection.on('stateChange', (oldState, newState) => {
+        console.log(`[Recorder Debug] Connection state change: ${oldState.status} -> ${newState.status}`);
+      });
+
+      try {
+        // Increase timeout to 45s for VM network stabilization
+        await entersState(connection, VoiceConnectionStatus.Ready, 45e3);
 
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -120,14 +126,17 @@ module.exports = {
         // Set a timeout for the 2-hour limit
         setTimeout(async () => {
           if (ctx.client.recorder.activeRecordings.has(guildId)) {
-             // We could trigger a stop here, but for now we'll just log or notify
              console.log(`Recording in ${guildId} reached 2-hour limit.`);
           }
         }, 2 * 60 * 60 * 1000);
 
       } catch (error) {
         console.error("Recording start error:", error);
-        await ctx.interaction.editReply("❌ Failed to join voice channel or start recording.");
+        // CRITICAL: Ensure connection is destroyed if we fail to reach Ready
+        if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
+          connection.destroy();
+        }
+        await ctx.interaction.editReply("❌ Failed to join voice channel or start recording (Handshake Timeout).");
       }
     }
 
