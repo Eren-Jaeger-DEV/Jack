@@ -264,12 +264,32 @@ async function checkRotationAndPhase(client) {
       const now = getIST();
 
       if (program.status === 'REGISTRATION' && now.getTime() >= new Date(program.registration.expiresAt).getTime()) {
-        await startPairingPhase(g, client, program);
+        await startActiveProgram(g, client, program);
+      } else if (program.status === 'PAIRING_VERIFICATION') {
+        const waitingForMs = now.getTime() - new Date(program.lastRotation).getTime();
+        if (waitingForMs >= VERIFICATION_WINDOW_MS) {
+          program.status = 'ACTIVE';
+          program.lastRotation = getIST();
+          await program.save();
+          
+          const config = await configManager.getGuildConfig(program.guildId);
+          const channel = await client.channels.fetch(config?.settings?.fosterChannelId).catch(() => null);
+          if (channel) {
+            await channel.send('🚀 **Cycle Active!** Initial verification window has closed. The 5-day cycle has begun!');
+          }
+        }
       } else if (program.status === 'ACTIVE') {
         const dr = (now.getTime() - new Date(program.lastRotation).getTime()) / (24 * 60 * 60 * 1000);
         if (dr >= CYCLE_DAYS) await rotateCycle(g, client, program);
+      } else if (program.status === 'VERIFICATION_FINAL') {
+        const waitingForMs = now.getTime() - new Date(program.lastRotation).getTime();
+        if (waitingForMs >= VERIFICATION_WINDOW_MS) {
+           await rotateCycle(g, client, program, true);
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('[FosterProgram] Phase Check Error:', err.message);
+    }
   }
 }
 
