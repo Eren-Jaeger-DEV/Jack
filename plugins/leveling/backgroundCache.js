@@ -1,6 +1,6 @@
 const { loadImage } = require("canvas");
 const path = require("path");
-const logger = require("../../../bot/utils/logger");
+const logger = require('../../utils/logger');
 
 const cache = {
   default: null

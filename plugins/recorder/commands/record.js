@@ -3,7 +3,7 @@ const { joinVoiceChannel, VoiceConnectionStatus, entersState } = require("@disco
 const audioHandler = require("../utils/audioHandler");
 const path = require("path");
 const fs = require("fs");
-const { addLog } = require("../../../utils/logger");
+const { addLog } = require('../../../utils/logger');
 
 module.exports = {
   name: "record",
@@ -54,9 +54,9 @@ module.exports = {
       });
 
       // ATTACH LISTENERS IMMEDIATELY
-      connection.on('stateChange', (oldState, newState) => {
-        // Connection debug - silenced
-
+      connection.on('stateChange', () => {
+        // State changes silently tracked
+      });
 
       connection.on('error', (error) => {
         console.error(`[Recorder Error] Voice connection error:`, error);

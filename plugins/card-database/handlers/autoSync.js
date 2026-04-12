@@ -17,7 +17,7 @@
 
 const { ChannelType } = require('discord.js');
 const { runSilentSync } = require('./syncHandler');
-const logger = require('../../../bot/utils/logger');
+const logger = require('../../../utils/logger');
 
 const configManager = require('../../../bot/utils/configManager');
 const DEBOUNCE_MS   = 7000; // 7 seconds — coalesces bursts

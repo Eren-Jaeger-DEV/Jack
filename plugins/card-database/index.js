@@ -15,7 +15,7 @@ const { handleAddCategory, handleCategoryModal, handleDeleteCategory } = require
 const { handleAddCard, handleCardModal, handleImageUpload } = require('./handlers/cardManager');
 const { handleSync }                                       = require('./handlers/syncHandler');
 const { registerAutoSync }                                 = require('./handlers/autoSync');
-const logger = require('../../../bot/utils/logger');
+const logger = require('../../utils/logger');
 
 module.exports = {
   name: 'card-database',

@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const { addLog } = require("../../utils/logger");
+const { addLog } = require('../../utils/logger');
 
 module.exports = {
   name: "recorder",

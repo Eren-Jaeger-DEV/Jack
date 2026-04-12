@@ -15,7 +15,7 @@ const {
 } = require('discord.js');
 
 const configManager = require('../../../bot/utils/configManager');
-const logger = require('../../../bot/utils/logger');
+const logger = require('../../../utils/logger');
 
 
 let panelMessageId = null;

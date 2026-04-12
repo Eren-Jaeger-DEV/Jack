@@ -1,6 +1,6 @@
 const { MessageFlags } = require('discord.js');
 const leaderboardCmd = require("./commands/leaderboard");
-const logger = require("../../../bot/utils/logger");
+const logger = require('../../utils/logger');
 
 module.exports = {
   name: "leveling",

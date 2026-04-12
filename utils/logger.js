@@ -67,4 +67,33 @@ function printLogs(botTag) {
   systemLogs.length = 0;
 }
 
-module.exports = { addLog, printLogs };
+/* ─────────────────────────────────────────────────
+ *  RUNTIME LOGGING  (info / warn / error / debug)
+ *  Used throughout plugin files as:
+ *    const logger = require('../../utils/logger');
+ *    logger.info("Tag", "message")
+ * ───────────────────────────────────────────────── */
+
+function _timestamp() {
+  return new Date().toTimeString().slice(0, 8); // HH:MM:SS
+}
+
+function info(tag, message) {
+  console.log(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[32mINFO\x1b[0m  [${tag}] ${message}`);
+}
+
+function warn(tag, message) {
+  console.warn(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[33mWARN\x1b[0m  [${tag}] ${message}`);
+}
+
+function error(tag, message) {
+  console.error(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[31mERROR\x1b[0m [${tag}] ${message}`);
+}
+
+function debug(tag, message) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[35mDEBUG\x1b[0m [${tag}] ${message}`);
+  }
+}
+
+module.exports = { addLog, printLogs, info, warn, error, debug };

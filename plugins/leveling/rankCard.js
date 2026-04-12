@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const xpForLevel = require("./utils/xpForLevel");
 const { getBackground } = require("./backgroundCache");
-const logger = require("../../../bot/utils/logger");
+const logger = require('../../utils/logger');
 
 // 10 Second Buffer Cache for Rank Cards
 // Key: "guildId-userId", Value: { buffer, timestamp }

@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { addLog } = require("../../utils/logger");
+const { addLog } = require('../../utils/logger');
 
 module.exports = (client) => {
   const eventsPath = path.join(__dirname, "..", "events");
@@ -22,7 +22,7 @@ module.exports = (client) => {
           event.execute(...args, client);
         }
       } catch (err) {
-        const logger = require("../../utils/logger");
+        const logger = require('../../utils/logger');
         logger.error("EventHandler", `Core Event error (${eventName}): ${err.message}`);
       }
     });

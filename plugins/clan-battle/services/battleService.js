@@ -11,7 +11,7 @@ const { generateContributionImage } = require('../utils/contributionCanvas');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
-const logger = require('../../../bot/utils/logger');
+const logger = require('../../../utils/logger');
 
 const PLAYERS_PER_PAGE       = 10;
 const MAX_POINTS             = 100;

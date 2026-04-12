@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { addLog } = require("../../utils/logger");
+const { addLog } = require('../../utils/logger');
 
 module.exports = (client) => {
   const commandsPath = path.join(__dirname, "..", "commands");
@@ -20,7 +20,7 @@ module.exports = (client) => {
         commandCount++;
       }
     } catch (err) {
-      const logger = require("../../utils/logger");
+      const logger = require('../../utils/logger');
       logger.error("CommandHandler", `Core Command error (${file}): ${err.message}`);
     }
   }

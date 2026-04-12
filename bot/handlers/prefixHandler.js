@@ -1,7 +1,7 @@
 const configManager = require("../utils/configManager");
 const Context = require("../structures/Context");
 const { runCommand } = require("../utils/commandExecutor");
-const logger = require("../../utils/logger");
+const logger = require('../../utils/logger');
 
 module.exports = async (message, client) => {
   if (!message.guild || message.author.bot || message.interaction) return;

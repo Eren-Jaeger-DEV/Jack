@@ -2,7 +2,7 @@ require("dotenv").config({ quiet: true });
 
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
-const logger = require("../utils/logger");
+const logger = require('../utils/logger');
 const { addLog, printLogs } = logger;
 const configManager = require("./utils/configManager");
 const ServerMapManager = require("../core/serverMapManager");

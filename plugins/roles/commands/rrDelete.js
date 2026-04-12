@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const ReactionRolePanel = require("../../../bot/database/models/ReactionRolePanel");
-const logger = require("../../../utils/logger");
+const logger = require('../../../utils/logger');
 
 module.exports = {
 

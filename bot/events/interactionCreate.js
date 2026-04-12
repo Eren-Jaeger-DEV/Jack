@@ -9,7 +9,7 @@ const emojiBrowserButtons = require("../interactions/emojiBrowserButtons");
 const guideMenuHandler = require("../interactions/guideMenuHandler");
 const CommandUsage = require("../database/models/CommandUsage");
 const Player = require("../database/models/Player");
-const logger = require("../../utils/logger");
+const logger = require('../../utils/logger');
 
 
 

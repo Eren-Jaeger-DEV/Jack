@@ -2,7 +2,7 @@ const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, String
 const OverviewConfig = require('../models/OverviewConfig');
 const { buildOverviewEmbed, buildOverviewDropdown } = require('../services/overviewService');
 const { buildControlPanelEmbed } = require('../services/controlPanelService');
-const logger = require('../../../bot/utils/logger');
+const logger = require('../../../utils/logger');
 
 module.exports = {
     name: 'interactionCreate',

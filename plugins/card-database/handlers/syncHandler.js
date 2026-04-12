@@ -17,7 +17,7 @@ const {
 } = require('discord.js');
 
 const Card = require('../../../bot/database/models/Card');
-const logger = require('../../../bot/utils/logger');
+const logger = require('../../../utils/logger');
 
 const configManager = require('../../../bot/utils/configManager');
 const CARD_NAME_RE   = /^Name:\s*(.+)$/im;

@@ -1,4 +1,4 @@
-const logger = require("../../../bot/utils/logger");
+const logger = require('../../../utils/logger');
 const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
 
 const {

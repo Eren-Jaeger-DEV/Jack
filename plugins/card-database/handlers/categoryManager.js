@@ -21,7 +21,7 @@ const {
   MessageFlags
 } = require('discord.js');
 
-const logger = require('../../../bot/utils/logger');
+const logger = require('../../../utils/logger');
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 function isAdmin(member) {

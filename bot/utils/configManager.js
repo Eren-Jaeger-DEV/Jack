@@ -1,5 +1,5 @@
 const GuildConfig = require("../database/models/GuildConfig");
-const logger = require("../../utils/logger");
+const logger = require('../../utils/logger');
 
 const configCache = new Map();
 let botClient = null;
