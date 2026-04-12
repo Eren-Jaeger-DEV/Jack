@@ -249,9 +249,6 @@ function buildButtons(page, totalPages) {
 }
 
 /**
- * Delete old leaderboard message and send a new one.
- * ALWAYS sends to SYNERGY_CHANNEL_ID.
- */
 async function refreshLeaderboard(client, season, page = 0) {
   try {
     const config = await configManager.getGuildConfig(season.guildId);
@@ -260,9 +257,6 @@ async function refreshLeaderboard(client, season, page = 0) {
 
     const channel = await client.channels.fetch(synergyChannelId).catch(() => null);
     if (!channel) return null;
-
-    // Delete old message
-    await deleteOldLeaderboardMessage(client, season);
 
     // Fetch guild for display names
     const guild = await client.guilds.fetch(season.guildId).catch(() => null);
@@ -281,13 +275,26 @@ async function refreshLeaderboard(client, season, page = 0) {
     const payload = { components, files };
     if (lb.embed) {
       payload.embeds = [lb.embed];
+    } else {
+      payload.embeds = [];
     }
 
-    const msg = await channel.send(payload);
+    let msg = null;
 
-    // Save new message ID
-    season.leaderboardMessageId = msg.id;
-    await season.save();
+    // Try to edit the existing message first
+    if (season.leaderboardMessageId) {
+      const oldMsg = await channel.messages.fetch(season.leaderboardMessageId).catch(() => null);
+      if (oldMsg) {
+        msg = await oldMsg.edit(payload).catch(() => null);
+      }
+    }
+
+    // If no existing message was found (or edit failed), send a new one
+    if (!msg) {
+      msg = await channel.send(payload);
+      season.leaderboardMessageId = msg.id;
+      await season.save();
+    }
 
     return msg;
   } catch (err) {
