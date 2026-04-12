@@ -248,7 +248,7 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
     let msg;
     if (interaction && (interaction.isButton() || interaction.isStringSelectMenu())) {
       // Use editReply() because deferUpdate() was called to prevent timeouts
-      await interaction.editReply({
+      msg = await interaction.editReply({
         content: '',
         embeds: [],
         files: [attachment],
@@ -258,17 +258,30 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
         throw err; // Re-throw to be caught by the outer try-catch
       });
     } else {
-      // Standard refresh: Delete old and send new
-      await deleteOldLeaderboardMessage(client, battle);
-      
-      msg = await channel.send({
-        files: [attachment],
-        components
-      });
+      // Standard refresh: Try to edit existing message
+      if (battle.leaderboardMessageId) {
+        const oldMsg = await channel.messages.fetch(battle.leaderboardMessageId).catch(() => null);
+        if (oldMsg) {
+          msg = await oldMsg.edit({
+            content: '',
+            embeds: [],
+            files: [attachment],
+            components
+          }).catch(() => null);
+        }
+      }
 
-      // Save new message ID
-      battle.leaderboardMessageId = msg.id;
-      await battle.save();
+      // If no existing message was found (or edit failed), send a new one
+      if (!msg) {
+        msg = await channel.send({
+          files: [attachment],
+          components
+        });
+
+        // Save new message ID
+        battle.leaderboardMessageId = msg.id;
+        await battle.save();
+      }
     }
 
     return msg;

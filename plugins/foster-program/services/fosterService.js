@@ -336,7 +336,24 @@ async function refreshLeaderboard(client, program) {
 
     const buffer = await generateDualLeaderboardImage({ mentors, newbies: partners }, { term: program.term, cycle: program.cycle });
     const embed = new EmbedBuilder().setTitle('🏆 Foster Rankings').setImage('attachment://foster-lb.png').setColor('#2F3136');
-    await channel.send({ embeds: [embed], files: [new AttachmentBuilder(buffer, { name: 'foster-lb.png' })] });
+    const attachment = new AttachmentBuilder(buffer, { name: 'foster-lb.png' });
+    const payload = { embeds: [embed], files: [attachment] };
+
+    let msg = null;
+
+    if (program.leaderboardMessageId) {
+      const oldMsg = await channel.messages.fetch(program.leaderboardMessageId).catch(() => null);
+      if (oldMsg) {
+        msg = await oldMsg.edit(payload).catch(() => null);
+      }
+    }
+
+    if (!msg) {
+      msg = await channel.send(payload);
+      program.leaderboardMessageId = msg.id;
+      await program.save();
+    }
+
   } catch (err) {}
 }
 
