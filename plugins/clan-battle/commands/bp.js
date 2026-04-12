@@ -17,6 +17,7 @@ const Player = require('../../../bot/database/models/Player');
 const battleService = require('../services/battleService');
 const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
+const { addLog } = require('../../../utils/logger');
 
 
 module.exports = {
@@ -85,7 +86,7 @@ module.exports = {
         return ctx.reply({ content: `❌ ${result.error}`, ephemeral: isEphemeral });
       }
 
-      console.log(`[ClanBattle] ${ctx.user.tag} submitted ${points} points`);
+      addLog("ClanBattle", `${ctx.user.tag} submitted ${points} pts`);
 
       const displayName = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
       await ctx.reply({ content: `✅ **${points}** battle points recorded for **${displayName}**!`, ephemeral: isEphemeral });

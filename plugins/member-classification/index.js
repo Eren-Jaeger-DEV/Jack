@@ -10,6 +10,7 @@
 const { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const classificationService = require('./services/classificationService');
 const { addLog } = require('../../utils/logger');
+const logger = require('../../utils/logger');
 
 module.exports = {
   load(client) {
@@ -23,7 +24,7 @@ module.exports = {
         addLog("Member System", "Newbie scan complete");
         await classificationService.checkExpiredNewbies(client);
       } catch (err) {
-        console.error('[MemberClassification] Startup scan error:', err.message);
+        logger.error("MemberClassification", `Startup scan error: ${err.message}`);
       }
     }, 5000); // Wait 5s after load for client to be ready
 
@@ -106,7 +107,7 @@ module.exports = {
             components: [disabledRow]
           });
 
-          console.log(`[MemberClassification] ${interaction.user.tag} classified ${targetUserId} as Clan Member`);
+          logger.info("MemberClassification", `${interaction.user.tag} classified ${targetUserId} as Clan Member`);
         }
 
         // ── Discord Member ──
@@ -143,12 +144,12 @@ module.exports = {
             components: [disabledRow]
           });
 
-          console.log(`[MemberClassification] ${interaction.user.tag} classified ${targetUserId} as Discord Member`);
+          logger.info("MemberClassification", `${interaction.user.tag} classified ${targetUserId} as Discord Member`);
         }
 
       } catch (err) {
         if (err?.code === 10062) return; // Unknown interaction
-        console.error('[MemberClassification] Button handler error:', err);
+        logger.error("MemberClassification", `Button handler error: ${err.message}`);
       }
     });
   }

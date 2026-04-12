@@ -20,7 +20,8 @@ module.exports = (client) => {
         commandCount++;
       }
     } catch (err) {
-      console.error(`Command error (${file}):`, err);
+      const logger = require("../../utils/logger");
+      logger.error("CommandHandler", `Core Command error (${file}): ${err.message}`);
     }
   }
 

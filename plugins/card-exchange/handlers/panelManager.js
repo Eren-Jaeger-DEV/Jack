@@ -15,6 +15,7 @@ const {
 } = require('discord.js');
 
 const configManager = require('../../../bot/utils/configManager');
+const { addLog } = require('../../../utils/logger');
 
 // In-memory storage for the panel message ID
 let panelMessageId = null;
@@ -70,7 +71,7 @@ async function sendPanel(channel) {
     panelMessageId = msg.id;
     return msg;
   } catch (err) {
-    console.error('[CardExchange] Failed to send panel:', err.message);
+    addLog("CardExchange", `Failed to send panel: ${err.message}`);
   }
 }
 
@@ -98,13 +99,13 @@ async function ensurePanel(client) {
 
     if (existing) {
       panelMessageId = existing.id;
-      console.log('[CardExchange] Panel found, ID stored.');
+      addLog("CardExchange", "Panel found, ID stored.");
     } else {
       await sendPanel(channel);
-      console.log('[CardExchange] Panel created.');
+      addLog("CardExchange", "Panel created.");
     }
   } catch (err) {
-    console.error('[CardExchange] ensurePanel error:', err.message);
+    addLog("CardExchange", `ensurePanel error: ${err.message}`);
   }
 }
 
@@ -132,7 +133,7 @@ async function repostPanel(client) {
 
     await sendPanel(channel);
   } catch (err) {
-    console.error('[CardExchange] repostPanel error:', err.message);
+    addLog("CardExchange", `repostPanel error: ${err.message}`);
   }
 }
 

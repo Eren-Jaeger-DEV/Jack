@@ -17,7 +17,7 @@ const commands = [];
 
 /* SCAN ALL PLUGINS */
 
-const pluginsPath = path.join(__dirname, 'plugins');
+const pluginsPath = path.join(__dirname, '..', 'plugins');
 
 function loadCommandsFromDir(dir) {
   if (!fs.existsSync(dir)) return;

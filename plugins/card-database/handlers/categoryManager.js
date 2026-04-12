@@ -21,6 +21,8 @@ const {
   MessageFlags
 } = require('discord.js');
 
+const logger = require('../../../bot/utils/logger');
+
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 function isAdmin(member) {
   return member.permissions.has(PermissionFlagsBits.Administrator);
@@ -103,7 +105,7 @@ async function handleCategoryModal(interaction) {
       type: ChannelType.PublicThread,
       reason: `Card Database — new category: ${categoryName}`
     }).catch(err => {
-      console.error('[CardDB] Failed to create thread:', err.message);
+      logger.error("CardDB", `Failed to create thread: ${err.message}`);
       return null;
     });
 
@@ -119,7 +121,7 @@ async function handleCategoryModal(interaction) {
       flags: MessageFlags.Ephemeral
     });
   } catch (err) {
-    console.error('[CardDB] handleCategoryModal error:', err.message);
+    logger.error("CardDB", `handleCategoryModal error: ${err.message}`);
     await interaction.followUp({ content: '❌ Something went wrong.', flags: MessageFlags.Ephemeral });
   }
 }
@@ -142,9 +144,9 @@ async function handleDeleteCategory(interaction) {
     
     // interaction.reply() will fail because the channel is deleted,
     // so we don't bother sending a confirmation to the channel itself.
-    console.log(`[CardDB] Category "${categoryName}" deleted by ${interaction.user.tag}.`);
+    logger.info("CardDB", `Category "${categoryName}" deleted by ${interaction.user.tag}.`);
   } catch (err) {
-    console.error('[CardDB] handleDeleteCategory error:', err.message);
+    logger.error("CardDB", `handleDeleteCategory error: ${err.message}`);
     await denyEphemeral(interaction, `❌ Failed to delete category: ${err.message}`);
   }
 }

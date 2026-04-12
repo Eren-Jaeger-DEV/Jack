@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const xpForLevel = require("./utils/xpForLevel");
 const { getBackground } = require("./backgroundCache");
+const logger = require("../../../bot/utils/logger");
 
 // 10 Second Buffer Cache for Rank Cards
 // Key: "guildId-userId", Value: { buffer, timestamp }
@@ -29,7 +30,7 @@ module.exports = async function generateRankCard(member, profile, serverRank, we
     try {
       background = await loadImage(profile.background);
     } catch (err) {
-      console.log(`\u26a0 Warning: Failed to load custom background from ${profile.background} for user ${profile.userId}. Falling back to default. Error: ${err.message}`);
+      logger.warn("Leveling", `Failed to load custom background for user ${profile.userId}. Falling back to default.`);
       background = getBackground("default");
     }
   } else {

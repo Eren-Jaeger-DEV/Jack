@@ -1,20 +1,19 @@
 const { MessageFlags } = require('discord.js');
 const leaderboardCmd = require("./commands/leaderboard");
+const logger = require("../../../bot/utils/logger");
 
 module.exports = {
   name: "leveling",
   async load(client) {
-    // Initialize the Canvas Preload routine safely
+    // 1. Initialize Canvas Preload routine
     const { preloadBackgrounds } = require("./backgroundCache");
     await preloadBackgrounds();
 
-    // Start the Background DB Sync Worker
+    // 2. Start Background DB Sync Worker
     const startWorker = require("./xpWorker");
     startWorker(client);
 
-    /* ═══════════════════════════════════════════
-     *  BUTTON HANDLER — Leaderboard Pagination
-     * ═══════════════════════════════════════════ */
+    // 3. Register Interaction Handler (Leaderboard Pagination)
     this._interactionHandler = async (interaction) => {
       if (!interaction.isButton()) return;
       if (!interaction.customId.startsWith('leveling_lb_')) return;
@@ -27,13 +26,11 @@ module.exports = {
 
         if (isNaN(currentPage)) return;
 
-        // Acknowledge the interaction immediately
         await interaction.deferUpdate().catch(() => {});
 
         let newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
         if (newPage < 0) newPage = 0;
 
-        // Mock a Context-like object for the command runner
         const ctx = {
           client: interaction.client,
           guild: interaction.guild,
@@ -51,7 +48,7 @@ module.exports = {
 
       } catch (err) {
         if (err?.code === 10062) return;
-        console.error('[Leveling] Pagination error:', err);
+        logger.error("Leveling", `Pagination fallback error: ${err.message}`);
       }
     };
 

@@ -7,6 +7,7 @@
 const NewbieTimer = require('../models/NewbieTimer');
 const AwaitingClassification = require('../models/AwaitingClassification');
 const configManager = require('../../../bot/utils/configManager');
+const logger = require('../../../utils/logger');
 
 /* ── Constants ── */
 const NEWBIE_DURATION_DAYS = 14;
@@ -28,7 +29,7 @@ async function classifyAsClanMember(guild, userId) {
     const clanRole = guild.roles.cache.get(clanMemberRoleId);
     if (clanRole && !member.roles.cache.has(clanMemberRoleId)) {
       await member.roles.add(clanRole).catch(err => {
-        console.error(`[MemberClassification] Failed to add clan role to ${member.user.tag}:`, err.message);
+        logger.error("MemberClassification", `Failed to add clan role to ${member.user.tag}: ${err.message}`);
       });
     }
   }
@@ -38,7 +39,7 @@ async function classifyAsClanMember(guild, userId) {
     const newbieRole = guild.roles.cache.get(newbieRoleId);
     if (newbieRole && !member.roles.cache.has(newbieRoleId)) {
       await member.roles.add(newbieRole).catch(err => {
-        console.error(`[MemberClassification] Failed to add newbie role to ${member.user.tag}:`, err.message);
+        logger.error("MemberClassification", `Failed to add newbie role to ${member.user.tag}: ${err.message}`);
       });
     }
   }
@@ -67,8 +68,8 @@ async function classifyAsDiscordMember(guild, userId) {
       const discordRole = guild.roles.cache.get(discordMemberRoleId);
       if (discordRole && !member.roles.cache.has(discordMemberRoleId)) {
         await member.roles.add(discordRole).catch(err => {
-          console.error(`[MemberClassification] Failed to add discord role to ${member.user.tag}:`, err.message);
-        });
+        logger.error("MemberClassification", `Failed to add discord role to ${member.user.tag}: ${err.message}`);
+      });
       }
     }
 
@@ -91,9 +92,9 @@ async function scheduleNewbieRemoval(guildId, userId) {
       { guildId, userId, assignedAt: now, expiresAt },
       { upsert: true, returnDocument: 'after' }
     );
-    console.log(`[MemberClassification] Newbie timer set for ${userId}, expires ${expiresAt.toISOString()}`);
+    logger.info("MemberClassification", `Newbie timer set for ${userId}, expires ${expiresAt.toISOString()}`);
   } catch (err) {
-    console.error(`[MemberClassification] Failed to store newbie timer for ${userId}:`, err.message);
+    logger.error("MemberClassification", `Failed to store newbie timer for ${userId}: ${err.message}`);
   }
 }
 
@@ -108,7 +109,7 @@ async function addAwaitingClassification(guildId, userId, messageId) {
             { upsert: true, returnDocument: 'after' }
         );
     } catch (err) {
-        console.error(`[MemberClassification] Failed to track unclassified user ${userId}:`, err.message);
+        logger.error("MemberClassification", `Failed to track unclassified user ${userId}: ${err.message}`);
     }
 }
 
@@ -116,7 +117,7 @@ async function removeAwaitingClassification(guildId, userId) {
     try {
         await AwaitingClassification.deleteOne({ guildId, userId });
     } catch (err) {
-        console.error(`[MemberClassification] Failed to cleanup unclassified user ${userId}:`, err.message);
+        logger.error("MemberClassification", `Failed to cleanup unclassified user ${userId}: ${err.message}`);
     }
 }
 
@@ -135,7 +136,7 @@ async function sendClassificationReminders(client) {
 
         if (unclassified.length === 0) return;
 
-        console.log(`[MemberClassification] Sending reminders for ${unclassified.length} unclassified members.`);
+        logger.info("MemberClassification", `Sending reminders for ${unclassified.length} unclassified members.`);
 
         for (const entry of unclassified) {
             const guild = client.guilds.cache.get(entry.guildId);
@@ -161,7 +162,7 @@ async function sendClassificationReminders(client) {
             await entry.save();
         }
     } catch (err) {
-        console.error('[MemberClassification] Error sending reminders:', err.message);
+        logger.error("MemberClassification", `Error sending reminders: ${err.message}`);
     }
 }
 
@@ -176,7 +177,7 @@ async function checkExpiredNewbies(client) {
 
     if (expired.length === 0) return;
 
-    console.log(`[MemberClassification] Found ${expired.length} expired newbie timer(s).`);
+    logger.info("MemberClassification", `Found ${expired.length} expired newbie timer(s).`);
 
     for (const timer of expired) {
       try {
@@ -200,9 +201,9 @@ async function checkExpiredNewbies(client) {
           const newbieRole = guild.roles.cache.get(newbieRoleId);
           if (newbieRole && member.roles.cache.has(newbieRoleId)) {
             await member.roles.remove(newbieRole).catch(err => {
-              console.error(`[MemberClassification] Failed to remove newbie role from ${member.user.tag}:`, err.message);
+              logger.error("MemberClassification", `Failed to remove newbie role from ${member.user.tag}: ${err.message}`);
             });
-            console.log(`[MemberClassification] Removed Newbie role from ${member.user.tag} (expired).`);
+            logger.info("MemberClassification", `Removed Newbie role from ${member.user.tag} (expired).`);
           }
         }
 

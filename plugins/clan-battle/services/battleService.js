@@ -11,6 +11,7 @@ const { generateContributionImage } = require('../utils/contributionCanvas');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
+const logger = require('../../../bot/utils/logger');
 
 const PLAYERS_PER_PAGE       = 10;
 const MAX_POINTS             = 100;
@@ -168,7 +169,7 @@ async function resetDailyPoints(guildId) {
     p.todayPoints = 0;
   }
   await battle.save();
-  console.log(`[ClanBattle] Daily points reset for guild ${guildId}`);
+  logger.info("ClanBattle", `Daily points reset for guild ${guildId}`);
 }
 
 /* ═══════════════════════════════════════════
@@ -207,13 +208,13 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
 
     const channel = await client.channels.fetch(clanBattleChannelId).catch(() => null);
     if (!channel) {
-      console.log(`[ClanBattle] Channel not found: ${clanBattleChannelId}`);
+      logger.error("ClanBattle", `Leaderboard channel not found: ${clanBattleChannelId}`);
       return null;
     }
 
     const guild = await client.guilds.fetch(battle.guildId).catch(() => null);
     if (!guild) {
-      console.log(`[ClanBattle] Guild not found: ${battle.guildId}`);
+      logger.error("ClanBattle", `Guild not found for battle: ${battle.guildId}`);
       return null;
     }
 
@@ -253,7 +254,7 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
         files: [attachment],
         components
       }).catch(err => {
-        console.error('[ClanBattle] editReply error:', err.message);
+        logger.error("ClanBattle", `Leaderboard editReply error: ${err.message}`);
         throw err; // Re-throw to be caught by the outer try-catch
       });
     } else {
@@ -272,7 +273,7 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
 
     return msg;
   } catch (err) {
-    console.error(`[ClanBattle] Failed to refresh leaderboard:`, err.message);
+    logger.error("ClanBattle", `Failed to refresh leaderboard: ${err.message}`);
     return null;
   }
 }

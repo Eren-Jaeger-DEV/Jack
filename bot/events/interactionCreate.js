@@ -9,6 +9,7 @@ const emojiBrowserButtons = require("../interactions/emojiBrowserButtons");
 const guideMenuHandler = require("../interactions/guideMenuHandler");
 const CommandUsage = require("../database/models/CommandUsage");
 const Player = require("../database/models/Player");
+const logger = require("../../utils/logger");
 
 
 
@@ -37,8 +38,7 @@ module.exports = {
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       if (!command) {
-        console.warn(`[Interaction] Command not found: ${interaction.commandName}`);
-        console.log(`[Interaction] Available commands: ${[...client.commands.keys()].join(', ')}`);
+        logger.warn("InteractionCreate", `Command not found: ${interaction.commandName}`);
         return;
       }
 

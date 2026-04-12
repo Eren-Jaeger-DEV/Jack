@@ -17,6 +17,7 @@ const {
 } = require('discord.js');
 
 const Card = require('../../../bot/database/models/Card');
+const logger = require('../../../bot/utils/logger');
 
 const configManager = require('../../../bot/utils/configManager');
 const CARD_NAME_RE   = /^Name:\s*(.+)$/im;
@@ -141,9 +142,9 @@ async function runSync(client) {
 async function runSilentSync(client) {
   try {
     const result = await runSync(client);
-    console.log(`[CardDB] MongoDB Auto-sync complete: ${result.totalCards} cards, ${result.purged} purged.`);
+    logger.info("CardDB", `MongoDB Auto-sync complete: ${result.totalCards} cards, ${result.purged} purged.`);
   } catch (err) {
-    console.error('[CardDB] MongoDB Auto-sync failed:', err.message);
+    logger.error("CardDB", `MongoDB Auto-sync failed: ${err.message}`);
   }
 }
 
@@ -172,7 +173,7 @@ async function handleSync(interaction, client) {
 
     await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
   } catch (err) {
-    console.error('[CardDB] MongoDB Manual sync error:', err.message);
+    logger.error("CardDB", `Manual sync error: ${err.message}`);
     await interaction.followUp({
       content: `❌ Sync failed: ${err.message}`,
       flags: MessageFlags.Ephemeral

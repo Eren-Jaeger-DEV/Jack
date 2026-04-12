@@ -7,6 +7,7 @@
  */
 
 const registrationManager = require('./services/registrationManager');
+const logger = require('../../utils/logger');
 
 module.exports = {
   load(client) {
@@ -39,9 +40,9 @@ module.exports = {
             // Mark as inactive
             await registrationManager.closeRegistration(reg._id);
 
-            console.log(`[IntraMatch] Auto-closed registration in guild ${reg.guildId}`);
+            logger.info("IntraMatch", `Auto-closed registration in guild ${reg.guildId}`);
           } catch (innerErr) {
-            console.error(`[IntraMatch] Error closing registration ${reg._id}:`, innerErr.message);
+            logger.error("IntraMatch", `Error closing registration ${reg._id}: ${innerErr.message}`);
           }
         }
       } catch (err) {

@@ -15,6 +15,7 @@ const {
 } = require('discord.js');
 
 const configManager = require('../../../bot/utils/configManager');
+const logger = require('../../../bot/utils/logger');
 
 
 let panelMessageId = null;
@@ -54,7 +55,7 @@ async function sendPanel(channel) {
     panelMessageId = msg.id;
     return msg;
   } catch (err) {
-    console.error('[CardDB] Failed to send main panel:', err.message);
+    logger.error("CardDB", `Failed to send main panel: ${err.message}`);
   }
 }
 
@@ -67,7 +68,7 @@ async function ensurePanel(client) {
     if (!dbChannelId) return;
 
     const channel = await client.channels.fetch(dbChannelId).catch(() => null);
-    if (!channel) return console.warn('[CardDB] Database channel not found.');
+    if (!channel) return logger.warn("CardDB", "Database channel not found for panel check.");
 
     const messages = await channel.messages.fetch({ limit: 50 });
     const existing = messages.find(
@@ -78,13 +79,13 @@ async function ensurePanel(client) {
 
     if (existing) {
       panelMessageId = existing.id;
-      console.log('[CardDB] Main panel found, ID stored.');
+      logger.info("CardDB", "Main control panel found.");
     } else {
       await sendPanel(channel);
-      console.log('[CardDB] Main panel created.');
+      logger.info("CardDB", "Main control panel created.");
     }
   } catch (err) {
-    console.error('[CardDB] ensurePanel error:', err.message);
+    logger.error("CardDB", `ensurePanel error: ${err.message}`);
   }
 }
 

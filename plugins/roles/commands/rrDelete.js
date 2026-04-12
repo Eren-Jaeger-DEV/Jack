@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const ReactionRolePanel = require("../../../bot/database/models/ReactionRolePanel");
+const logger = require("../../../utils/logger");
 
 module.exports = {
 
@@ -42,7 +43,7 @@ module.exports = {
           if (message) await message.delete();
        }
     } catch (err) {
-       console.log("Could not delete associated Discord message for deleted Panel ID:", panelID);
+       logger.warn("ReactionRole", `Could not delete Discord message for Panel ID: ${panelID}`);
     }
 
     // Delete Record

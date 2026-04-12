@@ -7,6 +7,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const battleService = require('../services/battleService');
 const configManager = require('../../../bot/utils/configManager');
+const { addLog } = require('../../../utils/logger');
 
 module.exports = {
 
@@ -78,7 +79,7 @@ module.exports = {
       }
 
       const targetLabel = userArg ? userArg.tag : (result.player ? result.player.ign : uidArg);
-      console.log(`[ClanBattle] Admin ${ctx.user.tag} set total points for ${targetLabel} to ${points}`);
+      addLog("ClanBattle", `Admin ${ctx.user.tag} set total pts for ${targetLabel} → ${points}`);
 
       await ctx.reply(`✅ Set **${targetLabel}**'s total points to **${points}**`);
 

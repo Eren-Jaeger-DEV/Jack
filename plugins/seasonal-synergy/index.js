@@ -12,6 +12,7 @@ const synergyService = require('./services/synergyService');
 const Season = require('./models/Season');
 const profileService = require('../clan/services/profileService');
 const { addLog } = require('../../utils/logger');
+const logger = require('../../utils/logger');
 
 /**
  * Get current date/time in Asia/Kolkata timezone.
@@ -64,7 +65,7 @@ module.exports = {
         if (todayStr !== lastResetDate && now.getDay() === 1 && now.getHours() === 0 && now.getMinutes() < 2) {
           lastResetDate = todayStr;
 
-          console.log('[SeasonalSynergy] Weekly reset triggered (IST).');
+          logger.info("SeasonalSynergy", "Weekly reset triggered (IST).");
 
           // Get top 3 before reset
           const top3 = await synergyService.resetWeeklyEnergy();
@@ -97,7 +98,7 @@ module.exports = {
                     const member = await guild.members.fetch(p.discordId).catch(() => null);
                     if (member) await member.roles.add(mvpRole);
                   } catch (err) {
-                    console.error(`[SeasonalSynergy] Failed to assign MVP role to ${p.discordId}:`, err.message);
+                    logger.error("SeasonalSynergy", `Failed to assign MVP role to ${p.discordId}: ${err.message}`);
                   }
                 }
               }
@@ -108,7 +109,7 @@ module.exports = {
                 await synergyService.refreshLeaderboard(client, freshSeason);
               }
             } catch (err) {
-              console.error(`[SeasonalSynergy] Weekly reset error for guild ${season.guildId}:`, err.message);
+              logger.error("SeasonalSynergy", `Weekly reset error for guild ${season.guildId}: ${err.message}`);
             }
           }
         }
@@ -169,7 +170,7 @@ module.exports = {
 
       } catch (err) {
         if (err?.code === 10062) return;
-        console.error('[SeasonalSynergy] Pagination error:', err);
+        logger.error("SeasonalSynergy", `Pagination error: ${err.message}`);
       }
     };
 

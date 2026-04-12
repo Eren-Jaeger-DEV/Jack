@@ -11,6 +11,7 @@
 const { PermissionFlagsBits } = require('discord.js');
 const synergyService = require('../services/synergyService');
 const profileService = require('../../clan/services/profileService');
+const logger = require('../../../utils/logger');
 
 
 /* ── PATCH 3: Duplicate event protection ── */
@@ -58,14 +59,14 @@ module.exports = {
         // Prevent duplicate active seasons
         const existing = await synergyService.getActiveSeason(message.guild.id);
         if (existing) {
-          console.warn(`[SeasonalSynergy] Admin ${message.author.tag} tried to start a season, but one is already active.`);
+          logger.warn("SeasonalSynergy", `Admin ${message.author.tag} tried to start a season, but one is already active.`);
           return message.reply('⚠️ A season is already active. End it before starting a new one.');
         }
 
         // Create new season
         const season = await synergyService.createSeason(message.guild.id, message.channel.id);
 
-        console.log(`[SeasonalSynergy] ⚡ New season started in guild ${message.guild.id} by ${message.author.tag}`);
+        logger.info("SeasonalSynergy", `⚡ New season started in guild ${message.guild.id} by ${message.author.tag}`);
 
         // Send Season Announcement
         await message.channel.send(
@@ -103,7 +104,7 @@ module.exports = {
         // End the season
         const finalSeason = await synergyService.endSeason(message.guild.id);
 
-        console.log(`[SeasonalSynergy] Season ended in guild ${message.guild.id}`);
+        logger.info("SeasonalSynergy", `Season ended in guild ${message.guild.id}`);
 
         // Delete old leaderboard
         await synergyService.deleteOldLeaderboardMessage(client, finalSeason);
@@ -128,7 +129,7 @@ module.exports = {
           }
           await archiveMsg.delete().catch(() => {});
         } catch (err) {
-          console.error('[SeasonalSynergy] Archive error:', err);
+          logger.error("SeasonalSynergy", `Archive error: ${err.message}`);
           await archiveMsg.edit('⚠️ Failed to generate full archive, proceeding with winner announcement.').catch(() => {});
         }
 
@@ -147,7 +148,7 @@ module.exports = {
           // Remove from ALL current holders
           for (const [, member] of winnerRole.members) {
             await member.roles.remove(winnerRole).catch(err => {
-              console.error(`[SeasonalSynergy] Failed to remove season winner role from ${member.user.tag}:`, err.message);
+              logger.error("SeasonalSynergy", `Failed to remove season winner role from ${member.user.tag}: ${err.message}`);
             });
           }
           // Assign to top 3
@@ -156,7 +157,7 @@ module.exports = {
               const member = await message.guild.members.fetch(p.discordId).catch(() => null);
               if (member) await member.roles.add(winnerRole);
             } catch (err) {
-              console.error(`[SeasonalSynergy] Failed to assign season winner role to ${p.discordId}:`, err.message);
+              logger.error("SeasonalSynergy", `Failed to assign season winner role to ${p.discordId}: ${err.message}`);
             }
           }
         }

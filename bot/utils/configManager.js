@@ -1,4 +1,5 @@
 const GuildConfig = require("../database/models/GuildConfig");
+const logger = require("../../utils/logger");
 
 const configCache = new Map();
 let botClient = null;
@@ -8,15 +9,15 @@ let botClient = null;
  */
 async function init(client) {
   botClient = client;
-  console.log("[ConfigManager] Initializing configuration cache...");
+  logger.info("ConfigManager", "Initializing configuration cache...");
   try {
     const configs = await GuildConfig.find({});
     configs.forEach(config => {
       configCache.set(config.guildId, config.toObject());
     });
-    console.log(`[ConfigManager] Loaded ${configs.length} guild configurations.`);
+    logger.info("ConfigManager", `Loaded ${configs.length} guild configurations.`);
   } catch (err) {
-    console.error("[ConfigManager] Failed to initialize cache:", err);
+    logger.error("ConfigManager", `Failed to initialize cache: ${err.message}`);
   }
 }
 
@@ -26,7 +27,7 @@ async function init(client) {
  */
 async function getGuildConfig(guildId) {
   if (!guildId) {
-    console.error("[ConfigManager] Attempted to fetch config with undefined/null guildId.");
+    logger.error("ConfigManager", "Attempted to fetch config with undefined/null guildId.");
     return null;
   }
 
@@ -45,7 +46,7 @@ async function getGuildConfig(guildId) {
     configCache.set(guildId, configObj);
     return configObj;
   } catch (err) {
-    console.error(`[ConfigManager] Error fetching config for guild ${guildId}:`, err);
+    logger.error("ConfigManager", `Error fetching config for guild ${guildId}: ${err.message}`);
     return null;
   }
 }
@@ -91,7 +92,7 @@ async function updateGuildConfig(guildId, updates) {
 
     return configObj;
   } catch (err) {
-    console.error(`[ConfigManager] Error updating config for guild ${guildId}:`, err);
+    logger.error("ConfigManager", `Error updating config for guild ${guildId}: ${err.message}`);
     throw err;
   }
 }

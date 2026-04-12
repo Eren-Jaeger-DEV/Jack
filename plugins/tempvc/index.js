@@ -86,8 +86,6 @@ module.exports = {
 
     // Voice State Tracker
     client.on('voiceStateUpdate', async (oldState, newState) => {
-      // Debug log for every voice state change
-      console.log(`[TempVC Debug] User ${newState.member?.user.tag} moved from ${oldState.channelId} to ${newState.channelId}`);
 
       const config = await configManager.getGuildConfig(newState.guild.id);
 

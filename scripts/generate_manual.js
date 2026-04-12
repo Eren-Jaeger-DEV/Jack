@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const cmdDataRaw = fs.readFileSync(path.join(__dirname, 'cmd_dump.json'), 'utf-8');
+const cmdDataRaw = fs.readFileSync(path.join(__dirname, '..', 'data', 'docs', 'cmd_dump.json'), 'utf-8');
 const commands = JSON.parse(cmdDataRaw);
 
 const totalCommands = commands.length;
@@ -97,6 +97,6 @@ if (systemCmds.length > 0) {
 }
 md += `\n---\n`;
 
-const outPath = path.join('/home/victor/.gemini/antigravity/brain/0d180d53-f31f-497e-b11f-2f7bc47b0c3f', 'Jack_Command_Manual.md');
+const outPath = path.join(__dirname, '..', 'data', 'docs', 'Jack_Command_Manual.md');
 fs.writeFileSync(outPath, md);
 console.log(`Generated manual at ${outPath}`);

@@ -5,6 +5,7 @@ const session = require("express-session");
 const passport = require("passport");
 const DiscordStrategy = require("passport-discord").Strategy;
 const cors = require("cors");
+const logger = require("../../bot/utils/logger");
 const configManager = require("../../bot/utils/configManager");
 
 const app = express();
@@ -27,7 +28,7 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-  console.log(`[Request] ${req.method} ${req.url}`);
+  logger.info("DashboardAPI", `${req.method} ${req.url}`);
   next();
 });
 
@@ -124,7 +125,7 @@ app.get("/api/user", async (req, res) => {
     const OWNER_ID = process.env.OWNER_ID;
     const GUILD_ID = process.env.GUILD_ID;
 
-    console.log("[RBAC Sync] User:", req.user.username, "(", discordId, ")");
+    logger.info("DashboardAPI", `[RBAC Sync] User: ${req.user.username} (${discordId})`);
 
     let highestRole = "none";
 
@@ -147,7 +148,7 @@ app.get("/api/user", async (req, res) => {
             else if (s.contributorRoleId && r.has(s.contributorRoleId)) highestRole = "contributor";
           }
         } catch (e) {
-          console.warn(`[RBAC Sync] member.fetch fail for ${discordId}`);
+          logger.info("DashboardAPI", `[RBAC Sync] member.fetch fail for ${discordId}`);
         }
       }
     }
@@ -156,7 +157,7 @@ app.get("/api/user", async (req, res) => {
     let player = await Player.findOne({ discordId: discordId });
 
     if (!player) {
-      console.log("[RBAC Sync] New user discovered, creating record with role:", highestRole);
+      logger.info("DashboardAPI", `[RBAC Sync] New user discovered, creating record with role: ${highestRole}`);
       player = await Player.create({
         discordId: discordId,
         username: req.user.username,
@@ -185,7 +186,7 @@ app.get("/api/user", async (req, res) => {
       roleLevel: (require("./middleware/auth").ROLE_LEVELS)[player.role] || 0
     });
   } catch (err) {
-    console.error("[RBAC Sync Error]:", err);
+    logger.info("DashboardAPI", `[RBAC Sync Error]: ${err}`);
     res.json(req.user);
   }
 });
@@ -285,7 +286,7 @@ app.get("/api/welcome", async (req, res) => {
       backgroundImageUrl: config.greetingData?.welcomeImage || ''
     });
   } catch (err) {
-    console.error("Error fetching welcome config:", err);
+    logger.info("DashboardAPI", `Error fetching welcome config: ${err}`);
     res.json({});
   }
 });
@@ -306,7 +307,7 @@ app.post("/api/welcome", express.json(), async (req, res) => {
     await configManager.updateGuildConfig(guildId, { greetingData });
     res.json({ status: "saved" });
   } catch (err) {
-    console.error("Error saving welcome config:", err);
+    logger.info("DashboardAPI", `Error saving welcome config: ${err}`);
     res.status(500).json({ error: "Failed to save" });
   }
 });
@@ -329,7 +330,7 @@ app.get("/api/moderation", async (req, res) => {
       modLogChannelId: config.settings?.modLogChannelId || ''
     });
   } catch (err) {
-    console.error("Error fetching moderation settings:", err);
+    logger.info("DashboardAPI", `Error fetching moderation settings: ${err}`);
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
@@ -351,7 +352,7 @@ app.post("/api/moderation", express.json(), async (req, res) => {
     await configManager.updateGuildConfig(guildId, updates);
     res.json({ status: "success" });
   } catch (err) {
-    console.error("Error saving moderation settings:", err);
+    logger.info("DashboardAPI", `Error saving moderation settings: ${err}`);
     res.status(500).json({ error: "Failed to save settings" });
   }
 });
@@ -446,7 +447,7 @@ app.post("/api/plugins/toggle", express.json(), verifyGuildPermission, async (re
     const config = await configManager.getGuildConfig(guildId);
     res.json({ status: "success", plugins: config.plugins });
   } catch (err) {
-    console.error("Error toggling plugin:", err);
+    logger.info("DashboardAPI", `Error toggling plugin: ${err}`);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -463,7 +464,7 @@ app.get("/api/guilds/:guildId/config", verifyGuildPermission, async (req, res) =
     }
     res.json(config);
   } catch (err) {
-    console.error("Error fetching config:", err);
+    logger.info("DashboardAPI", `Error fetching config: ${err}`);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -476,7 +477,7 @@ app.put("/api/guilds/:guildId/config", express.json(), verifyGuildPermission, as
     const config = await configManager.updateGuildConfig(guildId, updates);
     res.json(config);
   } catch (err) {
-    console.error("Error updating config:", err);
+    logger.info("DashboardAPI", `Error updating config: ${err}`);
     res.status(500).json({ error: "Failed to update configuration" });
   }
 });
@@ -492,10 +493,10 @@ app.get("/api/guilds/:guildId/channels", verifyGuildPermission, async (req, res)
       .filter(c => c.type === 0) // GuildText
       .map(c => ({ id: c.id, name: c.name }));
     
-    console.log(`[API] Fetched ${fetchedChannels.size} channels for guild ${guildId}, filtered to ${channels.length} text channels.`);
+    logger.info("DashboardAPI", `Fetched ${channels.length} text channels for guild ${guildId}`);
     res.json(channels);
   } catch (err) {
-    console.error("Error fetching channels:", err);
+    logger.info("DashboardAPI", `Error fetching channels: ${err}`);
     res.status(500).json({ error: "Failed to fetch channels from Discord" });
   }
 });
@@ -511,10 +512,10 @@ app.get("/api/guilds/:guildId/roles", verifyGuildPermission, async (req, res) =>
       .filter(r => r.name !== "@everyone")
       .map(r => ({ id: r.id, name: r.name, color: r.hexColor }));
     
-    console.log(`[API] Fetched ${fetchedRoles.size} roles for guild ${guildId}, filtered to ${roles.length} roles.`);
+    logger.info("DashboardAPI", `Fetched ${roles.length} roles for guild ${guildId}`);
     res.json(roles);
   } catch (err) {
-    console.error("Error fetching roles:", err);
+    logger.info("DashboardAPI", `Error fetching roles: ${err}`);
     res.status(500).json({ error: "Failed to fetch roles from Discord" });
   }
 });

@@ -88,7 +88,9 @@ class ServerMapManager {
       roles
     };
 
-    console.log('[ServerMapManager] Server map initialized');
+    // Log success via structured logger
+    const logger = require('../bot/utils/logger');
+    logger.info("ServerMap", `Server map initialized for ${guild.name}`);
   }
 
   async refresh() {

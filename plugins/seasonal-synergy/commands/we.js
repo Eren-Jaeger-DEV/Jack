@@ -17,6 +17,8 @@ const Player = require('../../../bot/database/models/Player');
 const synergyService = require('../services/synergyService');
 const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
+const { addLog } = require('../../../utils/logger');
+const logger = require('../../../utils/logger');
 
 module.exports = {
   name: 'we',
@@ -130,7 +132,7 @@ module.exports = {
       
       const name = await resolveDisplayName(ctx.guild, dbPlayer.discordId, dbPlayer.ign);
       const displayName = name;
-      console.log(`[SeasonalSynergy] ${adminBypass ? `Admin ${ctx.user.tag} submitted` : `${ctx.user.tag} submitted`} ${points} weekly energy for ${displayName}`);
+      addLog("SeasonalSynergy", `${adminBypass ? `Admin ${ctx.user.tag}` : ctx.user.tag} submitted ${points} weekly energy for ${displayName}`);
 
       await ctx.reply({ content: `✅ **${points}** weekly energy recorded for **${displayName}**!`, flags: [MessageFlags.Ephemeral] });
 
@@ -141,7 +143,7 @@ module.exports = {
       }
 
     } catch (err) {
-      console.error('[SeasonalSynergy] we command error:', err);
+      logger.error("SeasonalSynergy", `we command error: ${err.message}`);
       await ctx.reply({ content: '❌ Something went wrong.', flags: [MessageFlags.Ephemeral] }).catch(() => {});
     }
   }

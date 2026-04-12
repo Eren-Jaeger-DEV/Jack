@@ -2,6 +2,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const axios = require('axios');
 const persona = require('./persona');
 const toolService = require('./toolService');
+const logger = require('../../utils/logger');
 require('dotenv').config();
 
 const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
@@ -21,7 +22,7 @@ module.exports = {
   _rotateKey() {
     if (API_KEYS.length <= 1) return false;
     currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-    console.log(`[JackAI] 🔄 System Rotation: Switching to API Key #${currentKeyIndex + 1}`);
+    logger.info("JackAI", `System Rotation: Switching to API Key #${currentKeyIndex + 1}`);
     return true;
   },
   async _fetchImageData(url) {
@@ -31,7 +32,7 @@ module.exports = {
       const data = Buffer.from(response.data).toString('base64');
       return { mimeType, data };
     } catch (e) {
-      console.error('[JackAI] Image fetch failed:', e.message);
+      logger.error("JackAI", `Image fetch failed: ${e.message}`);
       return null;
     }
   },
@@ -200,7 +201,7 @@ module.exports = {
       };
 
     } catch (error) {
-      console.error("[JackAI] generateResponse Failure:", error.message);
+      logger.error("JackAI", `generateResponse Failure: ${error.message}`);
       throw error;
     }
   },
@@ -241,7 +242,7 @@ module.exports = {
       const points = parseInt(match[0], 10);
       return isNaN(points) ? null : points;
     } catch (e) {
-      console.error('[JackAI] Synergy extraction failed:', e.message);
+      logger.error("JackAI", `Synergy extraction failed: ${e.message}`);
       return null; // null = error, distinct from 0 points
     }
   }

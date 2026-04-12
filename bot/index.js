@@ -2,7 +2,8 @@ require("dotenv").config({ quiet: true });
 
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
-const { addLog, printLogs } = require("../utils/logger");
+const logger = require("../utils/logger");
+const { addLog, printLogs } = logger;
 const configManager = require("./utils/configManager");
 const ServerMapManager = require("../core/serverMapManager");
 global.addLog = addLog;
@@ -32,7 +33,7 @@ require("./handlers/eventHandler")(client);
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => addLog("Database", "Connected"))
-  .catch(err => console.error("❌ Database Connection Failed:", err.message));
+  .catch(err => logger.critical("Database", `Connection Failed: ${err.message}`));
 
 /* Ready */
 

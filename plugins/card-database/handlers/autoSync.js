@@ -17,6 +17,7 @@
 
 const { ChannelType } = require('discord.js');
 const { runSilentSync } = require('./syncHandler');
+const logger = require('../../../bot/utils/logger');
 
 const configManager = require('../../../bot/utils/configManager');
 const DEBOUNCE_MS   = 7000; // 7 seconds — coalesces bursts
@@ -33,7 +34,6 @@ function scheduleSyncDebounced(client, reason) {
   if (debounceTimer) {
     clearTimeout(debounceTimer);
   }
-  console.log(`[CardDB] Auto-sync scheduled (${reason}), debouncing for ${DEBOUNCE_MS / 1000}s...`);
 
   debounceTimer = setTimeout(async () => {
     debounceTimer = null;
@@ -114,7 +114,7 @@ function registerAutoSync(client) {
     scheduleSyncDebounced(client, `threadDelete: "${thread.name}"`);
   });
 
-  console.log('[CardDB] Auto-sync event listeners registered.');
+  logger.info("CardDB", "Auto-sync event listeners registered.");
 }
 
 module.exports = { registerAutoSync };

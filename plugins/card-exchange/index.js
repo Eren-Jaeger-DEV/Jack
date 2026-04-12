@@ -12,6 +12,7 @@
 const configManager = require('../../bot/utils/configManager');
 const { ensurePanel, repostPanel, getPanelMessageId } = require('./handlers/panelManager');
 const { registerHandler, cleanupExchanges } = require('./handlers/exchangeHandler');
+const { addLog } = require('../../utils/logger');
 
 module.exports = {
   name: 'card-exchange',
@@ -56,6 +57,6 @@ module.exports = {
     // 4. Periodically cleanup expired exchanges (every 1 minute)
     setInterval(() => cleanupExchanges(client), 60 * 1000);
 
-    console.log('[CardExchange] Plugin loaded ✅');
+    addLog('CardExchange', 'Plugin loaded ✅');
   }
 };

@@ -15,6 +15,7 @@ const { handleAddCategory, handleCategoryModal, handleDeleteCategory } = require
 const { handleAddCard, handleCardModal, handleImageUpload } = require('./handlers/cardManager');
 const { handleSync }                                       = require('./handlers/syncHandler');
 const { registerAutoSync }                                 = require('./handlers/autoSync');
+const logger = require('../../../bot/utils/logger');
 
 module.exports = {
   name: 'card-database',
@@ -48,7 +49,7 @@ module.exports = {
           if (interaction.customId === 'cdb_modal_card') return handleCardModal(interaction);
         }
       } catch (err) {
-        console.error('[CardDB] Unhandled interaction error:', err.message);
+        logger.error("CardDB", `Unhandled interaction error: ${err.message}`);
       }
     });
 
@@ -60,6 +61,6 @@ module.exports = {
     // 4. Debounced auto-sync on data changes (threadCreate, messageCreate, messageUpdate, messageDelete)
     registerAutoSync(client);
 
-    console.log('[CardDB] Plugin loaded ✅');
+    logger.info("CardDB", "Plugin loaded and synchronized.");
   }
 };

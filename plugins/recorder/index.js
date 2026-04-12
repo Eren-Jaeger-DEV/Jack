@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const { addLog } = require("../../utils/logger");
 
 module.exports = {
   name: "recorder",
@@ -20,7 +21,7 @@ module.exports = {
       this.cleanupRecordings(recordingsDir);
     }, 60 * 60 * 1000);
     
-    console.log("Jack Recorder Plugin Loaded!");
+    addLog("Recorder", "Plugin loaded.");
   },
 
   cleanupRecordings(directory) {

@@ -8,6 +8,7 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const classificationService = require('../services/classificationService');
 const configManager = require('../../../bot/utils/configManager');
+const logger = require('../../../utils/logger');
 
 
 module.exports = {
@@ -25,7 +26,7 @@ module.exports = {
 
       const channel = await client.channels.fetch(classificationChannelId).catch(() => null);
       if (!channel) {
-        console.error('[MemberClassification] Classification channel not found.');
+        logger.error("MemberClassification", "Classification channel not found.");
         return;
       }
 
@@ -57,7 +58,7 @@ module.exports = {
       // Track for reminders
       await classificationService.addAwaitingClassification(member.guild.id, member.id, message.id);
 
-      console.log(`[MemberClassification] Classification prompt sent for ${member.user.tag}`);
+      logger.info("MemberClassification", `Classification prompt sent for ${member.user.tag}`);
 
     } catch (err) {
       console.error('[MemberClassification] guildMemberAdd error:', err);

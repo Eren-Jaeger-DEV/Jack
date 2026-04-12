@@ -12,6 +12,7 @@ const { PermissionFlagsBits } = require('discord.js');
 const battleService = require('../services/battleService');
 const profileService = require('../../clan/services/profileService');
 const configManager = require('../../../bot/utils/configManager');
+const logger = require('../../../utils/logger');
 
 /* ── PATCH 3: Duplicate event protection ── */
 const processedEvents = new Set();
@@ -62,14 +63,14 @@ module.exports = {
         // Prevent multiple active battles
         const existing = await battleService.getActiveBattle(message.guild.id);
         if (existing) {
-          console.warn(`[ClanBattle] Admin ${message.author.tag} tried to start a battle, but one is already active.`);
+          logger.warn("ClanBattle", `Admin ${message.author.tag} tried to start a battle, but one is already active.`);
           return message.reply('⚠️ A clan battle is already active. End it before starting a new one.');
         }
 
         // Create new battle
         const battle = await battleService.createBattle(message.guild.id, message.channel.id);
 
-        console.log(`[ClanBattle] ⚔️ Battle started in guild ${message.guild.id} by ${message.author.tag}`);
+        logger.info("ClanBattle", `⚔️ Battle started in guild ${message.guild.id} by ${message.author.tag}`);
 
         // Send initial leaderboard
         await battleService.refreshLeaderboard(client, battle);
@@ -96,7 +97,7 @@ module.exports = {
         // End the battle
         const finalBattle = await battleService.endBattle(message.guild.id);
 
-        console.log(`[ClanBattle] Battle ended in guild ${message.guild.id}`);
+        logger.info("ClanBattle", `Battle ended in guild ${message.guild.id}`);
 
         // Delete old leaderboard
         await battleService.deleteOldLeaderboardMessage(client, finalBattle);
@@ -121,7 +122,7 @@ module.exports = {
           }
           await archiveMsg.delete().catch(() => {});
         } catch (err) {
-          console.error('[ClanBattle] Archive error:', err);
+          logger.error("ClanBattle", `Archive error: ${err.message}`);
           await archiveMsg.edit('⚠️ Failed to generate full archive, proceeding with winner announcement.').catch(() => {});
         }
 
@@ -138,7 +139,7 @@ module.exports = {
           // Remove from all
           for (const [, member] of winnerRole.members) {
             await member.roles.remove(winnerRole).catch(err => {
-              console.error(`[ClanBattle] Failed to remove winner role from ${member.user.tag}:`, err.message);
+              logger.error("ClanBattle", `Failed to remove winner role from ${member.user.tag}: ${err.message}`);
             });
           }
 
@@ -148,7 +149,7 @@ module.exports = {
               const member = await message.guild.members.fetch(p.userId).catch(() => null);
               if (member) await member.roles.add(winnerRole);
             } catch (err) {
-              console.error(`[ClanBattle] Failed to assign winner role to ${p.userId}:`, err.message);
+              logger.error("ClanBattle", `Failed to assign winner role to ${p.userId}: ${err.message}`);
             }
           }
         }

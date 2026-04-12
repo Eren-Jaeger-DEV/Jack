@@ -1,5 +1,6 @@
 const { loadImage } = require("canvas");
 const path = require("path");
+const logger = require("../../../bot/utils/logger");
 
 const cache = {
   default: null
@@ -10,9 +11,8 @@ module.exports = {
     const defaultPath = path.join(__dirname, "../../assets/rank-backgrounds/default.png");
     try {
       cache.default = await loadImage(defaultPath);
-      // Silenced
     } catch (err) {
-      console.log(`⚠ Warning: Missing default background at ${defaultPath}. Creating fallback.`);
+      logger.warn("Leveling", `Missing default background at assets/rank-backgrounds/default.png. Using fallback.`);
       
       // Create dynamic fallback
       const { createCanvas } = require("canvas");

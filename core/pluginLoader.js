@@ -119,12 +119,12 @@ async function loadPlugin(client, folder) {
     const commands = commandLoader(client, pluginPath);
     const events = eventLoader(client, pluginPath);
 
-    // 3. Optional index.js Lifecycle Hook
+    // 3. Optional lifecycle hooks (index.js)
     const indexPath = path.join(pluginPath, manifest.main || 'index.js');
     if (fs.existsSync(indexPath)) {
         try {
             const plugin = require(indexPath);
-            if (typeof plugin.load === 'function') {
+            if (plugin && typeof plugin.load === 'function') {
                 await plugin.load(client);
             }
         } catch (err) {

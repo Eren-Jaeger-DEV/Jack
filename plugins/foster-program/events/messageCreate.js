@@ -15,6 +15,7 @@ const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const fosterService = require('../services/fosterService');
 const aiService     = require('../../../bot/utils/aiService');
 const configManager = require('../../../bot/utils/configManager');
+const logger        = require('../../../utils/logger');
 
 module.exports = async (client, message) => {
   if (message.author.bot || !message.guild) return;
@@ -25,7 +26,7 @@ module.exports = async (client, message) => {
 
   // Debug trigger
   if (content.includes('foster program starts') || content === 'h manual' || content === 'h refresh') {
-    console.log(`[FosterV2] Potential trigger from ${message.author.tag} | Admin: ${isAdmin} | Channel: ${message.channel.id}`);
+    logger.info("FosterV2", `Potential trigger from ${message.author.tag} | Admin: ${isAdmin} | Channel: ${message.channel.id}`);
   }
 
   if (isAdmin && (content.includes('foster program starts') || content === 'h manual' || content === 'h refresh')) {
@@ -76,7 +77,7 @@ module.exports = async (client, message) => {
       // Process registration (IGN verification)
       await fosterService.processThreadRegistration(message, roleType);
     } catch (err) {
-      console.error('[FosterProgram] Thread registration error:', err.message);
+      logger.error("FosterProgram", `Thread registration error: ${err.message}`);
     }
   }
 

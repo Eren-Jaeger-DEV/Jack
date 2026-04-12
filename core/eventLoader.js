@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const logger = require('../bot/utils/logger');
 
 module.exports = (client, pluginPath) => {
   const eventsPath = path.join(pluginPath, 'events');
@@ -25,14 +26,15 @@ module.exports = (client, pluginPath) => {
             event.execute(...args, client);
           }
         } catch (err) {
-          console.error(`[Jack] Plugin Event error (${eventName}):`, err);
+          logger.error("EventLoader", `Plugin Event error (${eventName}): ${err.message}`);
         }
       };
 
       client.on(eventName, handler);
+      logger.info("EventLoader", `Loaded event: ${eventName}`);
       loadedEvents.push({ eventName, handler });
     } catch (err) {
-      console.error(`[Jack] Failed to load event at ${fullPath}:`, err.message);
+      logger.critical("EventLoader", `Failed to load event at ${path.basename(fullPath)}: ${err.message}`);
     }
   }
 

@@ -11,6 +11,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBu
 const { generateLeaderboardImage } = require('../../../utils/leaderboardCanvas');
 const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
+const logger = require('../../../utils/logger');
 
 
 /* ── Constants ── */
@@ -138,7 +139,7 @@ async function resetWeeklyEnergy() {
     { $set: { weeklySynergy: 0, lastWeeklySubmission: '' } }
   );
 
-  console.log(`[SeasonalSynergy] Weekly energy reset. Top 3: ${topNames.join(', ')}`);
+  logger.info("SeasonalSynergy", `Weekly energy reset. Top 3: ${topNames.join(', ')}`);
   return top3;
 }
 
@@ -160,7 +161,7 @@ async function resetAllEnergy() {
       }
     ]
   );
-  console.log('[SeasonalSynergy] All energy archived and reset (season end).');
+  logger.info("SeasonalSynergy", "All energy archived and reset (season end).");
 }
 
 /**
@@ -290,7 +291,7 @@ async function refreshLeaderboard(client, season, page = 0) {
 
     return msg;
   } catch (err) {
-    console.error('[SeasonalSynergy] Failed to refresh leaderboard:', err.message);
+    logger.error("SeasonalSynergy", `Failed to refresh leaderboard: ${err.message}`);
     return null;
   }
 }

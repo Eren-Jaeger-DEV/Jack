@@ -3,6 +3,7 @@ const { joinVoiceChannel, VoiceConnectionStatus, entersState } = require("@disco
 const audioHandler = require("../utils/audioHandler");
 const path = require("path");
 const fs = require("fs");
+const { addLog } = require("../../../utils/logger");
 
 module.exports = {
   name: "record",
@@ -54,12 +55,8 @@ module.exports = {
 
       // ATTACH LISTENERS IMMEDIATELY
       connection.on('stateChange', (oldState, newState) => {
-        console.log(`[Recorder Debug] Connection state change: ${oldState.status} -> ${newState.status}`);
-      });
+        // Connection debug - silenced
 
-      connection.on('debug', (message) => {
-        console.log(`[Recorder Debug] DEBUG: ${message}`);
-      });
 
       connection.on('error', (error) => {
         console.error(`[Recorder Error] Voice connection error:`, error);
@@ -68,7 +65,7 @@ module.exports = {
       try {
         const sodium = require("libsodium-wrappers");
         await sodium.ready;
-        console.log("[Recorder Debug] libsodium Ready.");
+      // libsodium loaded
 
         // Wait 1s for Gateway to stabilize before the UDP Handshake
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -143,7 +140,7 @@ module.exports = {
         // Set a timeout for the 2-hour limit
         setTimeout(async () => {
           if (ctx.client.recorder.activeRecordings.has(guildId)) {
-             console.log(`Recording in ${guildId} reached 2-hour limit.`);
+             addLog("Recorder", `Recording in ${guildId} reached 2-hour limit.`);
           }
         }, 2 * 60 * 60 * 1000);
 

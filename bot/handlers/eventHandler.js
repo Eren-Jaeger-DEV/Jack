@@ -22,7 +22,8 @@ module.exports = (client) => {
           event.execute(...args, client);
         }
       } catch (err) {
-        console.error(`Event error (${eventName}):`, err);
+        const logger = require("../../utils/logger");
+        logger.error("EventHandler", `Core Event error (${eventName}): ${err.message}`);
       }
     });
 
