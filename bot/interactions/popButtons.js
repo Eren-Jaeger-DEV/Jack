@@ -2,6 +2,7 @@ const { TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder,
 const PopListing = require("../database/models/PopListing");
 const PopDeal = require("../database/models/PopDeal");
 const configManager = require("../utils/configManager");
+const { refreshMarketPanel } = require("../utils/marketPanel");
 
 module.exports = async function popButtons(interaction) {
   const config = await configManager.getGuildConfig(interaction.guild.id);
@@ -9,6 +10,20 @@ module.exports = async function popButtons(interaction) {
   const logChannelId = config?.settings?.marketLogChannelId || config?.settings?.logChannelId;
   const dealCategoryId = config?.settings?.dealCategoryId;
 
+  /* ---------- PAGINATION ---------- */
+  if (interaction.customId.startsWith("pop_lb_")) {
+    const parts = interaction.customId.split('_');
+    const direction = parts[2]; // 'prev' or 'next'
+    const currentPage = parseInt(parts[3]);
+
+    if (isNaN(currentPage)) return;
+
+    const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
+
+    await interaction.deferUpdate().catch(() => {});
+    await refreshMarketPanel(interaction.client, newPage, interaction);
+    return;
+  }
 
   /* ---------- BUY POP LISTING ---------- */
   if (interaction.customId.startsWith("buy_pop_")) {
