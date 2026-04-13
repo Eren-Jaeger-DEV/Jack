@@ -27,7 +27,8 @@ const playerSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ["owner", "manager", "admin", "contributor", "none"],
-    default: "none"
+    default: "none",
+    index: true
   },
 
   isDeleted: {
@@ -37,7 +38,8 @@ const playerSchema = new mongoose.Schema({
 
   isClanMember: {
     type: Boolean,
-    default: false
+    default: false,
+    index: true
   },
 
   registered: {
@@ -49,8 +51,8 @@ const playerSchema = new mongoose.Schema({
   username: String,
   avatar: String,
 
-  ign: String,
-  uid: String,
+  ign: { type: String, index: true },
+  uid: { type: String, index: true },
 
   accountLevel: String,
 

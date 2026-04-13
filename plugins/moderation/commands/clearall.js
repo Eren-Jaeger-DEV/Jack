@@ -1,5 +1,6 @@
 const logger = require('../../../utils/logger');
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -23,14 +24,14 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('clearall')
     .setDescription('Delete ALL messages in the channel (Nuke)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
 
     /* USER PERMISSION CHECK */
 
-    if (!checkUser(ctx.member, PermissionFlagsBits.ManageMessages)) {
-      return ctx.reply("❌ You don't have permission to manage messages.");
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply("❌ **Jack:** Only tactical management personnel can authorize a full channel wipe.");
     }
 
     /* BOT PERMISSION CHECK */
@@ -122,7 +123,8 @@ module.exports = {
           .setColor("Red")
           .setTimestamp();
 
-        await logger(ctx.guild, logEmbed);
+        const guildLogger = require("../../../bot/utils/guildLogger");
+        await guildLogger.send(ctx.guild, logEmbed, 'mod');
 
       } else {
         await confirmation.update({ content: "❌ Nuke cancelled.", embeds: [], components: [] });

@@ -8,7 +8,8 @@ const { OWNER_IDS } = require('./persona');
 
 const ROLES = {
     SUPREME: ['Manager', 'PapaPlayer'],
-    HIGH_STAFF: ['Admins', 'Contributors'],
+    MANAGEMENT: ['Admins', 'Moderator'],
+    CONTRIBUTORS: ['Contributors'],
     BOOSTER: ['Clan Booster']
 };
 
@@ -18,6 +19,14 @@ const ROLES = {
 function hasRole(member, roleNames) {
     if (!member || !member.roles) return false;
     return member.roles.cache.some(r => roleNames.includes(r.name));
+}
+
+/**
+ * Management Personnel: Supreme roles, Admin, or Moderator roles.
+ */
+function isManagement(member) {
+    if (!member) return false;
+    return isOwner(member) || hasRole(member, ROLES.MANAGEMENT) || member.permissions.has(PermissionFlagsBits.Administrator);
 }
 
 /**
@@ -31,11 +40,11 @@ function isOwner(member) {
 }
 
 /**
- * High Staff: Admins or Contributors.
+ * High Staff: Management + Contributors.
  */
 function isHighStaff(member) {
     if (!member) return false;
-    return hasRole(member, ROLES.HIGH_STAFF) || member.permissions.has(PermissionFlagsBits.Administrator);
+    return isManagement(member) || hasRole(member, ROLES.CONTRIBUTORS);
 }
 
 /**
@@ -64,6 +73,7 @@ function hasExtraPerks(member) {
 
 module.exports = {
     isOwner,
+    isManagement,
     isHighStaff,
     isBooster,
     hasFullBypass,

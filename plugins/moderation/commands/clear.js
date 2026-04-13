@@ -1,6 +1,7 @@
 const logger = require('../../../utils/logger');
 const guildLogger = require("../../../bot/utils/guildLogger");
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -30,9 +31,13 @@ module.exports = {
       option.setName('target')
         .setDescription('User to clear messages from')
         .setRequired(false))
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
+
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** Only tactical management personnel can perform bulk tactical purging.');
+    }
 
     let amount;
     let targetUser;
@@ -40,9 +45,6 @@ module.exports = {
     /* PREFIX ARGUMENT PARSING */
 
     if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.ManageMessages))
-        return ctx.reply('❌ No permission.');
 
       if (!checkBot(ctx.guild, PermissionFlagsBits.ManageMessages))
         return ctx.reply('❌ I lack permission.');

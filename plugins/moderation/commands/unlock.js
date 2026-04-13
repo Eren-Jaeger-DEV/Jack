@@ -1,6 +1,7 @@
 const logger = require('../../../utils/logger');
 const guildLogger = require("../../../bot/utils/guildLogger");
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -20,17 +21,12 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('unlock')
     .setDescription('Unlock the current channel')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
 
-    /* PREFIX PERMISSION CHECK */
-
-    if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.ManageChannels))
-        return ctx.reply('❌ No permission.');
-
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** Only tactical management personnel can lift channel lockdowns.');
     }
 
     if (!checkBot(ctx.guild, PermissionFlagsBits.ManageChannels))

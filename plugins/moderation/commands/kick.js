@@ -1,6 +1,7 @@
 const logger = require('../../../utils/logger');
 const guildLogger = require("../../../bot/utils/guildLogger");
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -27,9 +28,13 @@ module.exports = {
     .addStringOption(option =>
       option.setName('reason')
         .setDescription('Reason'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** You lack the disciplinary authority for this action.');
+    }
+
     let user;
     let reason;
 

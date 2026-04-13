@@ -8,6 +8,7 @@
  */
 
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const perms = require('../../../bot/utils/permissionUtils');
 const Player = require('../../../bot/database/models/Player');
 const synergyService = require('../services/synergyService');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
@@ -50,8 +51,8 @@ module.exports = {
       if (ctx.isInteraction) await ctx.defer({ ephemeral: isEphemeral }).catch(() => {});
 
       // Admin check
-      if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-        return ctx.reply({ content: '❌ You need **Manage Server** permission to use this command.', ephemeral: isEphemeral });
+      if (!perms.isManagement(ctx.member)) {
+        return ctx.reply({ content: '❌ You need **Staff Authority** to use this command.', ephemeral: isEphemeral });
       }
 
       // Parse target user and points

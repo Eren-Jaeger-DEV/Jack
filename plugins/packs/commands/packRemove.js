@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const perms = require("../../../bot/utils/permissionUtils");
 const EmojiBank = require("../../../bot/database/models/EmojiBank");
 const EmojiPack = require("../../../bot/database/models/EmojiPack");
 
@@ -15,12 +16,12 @@ module.exports = {
     .setName("packremove")
     .setDescription("Unlinks an emoji from its pack")
     .addStringOption(opt => opt.setName("emojiname").setDescription("Name of the emoji").setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageEmojisAndStickers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
     
-    if (!ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", flags: 64 });
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply({ content: "❌ **Jack:** Only tactical management personnel can modify Emoji Packs.", flags: 64 });
     }
 
     const emojiName = ctx.type === "slash" ? ctx.options.getString("emojiname").toLowerCase() : ctx.args[0]?.toLowerCase();

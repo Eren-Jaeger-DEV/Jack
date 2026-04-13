@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const perms = require('../../../bot/utils/permissionUtils');
 const fosterService = require('../services/fosterService');
 const FosterProgram = require('../models/FosterProgram');
 
@@ -12,7 +13,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('fs-replace')
     .setDescription('Replace a mentor or newbie in an active Foster Program pair')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addStringOption(opt =>
       opt.setName('role')
         .setDescription('Which role to replace: mentor or newbie')
@@ -35,9 +36,8 @@ module.exports = {
 
   async run(ctx) {
     try {
-      /* ── Permission check (prefix commands) ── */
-      if (!ctx.isInteraction && !ctx.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return ctx.reply('❌ **Jack:** Admin-only command, noob.');
+      if (!perms.isManagement(ctx.member)) {
+        return ctx.reply('❌ **Jack:** Strategic reassignment is restricted to command personnel only.');
       }
 
       /* ── Parse arguments ── */

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const perms = require("../../../bot/utils/permissionUtils");
 const { createPack } = require("../../../bot/utils/packManager");
 
 module.exports = {
@@ -14,12 +14,12 @@ module.exports = {
     .setName("packcreate")
     .setDescription("Initializes an empty Emoji Pack")
     .addStringOption(opt => opt.setName("packname").setDescription("Name of the pack").setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageEmojisAndStickers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
     
-    if (!ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", flags: 64 });
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply({ content: "❌ **Jack:** Only tactical management personnel can modify Emoji Packs.", flags: 64 });
     }
 
     const packName = ctx.type === "slash" ? ctx.options.getString("packname").toLowerCase() : ctx.args.join(" ").toLowerCase();

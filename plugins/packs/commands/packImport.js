@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
+const perms = require("../../../bot/utils/permissionUtils");
 const { importPackToServer } = require("../../../bot/utils/packManager");
 
 module.exports = {
@@ -14,11 +15,11 @@ module.exports = {
     .setName("packimport")
     .setDescription("Uploads an entire pack's contents to the current server.")
     .addStringOption(opt => opt.setName("packname").setDescription("Exact name of the pack to download").setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageEmojisAndStickers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
-    if (!ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission.", flags: 64 });
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply({ content: "❌ **Jack:** Only tactical management personnel can modify Emoji Packs.", flags: 64 });
     }
 
     const packName = ctx.type === "slash" ? ctx.options.getString("packname").toLowerCase() : ctx.args.join(" ").toLowerCase();

@@ -1,6 +1,7 @@
 const logger = require('../../../utils/logger');
 const guildLogger = require("../../../bot/utils/guildLogger");
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -24,18 +25,19 @@ module.exports = {
       option.setName('user')
         .setDescription('User to unmute')
         .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
+
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** You lack the disciplinary authority for this action.');
+    }
 
     let user;
 
     /* PREFIX */
 
     if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.ModerateMembers))
-        return ctx.reply('❌ No permission.');
 
       user = ctx.message.mentions.users.first();
 

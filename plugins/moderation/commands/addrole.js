@@ -1,6 +1,7 @@
 const logger = require('../../../utils/logger');
 const guildLogger = require("../../../bot/utils/guildLogger");
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -28,9 +29,13 @@ module.exports = {
       option.setName('role')
         .setDescription('Role to add')
         .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
+
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** Role assignment is restricted to command personnel.');
+    }
 
     let user;
     let role;
@@ -38,9 +43,6 @@ module.exports = {
     /* PREFIX */
 
     if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.ManageRoles))
-        return ctx.reply('❌ No permission.');
 
       user = ctx.message.mentions.users.first();
       role = ctx.message.mentions.roles.first();

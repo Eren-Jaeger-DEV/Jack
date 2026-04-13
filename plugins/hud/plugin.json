@@ -1,0 +1,9 @@
+{
+  "id": "celestial-hud",
+  "name": "Celestial HUD",
+  "version": "1.0.0",
+  "description": "Premium real-time status dashboard for members.",
+  "enabledByDefault": true,
+  "main": "index.js",
+  "author": "Antigravity"
+}

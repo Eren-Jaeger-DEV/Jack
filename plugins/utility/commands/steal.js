@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, AttachmentBuilder } = require("discord.js");
+const perms = require("../../../bot/utils/permissionUtils");
 const { storeEmojiInBank } = require("../../../bot/utils/emojiDownloader");
 const { storeStickerInBank } = require("../../../bot/utils/stickerDownloader");
 const { processImageForDiscord } = require("../../../bot/utils/imageProcessor");
@@ -14,14 +15,15 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("steal")
-    .setDescription("Steal an emoji or sticker to the Global Vault (Must be used as a prefix command for replies)"),
+    .setDescription("Steal an emoji or sticker to the Global Vault (Must be used as a prefix command for replies)")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
     // A slash command variant could accept an ID or raw string, but replying is overwhelmingly simpler via Prefix.
 
   async run(ctx) {
 
     // Only Admins/Mods can steal
-    if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild) && !ctx.member.permissions.has(PermissionFlagsBits.ManageEmojisAndStickers)) {
-      return ctx.reply({ content: "❌ You need `Manage Emojis and Stickers` permission to steal.", flags: 64 });
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply({ content: "❌ **Jack:** Only tactical management personnel can authorize asset seizure.", flags: 64 });
     }
 
     // Since stealing replies to messages, it fundamentally works best as a message command ("j steal")

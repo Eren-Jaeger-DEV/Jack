@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+const perms = require('../../../bot/utils/permissionUtils');
 const fosterService = require('../services/fosterService');
 const FosterProgram = require('../models/FosterProgram');
 const Player = require('../../../bot/database/models/Player');
@@ -13,12 +14,12 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('fs-pairremove')
     .setDescription('Remove a pair from the active Foster Program')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
     try {
-      if (!ctx.isInteraction && !ctx.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return ctx.reply('❌ **Jack:** Admin-only command, noob.');
+      if (!perms.isManagement(ctx.member)) {
+        return ctx.reply('❌ **Jack:** You lack the authority to terminate active neural links.');
       }
 
       await ctx.reply('⚡ **Jack:** Fetching active pairs...');

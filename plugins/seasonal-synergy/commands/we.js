@@ -13,6 +13,7 @@
  */
 
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
+const perms = require('../../../bot/utils/permissionUtils');
 const Player = require('../../../bot/database/models/Player');
 const synergyService = require('../services/synergyService');
 const configManager = require('../../../bot/utils/configManager');
@@ -52,7 +53,7 @@ module.exports = {
   async run(ctx) {
     try {
       const isEphemeral = ctx.isInteraction;
-      const isAdmin = ctx.member.permissions.has(PermissionFlagsBits.ManageGuild);
+      const isAdmin = perms.isManagement(ctx.member);
 
       if (ctx.isInteraction) await ctx.defer({ ephemeral: isEphemeral }).catch(() => {});
 

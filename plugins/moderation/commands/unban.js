@@ -1,6 +1,7 @@
 const logger = require('../../../utils/logger');
 const guildLogger = require("../../../bot/utils/guildLogger");
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -24,18 +25,19 @@ module.exports = {
       option.setName('userid')
         .setDescription('User ID to unban')
         .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
+
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** Strategic reprieves are reserved for command personnel.');
+    }
 
     let userId;
 
     /* PREFIX */
 
     if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.BanMembers))
-        return ctx.reply('❌ No permission.');
 
       userId = ctx.args[0];
 

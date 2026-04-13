@@ -1,6 +1,7 @@
 const logger = require('../../../utils/logger');
 const guildLogger = require("../../../bot/utils/guildLogger");
-const { checkUser, checkBot } = require("../../../bot/utils/checkPermission");
+const perms = require("../../../bot/utils/permissionUtils");
+const { checkBot } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -27,19 +28,18 @@ module.exports = {
     .addStringOption(option =>
       option.setName('reason')
         .setDescription('Reason for ban'))
-    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
 
     let user;
     let reason;
 
-    /* ---------- PREFIX COMMAND ---------- */
+    /* ---------- PERMISSION CHECK ---------- */
 
-    if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.BanMembers))
-        return ctx.reply('❌ No permission.');
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** You lack the disciplinary authority for this action.');
+    }
 
       user = ctx.message.mentions.users.first();
       if (!user) return ctx.reply('Usage: jack ban @user [reason]');

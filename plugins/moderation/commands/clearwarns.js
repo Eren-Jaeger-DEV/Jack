@@ -1,5 +1,5 @@
+const perms = require("../../../bot/utils/permissionUtils");
 const Warn = require("../../../bot/database/models/Warn");
-const { checkUser } = require("../../../bot/utils/checkPermission");
 
 const {
   SlashCommandBuilder,
@@ -23,18 +23,19 @@ module.exports = {
       option.setName('user')
         .setDescription('User')
         .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async run(ctx) {
+
+    if (!perms.isManagement(ctx.member)) {
+      return ctx.reply('❌ **Jack:** Only senior tactical personnel can wipe disciplinary records.');
+    }
 
     let user;
 
     /* PREFIX */
 
     if (ctx.type === "prefix") {
-
-      if (!checkUser(ctx.member, PermissionFlagsBits.Administrator))
-        return ctx.reply('❌ No permission.');
 
       user = ctx.message.mentions.users.first();
 
