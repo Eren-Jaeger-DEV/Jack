@@ -30,7 +30,7 @@ require("./handlers/eventHandler")(client);
 
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => addLog("Database", "Connected"))
+  .then(() => logger.addLog("Database", "Connected"))
   .catch(err => logger.critical("Database", `Connection Failed: ${err.message}`));
 
 /* Ready */
