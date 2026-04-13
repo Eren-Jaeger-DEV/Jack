@@ -1,3 +1,4 @@
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const perms = require('../../../bot/utils/permissionUtils');
 const fosterService = require('../services/fosterService');
 
