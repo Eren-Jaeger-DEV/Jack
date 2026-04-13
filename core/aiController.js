@@ -1,5 +1,4 @@
-const aiService = require("../bot/utils/aiService");
-const configManager = require("../bot/utils/configManager");
+const perms = require("../bot/utils/permissionUtils");
 const { OWNER_IDS } = require("../bot/utils/persona");
 const { getClanContext } = require("../bot/utils/clanContext");
 const ConversationHistory = require("../bot/database/models/ConversationHistory");
@@ -51,10 +50,10 @@ module.exports = {
 
     // 3. Rate Limiting & Quality Filter
     const userId = message.author.id;
-    const isAdmin = message.member.permissions.has("Administrator");
+    const bypass = perms.hasFullBypass(message.member);
 
     // Cooldown Check
-    if (!isAdmin && userCooldowns.has(userId)) {
+    if (!bypass && userCooldowns.has(userId)) {
       const remaining = COOLDOWN_MS - (Date.now() - userCooldowns.get(userId));
       if (remaining > 0) {
         addLog("AIController", `Filtered: Cooldown active for ${message.author.tag} (${remaining}ms)`);
@@ -62,8 +61,8 @@ module.exports = {
       }
     }
 
-    // Meaningful Input Check (Admin Bypass)
-    if (!isAdmin) {
+    // Meaningful Input Check (Full Bypass)
+    if (!bypass) {
       const quality = _isMeaningfulMessage(content, userId);
       if (!quality.valid) {
         addLog("AIController", `Filtered: ${quality.reason} from ${message.author.tag}`);
@@ -94,7 +93,7 @@ module.exports = {
       const member = context.member;
       const guild = context.guild;
       const userId = member.id;
-      const isOwner = OWNER_IDS.includes(userId);
+      const isOwner = perms.isOwner(member);
 
       const { context: extraContext, reputationScore } = await getClanContext(guild, member);
       let history = await this._getHistory(channelId);
@@ -135,10 +134,11 @@ module.exports = {
       addLog("AIController", `${isOwner ? '[MASTER_OVERRIDE] ' : ''}[MODEL: ${decision.model}] Decision Type: ${decision.type} | Target: ${decision.tool || 'Text'}`);
  
       if (decision.type === "tool") {
-        const validation = await aiValidator.validateAction(decision, member, guild, isOwner);
+        const bypass = perms.hasFullBypass(member);
+        const validation = await aiValidator.validateAction(decision, member, guild, bypass);
         
         if (validation.valid) {
-          if (isOwner) addLog("AIController", `[MASTER_OVERRIDE] Executing ${decision.tool} for Owner`);
+          if (bypass) addLog("AIController", `[BYPASS_ACTIVE] Executing ${decision.tool} for Staff/Owner`);
           else addLog("AIController", `Executing ${decision.tool} with args: ${JSON.stringify(decision.args)}`);
           
           // PHASE: Real Execution

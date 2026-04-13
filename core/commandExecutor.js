@@ -4,6 +4,7 @@
  * Includes Permission Checks, Cooldowns, Timeout Protection, and Global Error Handling.
  */
 
+const perms = require("../bot/utils/permissionUtils");
 const { handleError } = require("./errorHandler");
 const { checkCooldown, applyCooldown } = require("./cooldownManager");
 const { validateCommand } = require("./validator");
@@ -85,9 +86,11 @@ async function execute(ctx, command) {
  * Validates Permissions and Cooldowns.
  */
 async function validate(ctx, command) {
-    // 1. Cooldown Check
+    // 1. Cooldown Check (Bypassed by Owners/Managers/Admins/Contributors)
+    const bypass = perms.hasFullBypass(ctx.member);
     const cd = checkCooldown(command.name, ctx.userId, ctx.guildId, command.cooldown);
-    if (cd.onCooldown) {
+    
+    if (cd.onCooldown && !bypass) {
         return { 
             success: false, 
             message: `⚠️ Please wait **${cd.timeLeft}s** before using the \`${command.name}\` command again.` 

@@ -1,12 +1,10 @@
-const { PermissionFlagsBits } = require('discord.js');
+const perms = require('../../bot/utils/permissionUtils');
 const configManager = require('../../bot/utils/configManager');
-
 
 // Precise regex for links, including common TLDs and discord.gg
 const LINK_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(discord\.gg\/[^\s]+)|([^\s]+\.(com|net|org|io|me|xyz)([^\s]*)?)/i;
 // Regex for GIF links from Tenor, Giphy, and direct .gif extensions
 const GIF_REGEX = /(tenor\.com\/[^\s]+)|([^\s]+\.gif(\?[^\s]*)?)|(giphy\.com\/gifs\/[^\s]+)|(media\.giphy\.com\/media\/[^\s]+)|(giphy\.com\/media\/[^\s]+)/i;
-const DIRECT_GIF_REGEX = /\.gif(\?[^\s]*)?$/i;
 
 async function sendWarning(message, text) {
   try {
@@ -21,12 +19,16 @@ async function sendWarning(message, text) {
 
 module.exports = {
   load(client) {
-    // Silenced
-
     client.on('messageCreate', async (message) => {
       // 1. SAFETY: Ignore messages from Jack itself
       if (message.author.id === client.user.id) return;
-      if (!message.guild) return;
+      if (!message.guild || !message.member) return;
+
+      // 2. PERMISSION: RBAC Bypass (Admins, Contributors, Managers, PapaPlayer, and Clan Boosters)
+      // Boosters and Staff can bypass all chat restrictions in General.
+      if (perms.hasExtraPerks(message.member)) {
+        return;
+      }
 
       // Fetch dynamic configuration
       const config = await configManager.getGuildConfig(message.guild.id);
@@ -42,14 +44,9 @@ module.exports = {
       // Target check: General Chat only
       if (message.channelId !== generalChannelId) return;
 
-      // 2. FEATURE: Delete other bot responses
+      // 3. FEATURE: Delete other bot responses
       if (message.author.bot) {
         return message.delete().catch(() => {});
-      }
-
-      // 3. PERMISSION: Admins and Owner bypass all remaining restrictions
-      if (message.member.permissions.has(PermissionFlagsBits.Administrator) || message.guild.ownerId === message.author.id) {
-        return;
       }
 
       const content = message.content.trim();
@@ -60,7 +57,6 @@ module.exports = {
         const lowerContent = content.toLowerCase();
         
         // FEATURE 1: Bot Command Detection (Priority 1)
-        // Strict prefixes (!, /) vs Word prefixes (j, jack, a)
         const isStrictPrefix = lowerContent.startsWith('!') || lowerContent.startsWith('/');
         const isWordCommand = ['j', 'jack', 'a'].some(p => lowerContent === p || lowerContent.startsWith(p + ' '));
 
@@ -70,12 +66,8 @@ module.exports = {
         }
 
         // FEATURE 2: Link Detection (Priority 2)
-        // Check for links, but whitelist GIFs
         if (LINK_REGEX.test(content)) {
-          // If it's a GIF link, allow it
-          if (GIF_REGEX.test(content)) {
-             // Allow GIFs
-          } else {
+          if (!GIF_REGEX.test(content)) {
             await message.delete().catch(() => {});
             return sendWarning(message, `Send links in <#${linksChannelId}>`);
           }
@@ -84,14 +76,11 @@ module.exports = {
 
       // FEATURE 3: Media Restriction (Priority 3)
       if (message.attachments.size > 0) {
-        // Check if all attachments are GIFs
         const hasNonGif = message.attachments.some(a => !a.contentType || !a.contentType.includes('gif'));
-        
         if (hasNonGif) {
           await message.delete().catch(() => {});
           return sendWarning(message, `Send media in <#${mediaChannelId}>`);
         }
-        // If they are all GIFs, allow it.
       }
     });
   }
