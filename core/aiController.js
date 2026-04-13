@@ -207,37 +207,48 @@ module.exports = {
     const DEFAULT_FALLBACK = "Strategic inquiry incomplete. Data stream unstable.";
     if (!rawText) return DEFAULT_FALLBACK;
     
-    let clean = rawText.trim();
+    // 1. Aggressive Markdown Cleanup (Strip ```json ... ``` or ``` ...)
+    let clean = rawText.trim()
+      .replace(/^```[a-z]*\n/i, "") // Strip starting block with lang
+      .replace(/\n```$/i, "")         // Strip ending block
+      .replace(/^```|```$/g, "")      // Strip any loose backticks
+      .trim();
 
     try {
-      // 1. Try direct JSON parse
+      // 2. Try direct JSON parse
       const parsed = JSON.parse(clean);
       if (parsed.text) return parsed.text;
       if (parsed.message) return parsed.message;
       if (parsed.response) return parsed.response;
-      if (parsed.tool) return `[System: Processing ${parsed.tool}]`;
     } catch (e) {
-      // 2. Handle partial or malformed JSON via regex
-      const textMatch = clean.match(/"text"\s*:\s*"([^"]+)"/i);
-      if (textMatch) return textMatch[1];
-
+      // 3. Handle embedded JSON (case where Gemini adds conversational text around the block)
       const jsonMatch = clean.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
           const innerParsed = JSON.parse(jsonMatch[0]);
           if (innerParsed.text) return innerParsed.text;
-        } catch (innerE) {}
+        } catch (innerE) {
+          // If JSON parse fails, try to capture the "text": "..." field specifically
+          const textMatch = jsonMatch[0].match(/"text"\s*:\s*"([\s\S]*?)"\s*[,}]/i);
+          if (textMatch) {
+            // Unescape common JSON characters if we are using regex
+            return textMatch[1]
+              .replace(/\\n/g, "\n")
+              .replace(/\\"/g, '"')
+              .replace(/\\'/g, "'")
+              .trim();
+          }
+        }
       }
     }
     
-    // 3. Final Sanity: Aggressive strip for common JSON markers
+    // 4. Final Sanity Check: If it's still JSON, strip the brackets and key
     const finalClean = clean
-      .replace(/^\{[\s\S]*"text"\s*:\s*"/i, "") // Strip starting JSON if it matches text field
-      .replace(/"\s*\}?$/, "")                   // Strip trailing JSON artifacts
-      .replace(/\{[\s\S]*\}|\[[\s\S]*\]/g, "")   // Strip any balanced blocks
+      .replace(/^\{[\s\S]*"text"\s*:\s*"/i, "") 
+      .replace(/"\s*\}?$/i, "")
       .trim();
 
-    return finalClean || DEFAULT_FALLBACK;
+    return finalClean || clean || DEFAULT_FALLBACK;
   },
 
   /**

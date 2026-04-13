@@ -31,16 +31,10 @@ module.exports = {
           roles: member?.roles.cache.map(r => r.name).filter(n => n !== "@everyone") || []
         },
         activity: {
-          messageCount: activity?.messageCount || 0,
-          lastActive: activity?.lastActive ? this._relativeTime(activity.lastActive) : "Never",
-          activityScore: activity?.activityScore || 0
-        },
-        game: player ? {
           ign: player.ign,
           uid: player.uid,
           synergy: player.seasonSynergy,
-          role: player.role,
-          status: player.isClanMember ? "Clan Member" : "Outsider"
+          role: player.role
         } : null,
         progression: level ? {
           level: level.level,
