@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { addLog } = require('../../utils/logger');
+const logger = require('../../utils/logger');
 
 module.exports = (client) => {
   const eventsPath = path.join(__dirname, "..", "events");
@@ -8,27 +8,27 @@ module.exports = (client) => {
     .readdirSync(eventsPath)
     .filter(file => file.endsWith(".js"));
 
-  let eventCount = 0;
-
   for (const file of files) {
-    const event = require(`${eventsPath}/${file}`);
-    const eventName = event.name || file.split(".")[0];
+    try {
+      const event = require(`${eventsPath}/${file}`);
+      const eventName = event.name || file.split(".")[0];
 
-    client.on(eventName, (...args) => {
-      try {
-        if (typeof event === "function") {
-          event(client, ...args);
-        } else if (event && typeof event.execute === "function") {
-          event.execute(...args, client);
+      client.on(eventName, (...args) => {
+        try {
+          if (typeof event === "function") {
+            event(client, ...args);
+          } else if (event && typeof event.execute === "function") {
+            event.execute(...args, client);
+          }
+        } catch (err) {
+          logger.error("EventHandler", `Core Event error (${eventName}): ${err.message}`);
         }
-      } catch (err) {
-        const logger = require('../../utils/logger');
-        logger.error("EventHandler", `Core Event error (${eventName}): ${err.message}`);
-      }
-    });
+      });
 
-    eventCount++;
+      logger.startupStats.events.loaded++;
+    } catch (err) {
+      logger.error("EventHandler", `Failed to load event file ${file}: ${err.message}`);
+      logger.startupStats.events.failed++;
+    }
   }
-
-  addLog("Events", `${eventCount} loaded`);
 };

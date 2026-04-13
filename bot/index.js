@@ -3,12 +3,10 @@ require("dotenv").config({ quiet: true });
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const mongoose = require("mongoose");
 const logger = require('../utils/logger');
-const { addLog, printLogs } = logger;
 const configManager = require("./utils/configManager");
 const ServerMapManager = require("../core/serverMapManager");
-global.addLog = addLog;
 
-addLog("Environment", "Loaded");
+logger.addLog("Environment", "Loaded");
 
 const client = new Client({
   intents: [
@@ -38,12 +36,11 @@ mongoose
 /* Ready */
 
 client.once("clientReady", async () => {
-
   // Initialize configuration cache
   await configManager.init(client);
 
   // Initialize the server map dynamically
-  const guild = client.guilds.cache.first();
+  const guild = client.guilds.cache.first() || client.guilds.cache.get(process.env.GUILD_ID);
   if (guild) {
     await client.serverMap.init(guild);
   }
@@ -52,13 +49,13 @@ client.once("clientReady", async () => {
   const { startDefaultPresenceRotation } = require("./utils/presenceManager");
   startDefaultPresenceRotation(client);
 
-  // Load all standalone plugins synchronously
-  require("../core/pluginLoader")(client);
+  // Load all standalone plugins
+  await require("../core/pluginLoader")(client);
   
-  // Print centralized startup logs after plugins have initialized (including async ones)
+  // High-End Boot Report (shorter buffer for final async consistency)
   setTimeout(() => {
-    printLogs(client.user.tag);
-  }, 10000); // 10s buffer for all async recovery logs
+    logger.showBootReport(client);
+  }, 1500); 
 });
 
 /* Login */

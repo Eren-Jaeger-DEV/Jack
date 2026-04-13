@@ -1,108 +1,106 @@
-const coreLogs = [];
-const systemLogs = [];
+/**
+ * JACK PREMIUM LOGGER (v3.0.0)
+ * Unified celestial logging system with premium boot reporting.
+ */
 
-const coreEmojiMap = {
-  "Environment": "⚙️",
-  "System": "🌐",
-  "Database": "🗄️",
-  "Events": "📡",
-  "Plugins": "🧩",
-  "Dashboard": "🌐"
+const fs = require('fs');
+const path = require('path');
+const banner = require('../bot/utils/banner');
+
+const LOG_LEVELS = {
+    INFO: "\x1b[36mINFO\x1b[0m",
+    WARN: "\x1b[33mWARN\x1b[0m",
+    ERROR: "\x1b[31mERROR\x1b[0m",
+    CRITICAL: "\x1b[41m\x1b[37mCRIT\x1b[0m"
 };
 
-const pluginEmojiMap = {
-  "Counting": "🔢",
-  "TempVC": "🎙️",
-  "Member System": "👥",
-  "Synergy": "📊",
-  "Foster Program": "🎓"
+const SYMBOLS = {
+    Environment: "⚙️",
+    System: "🌐",
+    Database: "🗄️",
+    Events: "📡",
+    Plugins: "🧩",
+    Commands: "⚡",
+    Latency: "⏳"
+};
+
+const startupStats = {
+    startTime: Date.now(),
+    commands: { loaded: 0, failed: 0 },
+    events: { loaded: 0, failed: 0 },
+    plugins: { loaded: 0, failed: 0 },
+    core: [], // { system: string, status: string }
+    reportShown: false
 };
 
 /**
- * Add a log to the startup collection.
- * Roles: Core systems (System, Database, etc.) vs Plugin systems (Recovery logs).
+ * Capture core system status (Database, Envs, etc)
  */
-function addLog(systemName, message) {
-  if (coreEmojiMap[systemName]) {
-    coreLogs.push({ systemName, message });
-  } else {
-    // Basic deduplication for plugin recovery logs (if same system logs twice)
-    const existing = systemLogs.find(l => l.systemName === systemName);
-    if (existing) {
-      existing.message = `${existing.message} + ${message}`.replace(/restored \+ (.+) restored/g, "restored & $1");
+function addLog(system, status) {
+    if (startupStats.reportShown) {
+        log(LOG_LEVELS.INFO, system, status);
     } else {
-      systemLogs.push({ systemName, message });
+        startupStats.core.push({ system, status });
     }
-  }
 }
-
-const asciiJack = `
-    __  ___   ________ __
-   / / /   | / ____/ //_/
-  / / / /| |/ /   / ,<   
- / /_/ ___ / /___/ /| |  
- \\____/_/  |_\\____/_/ |_|  
-`;
 
 /**
- * Print all collected logs in a structured format.
+ * Print the High-End Boot Report
  */
-function printLogs(botTag) {
-  console.log("\\x1b[36m" + asciiJack + "\\x1b[0m");
-  console.log("\\x1b[1m\\x1b[34m[ INITIALIZING BOOT SEQUENCE ]\\x1b[0m\\n");
+function showBootReport(client) {
+    startupStats.reportShown = true;
+    const duration = Date.now() - startupStats.startTime;
+    const botTag = client.user ? client.user.tag : "Disconnected";
 
-  coreLogs.forEach(log => {
-      const emoji = coreEmojiMap[log.systemName] || "⚙️";
-      const paddedName = log.systemName.padEnd(18, " ");
-      console.log(`\\x1b[35m${emoji}\\x1b[0m \\x1b[1m${paddedName}\\x1b[0m \\x1b[90m→\\x1b[0m \\x1b[32m${log.message}\\x1b[0m`);
-  });
+    console.clear();
+    banner.print();
 
-  if (systemLogs.length > 0) {
-    console.log("\\n\\x1b[36m╭─────────── SYSTEM MODULES ───────────╮\\x1b[0m\\n");
-    systemLogs.forEach(log => {
-      const emoji = pluginEmojiMap[log.systemName] || "⚙️";
-      const paddedName = log.systemName.padEnd(18, " ");
-      console.log(`  ${emoji} \\x1b[1m${paddedName}\\x1b[0m \\x1b[90m→\\x1b[0m \\x1b[33m${log.message}\\x1b[0m`);
+    console.log("\x1b[1m\x1b[34m[ INITIALIZING CELESTIAL BOOT SEQUENCE ]\x1b[0m\n");
+
+    // 1. Core Systems
+    startupStats.core.forEach(log => {
+        const symbol = SYMBOLS[log.system] || "⚙️";
+        const paddedName = log.system.padEnd(16, " ");
+        console.log(`  ${symbol} \x1b[1m${paddedName}\x1b[0m \x1b[90m→\x1b[0m \x1b[32m${log.status}\x1b[0m`);
     });
-    console.log("\\n\\x1b[36m╰──────────────────────────────────────╯\\x1b[0m\\n");
-  }
 
-  if (botTag) {
-    console.log(`\\x1b[32m✅ SYSTEM ONLINE \\x1b[0m\\x1b[90m—\\x1b[0m Logged in as \\x1b[1m${botTag}\\x1b[0m\\n`);
-  }
+    console.log("");
 
-  // Final cleanup
-  coreLogs.length = 0;
-  systemLogs.length = 0;
+    // 2. Resource Summary
+    const resources = [
+        { name: "Commands", stats: startupStats.commands, symbol: SYMBOLS.Commands },
+        { name: "Events", stats: startupStats.events, symbol: SYMBOLS.Events },
+        { name: "Plugins", stats: startupStats.plugins, symbol: SYMBOLS.Plugins }
+    ];
+
+    resources.forEach(res => {
+        const failStr = res.stats.failed > 0 ? ` \x1b[31m(${res.stats.failed} failed)\x1b[0m` : "";
+        console.log(`  ${res.symbol} \x1b[1m${res.name.padEnd(16, " ")}\x1b[0m \x1b[90m→\x1b[0m \x1b[36m${res.stats.loaded}\x1b[0m loaded${failStr}`);
+    });
+
+    console.log(`\n  ${SYMBOLS.Latency} \x1b[1mBoot Latency    \x1b[0m \x1b[90m→\x1b[0m \x1b[33m${duration}ms\x1b[0m\n`);
+
+    console.log(`\x1b[32m✅ SYSTEM ONLINE \x1b[0m\x1b[90m—\x1b[0m Authenticated as \x1b[1m${botTag}\x1b[0m\n`);
 }
 
-/* ─────────────────────────────────────────────────
- *  RUNTIME LOGGING  (info / warn / error / debug)
- *  Used throughout plugin files as:
- *    const logger = require('../../utils/logger');
- *    logger.info("Tag", "message")
- * ───────────────────────────────────────────────── */
-
+/**
+ * Runtime Logging
+ */
 function _timestamp() {
-  return new Date().toTimeString().slice(0, 8); // HH:MM:SS
+    return new Date().toTimeString().slice(0, 8);
 }
 
-function info(tag, message) {
-  console.log(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[32mINFO\x1b[0m  [${tag}] ${message}`);
+function log(level, tag, message) {
+    const ts = `\x1b[90m[${_timestamp()}]\x1b[0m`;
+    console.log(`${ts} ${level.padEnd(14, " ")} \x1b[1m[${tag}]\x1b[0m ${message}`);
 }
 
-function warn(tag, message) {
-  console.warn(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[33mWARN\x1b[0m  [${tag}] ${message}`);
-}
-
-function error(tag, message) {
-  console.error(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[31mERROR\x1b[0m [${tag}] ${message}`);
-}
-
-function debug(tag, message) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`\x1b[36m[${_timestamp()}]\x1b[0m \x1b[35mDEBUG\x1b[0m [${tag}] ${message}`);
-  }
-}
-
-module.exports = { addLog, printLogs, info, warn, error, debug };
+module.exports = {
+    addLog,
+    showBootReport,
+    startupStats,
+    info: (tag, msg) => log(LOG_LEVELS.INFO, tag, msg),
+    warn: (tag, msg) => log(LOG_LEVELS.WARN, tag, msg),
+    error: (tag, msg) => log(LOG_LEVELS.ERROR, tag, msg),
+    critical: (tag, msg) => log(LOG_LEVELS.CRITICAL, tag, msg)
+};

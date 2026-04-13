@@ -78,7 +78,8 @@ module.exports = async (client) => {
         }
     }
 
-    logger.info("PluginLoader", `${activePlugins.size} plugins active and synchronized.`);
+    logger.startupStats.plugins.loaded = activePlugins.size;
+    // (Failures are already logged in the try/catch blocks within the loop)
 
     // 4. Fail-Safe Health Monitor
     setInterval(() => monitorHealth(client), 300000); // Check every 5 minutes
@@ -112,6 +113,7 @@ async function loadPlugin(client, folder) {
         isolation.checkIsolation(folder, pluginPath);
     } catch (err) {
         logger.error("PluginLoader", `Isolation violation in ${folder}. Load aborted.`);
+        logger.startupStats.plugins.failed++;
         return;
     }
 
@@ -133,7 +135,6 @@ async function loadPlugin(client, folder) {
     }
 
     activePlugins.set(folder, { manifest, commands, events });
-    logger.info("PluginLoader", `Plugin Loaded: ${folder}`);
 }
 
 /**
