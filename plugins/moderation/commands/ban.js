@@ -41,20 +41,14 @@ module.exports = {
       return ctx.reply('❌ **Jack:** You lack the disciplinary authority for this action.');
     }
 
+    if (ctx.type === "prefix") {
       user = ctx.message.mentions.users.first();
       if (!user) return ctx.reply('Usage: jack ban @user [reason]');
 
       reason = ctx.args.slice(1).join(' ') || 'No reason';
-
-    }
-
-    /* ---------- SLASH COMMAND ---------- */
-
-    if (ctx.type === "slash") {
-
+    } else {
       user = ctx.interaction.options.getUser('user');
       reason = ctx.interaction.options.getString('reason') || 'No reason';
-
     }
 
     const member = await ctx.guild.members.fetch(user.id).catch(() => null);

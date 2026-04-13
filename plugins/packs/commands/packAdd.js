@@ -1,3 +1,4 @@
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const perms = require("../../../bot/utils/permissionUtils");
 const { addEmojiToPack } = require("../../../bot/utils/packManager");
 
