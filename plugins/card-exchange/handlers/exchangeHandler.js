@@ -32,6 +32,7 @@ const { getCards, getCache, getCardImage } = require('../../../utils/cardManager
 const CardExchange = require('../../../bot/database/models/CardExchange');
 const CardExchangeThread = require('../../../bot/database/models/CardExchangeThread');
 
+const perms = require('../../../bot/utils/permissionUtils');
 const configManager = require('../../../bot/utils/configManager');
 
 /* ─── Config ──────────────────────────────────────────────────────────────── */
@@ -42,9 +43,9 @@ const COOLDOWN_MS         = 5 * 60 * 1000; // 5 minutes
 const sessions = new Map();
 const cooldowns = new Map();
 const searchCooldowns = new Map();
-const EXPIRE_MS = 4 * 60 * 60 * 1000; // 4 hours
+const EXPIRE_MS = 100 * 365 * 24 * 60 * 60 * 1000; // 100 years (Effectively infinite)
 const THREAD_EXPIRE_MS = 30 * 60 * 1000; // 30 minutes
-const SEARCH_COOLDOWN_MS = 10 * 1000; // 10 seconds for search/browse
+const SEARCH_COOLDOWN_MS = 10 * 1000; // 10 seconds
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 async function hasTraderRole(member, guildId) {
@@ -202,16 +203,14 @@ function buildCodeModal() {
 
 /** Public exchange embed */
 async function buildExchangeEmbed(user, wantedCard, offeredCards, code) {
-  const expiresAt = Math.floor((Date.now() + EXPIRE_MS) / 1000);
   const offeredStr = offeredCards.map((c, i) => `\`${i + 1}.\` ${c}`).join('\n');
-
   const wantedImage  = await getCardImage(wantedCard);
 
   return new EmbedBuilder()
     .setTitle('🔄 CARD EXCHANGE REQUEST')
     .setDescription(
       `<@${user.id}> is looking for a trade!\n` +
-      `⏳ **Status:** Active • **Expires:** <t:${expiresAt}:R>`
+      `⏳ **Status:** \`Active\` • **Posted:** <t:${Math.floor(Date.now() / 1000)}:R>`
     )
     .addFields(
       { name: '🔍 Looking For', value: `**${wantedCard}**`,  inline: true },
@@ -477,9 +476,15 @@ async function handleCodeModal(interaction) {
     .setStyle(ButtonStyle.Success)
     .setEmoji('🤝');
 
+  const deleteBtn = new ButtonBuilder()
+    .setCustomId(`cex_delete_${interaction.user.id}`)
+    .setLabel('Delete Post')
+    .setStyle(ButtonStyle.Danger)
+    .setEmoji('🗑️');
+
   const msg = await interaction.channel.send({
     embeds: [embed],
-    components: [new ActionRowBuilder().addComponents(interestedBtn)]
+    components: [new ActionRowBuilder().addComponents(interestedBtn, deleteBtn)]
   }).catch(() => null);
 
 
@@ -542,6 +547,30 @@ async function handleInterested(interaction) {
       }).catch(err => console.error('[CardExchange] Thread DB Save Error:', err));
     }
 
+    const listerAvatar = (await interaction.client.users.fetch(posterId).catch(() => null))?.displayAvatarURL() || null;
+    const wantedImage = listing ? await getCardImage(listing.wantedCard) : null;
+    const offeredStr = listing ? listing.offeredCards.map((c, i) => `\`${i + 1}.\` ${c}`).join('\n') : 'N/A';
+
+    const matchEmbed = new EmbedBuilder()
+      .setTitle('🌌 CELESTIAL TRADE HUB')
+      .setDescription(
+        `Welcome to the management interface for this trade.\n` +
+        `**Lister:** <@${posterId}>\n**Interested:** <@${interaction.user.id}>\n` +
+        '--------------------------------------------------\n' +
+        '🛡️ **Next Strategic Steps:**\n' +
+        '1. Discuss the trade details below.\n' +
+        '2. Confirm the code/method for delivery.\n' +
+        '3. Once agreed, the **Lister** must click **Finalize Deal**.'
+      )
+      .addFields(
+        { name: '📥 Lister Seeks', value: `**${listing?.wantedCard || 'Unknown'}**`, inline: true },
+        { name: '📤 Interested Offers', value: offeredStr, inline: true }
+      )
+      .setColor(0x3498DB) // Deep Celestial Blue
+      .setThumbnail(wantedImage || listerAvatar)
+      .setFooter({ text: 'Private Negotiations • Strategic Management', iconURL: interaction.client.user.displayAvatarURL() })
+      .setTimestamp();
+
     const dealFinalBtn = new ButtonBuilder()
       .setCustomId(`cex_deal_final_${interaction.user.id}`)
       .setLabel('Finalize Deal')
@@ -550,27 +579,14 @@ async function handleInterested(interaction) {
 
     const dealCancelBtn = new ButtonBuilder()
       .setCustomId(`cex_deal_cancel_${interaction.user.id}`)
-      .setLabel('Cancel')
+      .setLabel('Cancel Trade')
       .setStyle(ButtonStyle.Danger)
       .setEmoji('✖️');
 
     const row = new ActionRowBuilder().addComponents(dealFinalBtn, dealCancelBtn);
 
-    const matchEmbed = new EmbedBuilder()
-      .setTitle('🤝 TRADE MATCH FOUND')
-      .setDescription(
-        `Hello <@${posterId}> and <@${interaction.user.id}>!\n\n` +
-        'Use this private thread to discuss your trade details.\n' +
-        'Once you both agree, the **Lister** should click **"Finalize Deal"**.'
-      )
-      .addFields(
-        { name: '👤 Lister', value: `<@${posterId}>`, inline: true },
-        { name: '🙋 Interested', value: `<@${interaction.user.id}>`, inline: true }
-      )
-      .setColor(0xF1C40F)
-      .setFooter({ text: 'Private Trading Thread • Auto-expires in 30m' });
-
     await thread.send({
+      content: `<@${posterId}>, <@${interaction.user.id}> — **A potential trade match has been initiated.**`,
       embeds: [matchEmbed],
       components: [row]
     });
@@ -579,6 +595,44 @@ async function handleInterested(interaction) {
   } catch (err) {
     console.error('[CardExchange] handleInterested Error:', err);
     await interaction.followUp({ content: '❌ Something went wrong.', flags: MessageFlags.Ephemeral });
+  }
+}
+
+/* ─── Management Handlers ─────────────────────────────────────────────────── */
+
+async function handleDeleteListing(interaction) {
+  const posterId = interaction.customId.split('_')[2];
+  
+  // Logic: Author OR Full Bypass (Admins/Managers/PapaPlayer)
+  const isAuthor = interaction.user.id === posterId;
+  const isManagement = perms.hasFullBypass(interaction.member);
+
+  if (!isAuthor && !isManagement) {
+    return denyEphemeral(interaction, '❌ You do not have permission to delete this listing.');
+  }
+
+  try {
+    const listing = await CardExchange.findOne({ messageId: interaction.message.id });
+    if (listing) {
+      // 1. Cleanup all threads related to this listing
+      const threads = await CardExchangeThread.find({ listingId: listing._id });
+      for (const t of threads) {
+        const thread = await interaction.client.channels.fetch(t.threadId).catch(() => null);
+        if (thread) await thread.delete().catch(() => {});
+        await CardExchangeThread.deleteOne({ _id: t._id });
+      }
+      
+      // 2. Delete the DB entry
+      await CardExchange.deleteOne({ _id: listing._id });
+    }
+
+    // 3. Delete the message
+    await interaction.message.delete().catch(() => {});
+    
+    return denyEphemeral(interaction, '✅ Listing and associated threads deleted successfully.');
+  } catch (err) {
+    console.error('[CardExchange] handleDeleteListing Error:', err);
+    return denyEphemeral(interaction, '❌ Failed to delete listing.');
   }
 }
 
@@ -660,6 +714,7 @@ function registerHandler(client) {
         if (interaction.customId === 'cex_search') return await handleSearchButton(interaction);
         if (interaction.customId === 'cex_browse') return await handleBrowseButton(interaction);
         if (interaction.customId.startsWith('cex_interested_')) return await handleInterested(interaction);
+        if (interaction.customId.startsWith('cex_delete_')) return await handleDeleteListing(interaction);
         if (interaction.customId.startsWith('cex_deal_final_')) return await handleDealFinal(interaction);
         if (interaction.customId.startsWith('cex_deal_cancel_')) return await handleDealCancel(interaction);
       }
