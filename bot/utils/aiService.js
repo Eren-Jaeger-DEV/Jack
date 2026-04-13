@@ -184,19 +184,21 @@ module.exports = {
         } catch (e) {}
       }
 
-      const processedText = this._postProcess(fullText);
+      let processedText = this._postProcess(fullText);
+      // If post-processing killed the entire message, revert to raw text if it exists
+      if (fullText && !processedText) processedText = fullText;
 
       if (toolCall) {
         return {
           ...toolCall,
-          text: processedText || "Strategic protocol initiated. Data acquisition in progress.",
+          text: processedText || "Strategic protocol initiated. Directing assets now.",
           model: modelName
         };
       }
 
       return {
         type: 'response',
-        text: processedText || fullText || "Strategic analysis complete. Report generated.",
+        text: processedText || fullText || "Strategic analysis finalized. Link stable.",
         model: modelName
       };
 

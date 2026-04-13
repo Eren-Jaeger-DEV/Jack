@@ -234,65 +234,41 @@ module.exports = {
     const THINKING_MESSAGE = "Synchronizing strategic link...";
     if (!rawText) return DEFAULT_FALLBACK;
     
-    // 1. Aggressive Markdown Cleanup (Strip ```json ... ``` or ``` ...)
+    // 1. Aggressive Markdown Cleanup
     let clean = rawText.trim()
-      .replace(/```[a-z]*\n?/gi, "") // Strip all occurrences of code blocks
+      .replace(/```[a-z]*\n?/gi, "") 
       .replace(/```/g, "")
       .trim();
 
-    // 2. Detection: Is this a JSON payload (complete or in-progress)?
-    const isJsonLikely = clean.includes('{') && (clean.includes('"intent"') || clean.includes('"text"'));
+    // 2. Detection: Is this a JSON payload?
+    const isJsonLikely = (clean.includes('{') && clean.includes('}')) && (clean.includes('"text"') || clean.includes('"intent"'));
 
     if (isJsonLikely) {
       try {
-        // Try full parse first (fastest/best if complete)
-        const parsed = JSON.parse(clean);
-        if (parsed.text) return parsed.text;
-      } catch (e) {
-        // 3. Selective Extraction for Streaming (JSON-in-progress)
-        // Find the "text": " marker
-        const textKeyIndices = [
-          clean.indexOf('"text":"'),
-          clean.indexOf('"text": "'),
-          clean.indexOf("'text':'"),
-          clean.indexOf("'text': '")
-        ].filter(i => i !== -1);
-
-        if (textKeyIndices.length > 0) {
-          const startIndex = Math.min(...textKeyIndices);
-          // Calculate where the actual value starts (after the key and quote)
-          const valueStart = clean.indexOf('"', startIndex + 7) + 1; 
-          
-          if (valueStart > 0) {
-            let extracted = clean.substring(valueStart);
-            
-            // Cleanup trailing JSON structure if present
-            // Matches: ", "intent": ... or just " at the end
-            extracted = extracted.replace(/"\s*,\s*"[a-z0-9_]+"\s*:[\s\S]*$/i, "");
-            extracted = extracted.replace(/"\s*\}?$/i, "");
-            
-            // Final unescape for streaming text
-            return extracted
-              .replace(/\\n/g, "\n")
-              .replace(/\\"/g, '"')
-              .replace(/\\'/g, "'")
-              .trim();
-          }
+        const jsonMatch = clean.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.text) return parsed.text;
         }
-        
-        // If it clearly looks like JSON but we haven't hit the text field yet, show thinking
-        return THINKING_MESSAGE;
+      } catch (e) {
+        // Fallback to manual extraction for broken JSON
+        const textMatch = clean.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*}|\s*,)/);
+        if (textMatch && textMatch[1]) {
+          return textMatch[1]
+            .replace(/\\n/g, "\n")
+            .replace(/\\"/g, '"')
+            .trim();
+        }
       }
     }
     
-    // 4. Fallback for raw text responses that might have artifacts
+    // 3. Last Resort: Treat as plain text if it's not clearly a broken JSON shell
+    if (clean === "{" || clean === "}") return THINKING_MESSAGE;
+    
+    // Remove potential stray markers Jack might emit
     const finalClean = clean
-      .replace(/\{[\s\S]*"text"\s*:\s*"/i, "") // Strip text-key prefix even if not at start
-      .replace(/"\s*\}?$/i, "")
+      .replace(/^[\[|\(][A-Z\s_]+[\]|\)]\s*/i, "") // Strip [STRATEGIC_REPORT] etc.
       .trim();
-
-    // If finalClean is empty or just braces, it means we are still in the "Thinking" stage of a JSON block
-    if (!finalClean || finalClean === "{" || finalClean === "}") return THINKING_MESSAGE;
 
     return finalClean || clean || DEFAULT_FALLBACK;
   },
