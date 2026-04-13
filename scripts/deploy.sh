@@ -11,7 +11,7 @@ npm install
 
 # 3. Discord Sync
 echo "📡 Synchronizing slash commands with Discord API..."
-node deploy-commands.js
+node scripts/deploy-commands.js
 
 # 4. Restart Process
 echo "🔄 Refreshing Jack Bot process (PM2)..."
