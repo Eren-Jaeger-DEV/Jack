@@ -9,6 +9,9 @@ const systemContext = require('../../core/systemContext');
  */
 async function getClanContext(guild, member = null) {
   try {
+    let context = "";
+    let reputationScore = 0;
+
     // 1. SYSTEM BIBLE (Hierarchical Mapping)
     Object.entries(BIBLE).forEach(([category, plugins]) => {
       context += `\n[${category.replace(/_/g, " ")}]:\n`;
