@@ -154,6 +154,9 @@ module.exports = {
           if (result.success) {
              await observer.recordActionSuccess(member.id, decision.tool);
              
+             // UPDATE HISTORY with the call so the Interpretation Pass has context
+             await this._updateHistory(channelId, content, `[AI_CALL: ${decision.tool}]`);
+
              // PHASE: Interpretation Pass (Self-Awareness)
              const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result.data || result.message)}`;
              

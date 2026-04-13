@@ -189,14 +189,14 @@ module.exports = {
       if (toolCall) {
         return {
           ...toolCall,
-          text: processedText || "Initiating strategic protocol...",
+          text: processedText || "Strategic protocol initiated. Data acquisition in progress.",
           model: modelName
         };
       }
 
       return {
         type: 'response',
-        text: processedText || "Analysis complete. Strategic link stable.",
+        text: processedText || fullText || "Strategic analysis complete. Report generated.",
         model: modelName
       };
 
