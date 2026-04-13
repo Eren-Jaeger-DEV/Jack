@@ -151,17 +151,22 @@ module.exports = {
       let result = await executeRequest();
 
       let fullText = "";
+      let thoughtText = "";
       let hasStartedText = false;
       let toolCall = null;
 
       if (onToken) onToken(null, "", { type: 'thinking' });
 
       for await (const chunk of result.stream) {
-        if (chunk.thought && !hasStartedText) {
+        // 1. Capture Thought Blocks
+        if (chunk.thought) {
+          thoughtText += chunk.thought;
           if (onToken) onToken(null, "", { type: 'thinking', thought: chunk.thought });
         }
 
-        const functionCallPart = chunk.candidates?.[0]?.content?.parts?.find(p => p.functionCall);
+        // 2. Scan for Function Calls (All candidates and parts)
+        const parts = chunk.candidates?.[0]?.content?.parts || [];
+        const functionCallPart = parts.find(p => p.functionCall);
         if (functionCallPart) {
           const call = functionCallPart.functionCall;
           toolCall = {
@@ -171,6 +176,7 @@ module.exports = {
           };
         }
 
+        // 3. Capture Text Output
         try {
           const text = chunk.text();
           if (text && text.length > 0) {
@@ -181,7 +187,14 @@ module.exports = {
             fullText += text;
             if (onToken) onToken(text, fullText, { type: 'text' });
           }
-        } catch (e) {}
+        } catch (e) {
+          // chunk.text() might throw if chunk contains only function calls or thoughts
+        }
+      }
+
+      // 4. Intelligence Fallback: Use thought if text is empty
+      if (!fullText && thoughtText && !toolCall) {
+        fullText = `[THOUGHT_PROCESS] ${thoughtText}`;
       }
 
       let processedText = this._postProcess(fullText);
