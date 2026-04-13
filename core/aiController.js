@@ -205,48 +205,68 @@ module.exports = {
    */
   _extractFinalText(rawText) {
     const DEFAULT_FALLBACK = "Strategic inquiry incomplete. Data stream unstable.";
+    const THINKING_MESSAGE = "Synchronizing strategic link...";
     if (!rawText) return DEFAULT_FALLBACK;
     
     // 1. Aggressive Markdown Cleanup (Strip ```json ... ``` or ``` ...)
     let clean = rawText.trim()
-      .replace(/^```[a-z]*\n/i, "") // Strip starting block with lang
-      .replace(/\n```$/i, "")         // Strip ending block
-      .replace(/^```|```$/g, "")      // Strip any loose backticks
+      .replace(/```[a-z]*\n?/gi, "") // Strip all occurrences of code blocks
+      .replace(/```/g, "")
       .trim();
 
-    try {
-      // 2. Try direct JSON parse
-      const parsed = JSON.parse(clean);
-      if (parsed.text) return parsed.text;
-      if (parsed.message) return parsed.message;
-      if (parsed.response) return parsed.response;
-    } catch (e) {
-      // 3. Handle embedded JSON (case where Gemini adds conversational text around the block)
-      const jsonMatch = clean.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          const innerParsed = JSON.parse(jsonMatch[0]);
-          if (innerParsed.text) return innerParsed.text;
-        } catch (innerE) {
-          // If JSON parse fails, try to capture the "text": "..." field specifically
-          const textMatch = jsonMatch[0].match(/"text"\s*:\s*"([\s\S]*?)"\s*[,}]/i);
-          if (textMatch) {
-            // Unescape common JSON characters if we are using regex
-            return textMatch[1]
+    // 2. Detection: Is this a JSON payload (complete or in-progress)?
+    const isJsonLikely = clean.includes('{') && (clean.includes('"intent"') || clean.includes('"text"'));
+
+    if (isJsonLikely) {
+      try {
+        // Try full parse first (fastest/best if complete)
+        const parsed = JSON.parse(clean);
+        if (parsed.text) return parsed.text;
+      } catch (e) {
+        // 3. Selective Extraction for Streaming (JSON-in-progress)
+        // Find the "text": " marker
+        const textKeyIndices = [
+          clean.indexOf('"text":"'),
+          clean.indexOf('"text": "'),
+          clean.indexOf("'text':'"),
+          clean.indexOf("'text': '")
+        ].filter(i => i !== -1);
+
+        if (textKeyIndices.length > 0) {
+          const startIndex = Math.min(...textKeyIndices);
+          // Calculate where the actual value starts (after the key and quote)
+          const valueStart = clean.indexOf('"', startIndex + 7) + 1; 
+          
+          if (valueStart > 0) {
+            let extracted = clean.substring(valueStart);
+            
+            // Cleanup trailing JSON structure if present
+            // Matches: ", "intent": ... or just " at the end
+            extracted = extracted.replace(/"\s*,\s*"[a-z0-9_]+"\s*:[\s\S]*$/i, "");
+            extracted = extracted.replace(/"\s*\}?$/i, "");
+            
+            // Final unescape for streaming text
+            return extracted
               .replace(/\\n/g, "\n")
               .replace(/\\"/g, '"')
               .replace(/\\'/g, "'")
               .trim();
           }
         }
+        
+        // If it clearly looks like JSON but we haven't hit the text field yet, show thinking
+        return THINKING_MESSAGE;
       }
     }
     
-    // 4. Final Sanity Check: If it's still JSON, strip the brackets and key
+    // 4. Fallback for raw text responses that might have artifacts
     const finalClean = clean
-      .replace(/^\{[\s\S]*"text"\s*:\s*"/i, "") 
+      .replace(/\{[\s\S]*"text"\s*:\s*"/i, "") // Strip text-key prefix even if not at start
       .replace(/"\s*\}?$/i, "")
       .trim();
+
+    // If finalClean is empty or just braces, it means we are still in the "Thinking" stage of a JSON block
+    if (!finalClean || finalClean === "{" || finalClean === "}") return THINKING_MESSAGE;
 
     return finalClean || clean || DEFAULT_FALLBACK;
   },
