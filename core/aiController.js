@@ -170,7 +170,9 @@ module.exports = {
                 isOwner
              );
 
+             addLog("AIController", `Interpretation Pass Raw: ${interpretation.text.substring(0, 50)}...`);
              const responseText = this._extractFinalText(interpretation.text);
+             addLog("AIController", `Interpretation Pass Processed: ${responseText.substring(0, 50)}...`);
              
              if (isInteraction) await context.editReply(responseText).catch(() => {});
              else if (streamingMessage.isOwnerStub) await context.reply(responseText).catch(() => {});
@@ -197,7 +199,10 @@ module.exports = {
         }
       } else {
         // Normal Text Response with SMART FALLBACK
+        addLog("AIController", `Text Response Raw: ${decision.text.substring(0, 50)}...`);
         const responseText = this._extractFinalText(decision.text);
+        addLog("AIController", `Text Response Processed: ${responseText.substring(0, 50)}...`);
+
         if (isInteraction) await context.editReply(responseText).catch(() => {});
         else if (streamingMessage.isOwnerStub) await context.reply(responseText).catch(() => {});
         else await streamingMessage.edit(responseText).catch(() => {});
