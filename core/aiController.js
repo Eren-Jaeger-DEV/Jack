@@ -240,10 +240,20 @@ module.exports = {
       .replace(/```/g, "")
       .trim();
 
-    // 2. Detection: Is this a JSON payload?
-    const isJsonLikely = (clean.includes('{') && clean.includes('}')) && (clean.includes('"text"') || clean.includes('"intent"'));
+    // 2. Detection: Is this a JSON payload? (Lenient check)
+    const isJsonLikely = clean.includes('{') && (clean.includes('"text"') || clean.includes('"intent"'));
 
     if (isJsonLikely) {
+      // Try Regex First (Fastest for both partial and full JSON)
+      const textMatch = clean.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*\}|\s*,|\s*$)/i);
+      if (textMatch && textMatch[1]) {
+        return textMatch[1]
+          .replace(/\\n/g, "\n")
+          .replace(/\\"/g, '"')
+          .trim();
+      }
+
+      // Try full parse as backup
       try {
         const jsonMatch = clean.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -251,23 +261,17 @@ module.exports = {
           if (parsed.text) return parsed.text;
         }
       } catch (e) {
-        // Fallback to manual extraction for broken JSON
-        const textMatch = clean.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*}|\s*,)/);
-        if (textMatch && textMatch[1]) {
-          return textMatch[1]
-            .replace(/\\n/g, "\n")
-            .replace(/\\"/g, '"')
-            .trim();
-        }
+        // If it starts with { and we can't find 'text', it's a broken bubble
+        if (clean.startsWith('{')) return THINKING_MESSAGE;
       }
     }
     
-    // 3. Last Resort: Treat as plain text if it's not clearly a broken JSON shell
+    // 3. Fallback for raw text responses
     if (clean === "{" || clean === "}") return THINKING_MESSAGE;
     
-    // Remove potential stray markers Jack might emit
+    // Remove potential stray markers (e.g., [REPORT])
     const finalClean = clean
-      .replace(/^[\[|\(][A-Z\s_]+[\]|\)]\s*/i, "") // Strip [STRATEGIC_REPORT] etc.
+      .replace(/^[\[|\(][A-Z\s_]+[\]|\)]\s*/i, "") 
       .trim();
 
     return finalClean || clean || DEFAULT_FALLBACK;
