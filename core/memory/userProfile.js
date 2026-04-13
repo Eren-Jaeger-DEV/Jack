@@ -31,6 +31,11 @@ module.exports = {
           roles: member?.roles.cache.map(r => r.name).filter(n => n !== "@everyone") || []
         },
         activity: {
+          messageCount: activity?.messageCount || 0,
+          lastActive: activity?.lastActive ? this._relativeTime(activity.lastActive) : "Never",
+          activityScore: activity?.activityScore || 0
+        },
+        game: player ? {
           ign: player.ign,
           uid: player.uid,
           synergy: player.seasonSynergy,
@@ -55,6 +60,7 @@ module.exports = {
   },
 
   _relativeTime(date) {
+    if (!date) return "Never";
     const seconds = Math.floor((new Date() - date) / 1000);
     let interval = Math.floor(seconds / 31536000);
     if (interval > 1) return interval + "y ago";
