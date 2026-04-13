@@ -73,6 +73,8 @@ const MODES = {
 
 const OWNER_IDS = ["771611262022844427", "888337321869582367"];
 
+const systemContext = require("../../core/systemContext");
+
 /**
  * Generates the full system prompt with dynamic personality mode.
  */
@@ -93,6 +95,10 @@ function getSystemPrompt(extraContext = "", currentUserId = "", reputationScore 
   persona += `\n\n${MODES[activeMode]}`;
 
   // 2. Identity & Context
+  const sys = systemContext.getSystemContext();
+  const sysContextString = `[SYSTEM: ${sys.name} v${sys.version}] Architecture: ${sys.architecture} | Modules: ${JSON.stringify(sys.core_modules)}`;
+  
+  persona = persona.replace('{{SYSTEM_CONTEXT}}', sysContextString);
   persona = persona.replace('{{CLAN_DATA}}', extraContext || "No live data available.");
   
   // 3. Safety Enforcement (Mandatory)

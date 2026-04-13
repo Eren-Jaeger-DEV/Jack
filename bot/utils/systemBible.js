@@ -4,44 +4,38 @@
  * Jack uses this to understand his own capabilities and teach members.
  */
 const BIBLE = {
+  CORE_ARCHITECTURES: {
+    executor: "Lifecycle manager for commands. Handles security validation, cooldowns, and timeout protection.",
+    validator: "Security layer. Checks user permissions against PermissionFlagsBits before execution.",
+    observer: "Passive behavioral tracking. Records message activity, member growth, and success metrics.",
+    logic: "The AI Controller (Core Brain) which integrates intent classification with tool execution."
+  },
   CLAN_ADMINISTRATION: {
-    admin: "Executive control for Owners. Manage bot settings, plugins, and raw database overrides.",
-    moderation: "Law enforcement. Tools: kick, ban, mute, warn, purge. Jack has root access to these.",
-    audit: "Logging all server actions to ensure transparency and security.",
-    logger: "Unified logging system for Voice, Messages, and Member changes.",
-    channelManagement: "Tools to lock, hide, or archive channels instantly.",
-    roles: "Advanced role management, including auto-roles and VIP status.",
-    tickets: "Professional support system for clan inquiries and reports."
+    admin: "Executive control for Owners. Commands: /hud, /config, /setup. Used for raw DB overrides.",
+    moderation: "Law enforcement (Root Authority). Commands: /ban, /kick, /mute, /warn, /purge.",
+    audit: "Deep logging of server events (Message edits/deletes, Role changes, Voice activity).",
+    roles: "Advanced management. Auto-roles for newbies and specialized roles for Top 15 players.",
+    tickets: "Integrated support system for handling clan disputes and recruitment interviews."
   },
   COMPETITIVE_OPERATIONS: {
-    clan: "Roster management, level tracking, and IGN/UID verification.",
-    "clan-battle": "Automated scrims and tournament brackets with point tracking.",
-    "intra-match": "Internal clan 4v4 or 2v2 matches for practice and ranking.",
-    "foster-program": "The heart of clan growth. Seniors mentor rookies to build synergy.",
-    "seasonal-synergy": "Tracking seasonal growth and synergy between partners for rewards.",
-    "member-classification": "Classifying members by skill level: Rookie, Elite, Master.",
-    teamup: "Finding squad-mates for ranked matches in real-time."
+    clan: "Roster integrity. Commands: /profile, /verify, /ign. Syncs Discord IDs with BGMI UIDs.",
+    "clan-battle": "Strategic war room. Automated scrim brackets and tournament point tracking.",
+    "foster-program": "Growth engine. Pairs Seniors (Mentors) with Rookies for 30-day growth cycles.",
+    "seasonal-synergy": "Tracking growth between partners. Users submit '/hud' to see current synergy levels.",
+    "member-classification": "Skill-based ranking system (Rookie, Elite, Master) derived from performance data."
   },
   ECONOMY_SYSTEMS: {
-    "card-database": "The registry of all collectible clan cards (Gamer Cards).",
-    "card-exchange": "The marketplace for trading or gifting clan cards.",
-    market: "Virtual shop for buying custom roles, badges, or role-perms.",
-    packs: "Mystery box system for acquiring rare cards and items."
+    "card-database": "The registry of Gamer Cards. Each card represents a clan legacy.",
+    "pop-market": "Marketplace for trading Gamer Cards. Uses pagination and individual embeds for clarity.",
+    packs: "RNG mystery boxes. Users spend XP to unlock rare cards or vanity roles.",
+    market: "Buy specialized roles or server perks using clan reputation and activity points."
   },
   SOCIAL_ENGAGEMENT: {
-    fun: "Memes, roasts, and casual interaction commands.",
-    games: "Mini-games like XP betting, trivia, and reaction tests.",
-    greeting: "Custom welcome/goodbye messages with specialized embeds.",
-    leveling: "XP and level system. Higher levels unlock higher clan authority.",
-    say: "Anonymous messaging or bot-echo commands for announcements.",
-    ai: "The Core Brain. That's you, Jack. Powered by Gemini 3.1 Pro."
-  },
-  TECHNICAL_UTILITIES: {
-    utility: "Server info, user info, avatar fetch, and bot ping.",
-    "server-overview": "Live dashboard of server stats (Member count, boost level).",
-    tempvc: "Self-cleaning voice channels that disappear when empty.",
-    counting: "Clan mini-game to count sequentially without breaking the chain.",
-    inviteTrackerAdvanced: "Tracking who invited which member to reward recruiters."
+    leveling: "Passive XP system. Rewards high-quality engagement with increased authority in the clan.",
+    tempvc: "Self-cleaning voice channels. Created dynamically to keep the server map clean.",
+    counting: "The 'Discipline Game'. A sequential counting challenge in specialized channels.",
+    games: "Strategic mini-games (XP betting, trivia, and reaction tests) designed for clan bonding.",
+    ai: "The Central Intelligence. Multi-key rotation (Gemini 3.1 Pro) with adaptive persona modules."
   }
 };
 

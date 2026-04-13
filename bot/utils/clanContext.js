@@ -9,19 +9,12 @@ const systemContext = require('../../core/systemContext');
  */
 async function getClanContext(guild, member = null) {
   try {
-    let context = "### JACK'S HOLY BIBLE (Plugin Summary) ###\n";
-    let reputationScore = 0;
-    
-    // 0. SYSTEM AWARENESS (New Component)
-    const sys = systemContext.getSystemContext();
-    context = `### SYSTEM AWARENESS: ${sys.name} v${sys.version} ###\n`;
-    context += `[Capabilities]: ${Object.keys(sys.capabilities).join(', ')}\n\n`;
-    
-    context += "### JACK'S HOLY BIBLE (Plugin Summary) ###\n";
-    
-    // 1. SYSTEM BIBLE
+    // 1. SYSTEM BIBLE (Hierarchical Mapping)
     Object.entries(BIBLE).forEach(([category, plugins]) => {
-      context += `[${category}]: ${Object.values(plugins).join('; ')}\n`;
+      context += `\n[${category.replace(/_/g, " ")}]:\n`;
+      Object.entries(plugins).forEach(([name, desc]) => {
+        context += ` - ${name}: ${desc}\n`;
+      });
     });
 
     context += "\n### LIVE CLAN STATUS ###\n";
