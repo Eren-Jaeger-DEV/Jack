@@ -12,30 +12,30 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('hud')
     .setDescription('Access your Celestial HUD (Live Status)')
-    .addUserOption(option => 
-        option.setName('target')
-            .setDescription('View another asset\'s HUD')
-            .setRequired(false)
+    .addUserOption(option =>
+      option.setName('target')
+        .setDescription('View another asset\'s HUD')
+        .setRequired(false)
     ),
 
   async run(ctx) {
     const target = ctx.options.getUser('target') || ctx.user;
-    
+
     // Defer because multi-service aggregation might take a moment
     await ctx.defer();
 
     try {
-        const data = await hudService.getMemberHUDData(ctx.guild, target.id);
-        const embed = this.buildHUDEmbed(target, data);
-        const row = this.buildHUDButtons(target.id);
+      const data = await hudService.getMemberHUDData(ctx.guild, target.id);
+      const embed = this.buildHUDEmbed(target, data);
+      const row = this.buildHUDButtons(target.id);
 
-        await ctx.editReply({
-            embeds: [embed],
-            components: [row]
-        });
+      await ctx.editReply({
+        embeds: [embed],
+        components: [row]
+      });
     } catch (err) {
-        logger.error("HUD", `Failed to generate HUD for ${target.tag}: ${err.message}`);
-        await ctx.editReply({ content: "❌ **System Error:** Failed to synchronize HUD telemetry." });
+      logger.error("HUD", `Failed to generate HUD for ${target.tag}: ${err.message}`);
+      await ctx.editReply({ content: "❌ **System Error:** Failed to synchronize HUD telemetry." });
     }
   },
 
@@ -44,30 +44,30 @@ module.exports = {
    */
   buildHUDEmbed(user, data) {
     const progressBar = this.generateProgressBar(data.leveling.progress);
-    
+
     const embed = new EmbedBuilder()
-      .setAuthor({ 
-          name: `CELESTIAL HUD v1.0`, 
-          iconURL: 'https://cdn-icons-png.flaticon.com/512/1067/1067562.png' 
+      .setAuthor({
+        name: `CELESTIAL HUD v1.0`,
+        iconURL: 'https://cdn-icons-png.flaticon.com/512/1067/1067562.png'
       })
       .setTitle(`🖥️ Tactical Status: ${user.username.toUpperCase()}`)
       .setThumbnail(user.displayAvatarURL({ dynamic: true, size: 256 }))
       .setColor('#00D2FF') // Celestial Blue
       .addFields(
-        { 
-          name: '🧬 NEURAL STANDING', 
+        {
+          name: '🧬 NEURAL STANDING',
           value: `**Level:** ${data.leveling.level}\n**XP Progress:** ${data.leveling.progress}%\n${progressBar}\n\`${data.leveling.xpToNext} XP until next tier\``,
-          inline: false 
+          inline: false
         },
-        { 
-          name: '⚡ SYNERGY ARCHIVE', 
+        {
+          name: '⚡ SYNERGY ARCHIVE',
           value: `**Weekly:** ${data.synergy.weekly.toLocaleString()}\n**Season:** ${data.synergy.season.toLocaleString()}`,
-          inline: true 
+          inline: true
         },
-        { 
-          name: '🤝 FOSTER PROTOCOL', 
-          value: data.foster ? `**Role:** ${data.foster.role}\n**Partner:** <@${data.foster.partnerId}>\n**Shared Pts:** ${data.foster.points}` : "*No active deployment*", 
-          inline: true 
+        {
+          name: '🤝 FOSTER PROTOCOL',
+          value: data.foster ? `**Role:** ${data.foster.role}\n**Partner:** <@${data.foster.partnerId}>\n**Shared Pts:** ${data.foster.points}` : "*No active deployment*",
+          inline: true
         }
       )
       .setFooter({ text: `Neural Identity Active | Strategic Asset ID: ${user.id}` })
@@ -104,7 +104,7 @@ module.exports = {
 
     const progressText = '■'.repeat(progress);
     const emptyProgressText = '□'.repeat(emptyProgress);
-    
+
     return `\`[${progressText}${emptyProgressText}]\``;
   }
 };
