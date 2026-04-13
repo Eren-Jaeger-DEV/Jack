@@ -12,7 +12,7 @@ module.exports = {
       version: packageJson.version || "1.0.0",
       architecture: "Modular Plugin System (Neural Registry V4)",
       core_modules: {
-        logic: "AI Controller (Gemini 3.1 Pro)",
+        logic: "Neural Logic Engine (V4.2)",
         safety: "AI Validator (Permission-Tiered)",
         metrics: "Observer & Metrics Manager",
         execution: "Standard Command Executor"
