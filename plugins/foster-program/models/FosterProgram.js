@@ -28,7 +28,7 @@ const fosterProgramSchema = new mongoose.Schema({
   active:               { type: Boolean, default: true },
   status: { 
     type: String, 
-    enum: ['REGISTRATION', 'PAIRING_VERIFICATION', 'ACTIVE', 'ENDED'], 
+    enum: ['REGISTRATION', 'PAIRING_VERIFICATION', 'ACTIVE', 'VERIFICATION_FINAL', 'ENDED'], 
     default: 'REGISTRATION' 
   },
   

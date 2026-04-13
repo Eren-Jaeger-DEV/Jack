@@ -249,6 +249,8 @@ function buildButtons(page, totalPages) {
 }
 
 /**
+ * Refreshes the leaderboard image message
+ */
 async function refreshLeaderboard(client, season, page = 0) {
   try {
     const config = await configManager.getGuildConfig(season.guildId);
