@@ -5,6 +5,7 @@ const ConversationHistory = require("../bot/database/models/ConversationHistory"
 const UserActivity = require("../bot/database/models/UserActivity");
 const aiValidator = require("./aiValidator");
 const toolService = require("../bot/utils/toolService");
+const aiService = require("../bot/utils/aiService");
 const observer = require("./observer");
 const { addLog } = require("../utils/logger");
 

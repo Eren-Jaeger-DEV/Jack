@@ -1,3 +1,4 @@
+const { PermissionFlagsBits } = require("discord.js");
 const toolService = require("../bot/utils/toolService");
 
 /**
