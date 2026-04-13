@@ -36,30 +36,39 @@ function addLog(systemName, message) {
   }
 }
 
+const asciiJack = `
+    __  ___   ________ __
+   / / /   | / ____/ //_/
+  / / / /| |/ /   / ,<   
+ / /_/ ___ / /___/ /| |  
+ \\____/_/  |_\\____/_/ |_|  
+`;
+
 /**
  * Print all collected logs in a structured format.
  */
 function printLogs(botTag) {
-  console.log("\n🚀 Jack Booting...\n");
+  console.log("\\x1b[36m" + asciiJack + "\\x1b[0m");
+  console.log("\\x1b[1m\\x1b[34m[ INITIALIZING BOOT SEQUENCE ]\\x1b[0m\\n");
 
   coreLogs.forEach(log => {
       const emoji = coreEmojiMap[log.systemName] || "⚙️";
       const paddedName = log.systemName.padEnd(18, " ");
-      console.log(`${emoji} ${paddedName} → ${log.message}`);
+      console.log(`\\x1b[35m${emoji}\\x1b[0m \\x1b[1m${paddedName}\\x1b[0m \\x1b[90m→\\x1b[0m \\x1b[32m${log.message}\\x1b[0m`);
   });
 
   if (systemLogs.length > 0) {
-    console.log("\n╭────────────── JACK SYSTEM BOOT ──────────────╮\n");
+    console.log("\\n\\x1b[36m╭─────────── SYSTEM MODULES ───────────╮\\x1b[0m\\n");
     systemLogs.forEach(log => {
       const emoji = pluginEmojiMap[log.systemName] || "⚙️";
       const paddedName = log.systemName.padEnd(18, " ");
-      console.log(`${emoji} ${paddedName} → ${log.message}`);
+      console.log(`  ${emoji} \\x1b[1m${paddedName}\\x1b[0m \\x1b[90m→\\x1b[0m \\x1b[33m${log.message}\\x1b[0m`);
     });
-    console.log("\n╰────────────── SYSTEM READY ──────────────╯\n");
+    console.log("\\n\\x1b[36m╰──────────────────────────────────────╯\\x1b[0m\\n");
   }
 
   if (botTag) {
-    console.log(`🤖 Logged in as ${botTag}\n`);
+    console.log(`\\x1b[32m✅ SYSTEM ONLINE \\x1b[0m\\x1b[90m—\\x1b[0m Logged in as \\x1b[1m${botTag}\\x1b[0m\\n`);
   }
 
   // Final cleanup
