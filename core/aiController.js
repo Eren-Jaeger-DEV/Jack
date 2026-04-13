@@ -154,12 +154,29 @@ module.exports = {
           if (result.success) {
              await observer.recordActionSuccess(member.id, decision.tool);
              
-             const successText = `✅ **Action Confirmed**: ${result.message}`;
-             if (isInteraction) await context.editReply(successText).catch(() => {});
-             else if (streamingMessage.isOwnerStub) await context.reply(successText).catch(() => {});
-             else await streamingMessage.edit(successText).catch(() => {});
+             // PHASE: Interpretation Pass (Self-Awareness)
+             const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result.data || result.message)}`;
              
-             await this._updateHistory(channelId, content, `[ACTION_SUCCESS: ${decision.tool}] ${result.message}`);
+             const interpretation = await aiService.generateResponse(
+                feedbackPrompt,
+                history,
+                null,
+                extraContext,
+                guild,
+                member,
+                null,
+                reputationScore,
+                activityData,
+                isOwner
+             );
+
+             const responseText = this._extractFinalText(interpretation.text);
+             
+             if (isInteraction) await context.editReply(responseText).catch(() => {});
+             else if (streamingMessage.isOwnerStub) await context.reply(responseText).catch(() => {});
+             else await streamingMessage.edit(responseText).catch(() => {});
+             
+             await this._updateHistory(channelId, content, responseText);
           } else {
              await observer.recordActionFailure(member.id, decision.tool);
              const errorText = `❌ **Action Failed**: ${result.message}`;
