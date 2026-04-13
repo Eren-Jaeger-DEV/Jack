@@ -244,16 +244,36 @@ module.exports = {
     const isJsonLikely = clean.includes('{') && (clean.includes('"text"') || clean.includes('"intent"'));
 
     if (isJsonLikely) {
-      // Try Regex First (Fastest for both partial and full JSON)
-      const textMatch = clean.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*\}|\s*,|\s*$)/i);
-      if (textMatch && textMatch[1]) {
-        return textMatch[1]
+      // 1. Try Structured Regex (Closed JSON)
+      const structuredMatch = clean.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*\}|\s*,)/i);
+      if (structuredMatch && structuredMatch[1]) {
+        return structuredMatch[1]
           .replace(/\\n/g, "\n")
           .replace(/\\"/g, '"')
           .trim();
       }
 
-      // Try full parse as backup
+      // 2. Try Aggressive Recovery (Partial/Open JSON)
+      // Look for the LAST occurrence of "text":"
+      const textKey = '"text":';
+      const lastIndex = clean.lastIndexOf(textKey);
+      if (lastIndex !== -1) {
+        let extracted = clean.substring(lastIndex + textKey.length).trim();
+        // Remove leading quote
+        if (extracted.startsWith('"') || extracted.startsWith("'")) {
+          extracted = extracted.substring(1);
+        }
+        // Remove trailing quote/brace if present
+        extracted = extracted.replace(/"\s*\}?$/i, "");
+        extracted = extracted.replace(/,\s*"[a-z]+"\s*:[\s\S]*$/i, ""); // Strip subsequent keys
+        
+        return extracted
+          .replace(/\\n/g, "\n")
+          .replace(/\\"/g, '"')
+          .trim();
+      }
+
+      // 3. Full Parse as backup
       try {
         const jsonMatch = clean.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -261,7 +281,6 @@ module.exports = {
           if (parsed.text) return parsed.text;
         }
       } catch (e) {
-        // If it starts with { and we can't find 'text', it's a broken bubble
         if (clean.startsWith('{')) return THINKING_MESSAGE;
       }
     }
