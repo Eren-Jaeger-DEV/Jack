@@ -405,8 +405,10 @@ async function resolveMemberByName(guild, name) {
   const target = normalize(name);
   if (!target) return null;
 
-  // Fetch all clan members to search in-memory (faster and allows fuzzy logic)
-  const players = await Player.find({ isClanMember: true });
+  // Fetch all players to search in-memory
+  const players = await Player.find({ 
+    $or: [{ ign: { $ne: null } }, { discordName: { $ne: null } }] 
+  });
 
   for (const player of players) {
     const pIgn = normalize(player.ign);

@@ -233,10 +233,10 @@ async function showPlayerSelectMenu(interaction, index, session) {
   const unmatchedEntry = session.unmatched[index];
   const { name } = unmatchedEntry;
 
-  // Get all clan members from DB, excluding those already updated in this session
+  // Get all players to populate select menu, excluding those already updated
   const players = await Player.find({ 
-    isClanMember: true,
-    discordId: { $nin: session.updatedPlayerIds } 
+    discordId: { $nin: session.updatedPlayerIds },
+    $or: [{ ign: { $ne: null } }, { discordName: { $ne: null } }]
   }).sort({ ign: 1 }).limit(25);
   
   if (players.length === 0) {
