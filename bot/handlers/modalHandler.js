@@ -1,4 +1,5 @@
 const Player = require("../database/models/Player");
+const configManager = require("../utils/configManager");
 
 module.exports = async function modalHandler(interaction) {
 
@@ -28,23 +29,35 @@ module.exports = async function modalHandler(interaction) {
 
       if (unlinkedProfile) {
         // Claim the unlinked profile
+        const config = await configManager.getGuildConfig(interaction.guild.id);
+        const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
+
         unlinkedProfile.discordId = interaction.user.id;
         unlinkedProfile.discordName = interaction.user.username;
         unlinkedProfile.status = "linked";
         unlinkedProfile.uid = uid;
         unlinkedProfile.accountLevel = level;
         unlinkedProfile.preferredModes = preferredModes;
-        if (member && !unlinkedProfile.clanJoinDate) unlinkedProfile.clanJoinDate = member.joinedAt;
+        unlinkedProfile.isClanMember = isClan;
+        
+        if (isClan && member && !unlinkedProfile.clanJoinDate) {
+          unlinkedProfile.clanJoinDate = member.joinedAt;
+        } else if (isClan && !unlinkedProfile.clanJoinDate) {
+          unlinkedProfile.clanJoinDate = new Date();
+        }
         
         await unlinkedProfile.save();
         
         return interaction.reply({
-          content: "✅ Found an existing profile created by an admin and linked it to your Discord!\n\nUpload your **BGMI Basic Info** now.",
+          content: `✅ Linked an existing profile for **${ign}** to your Discord!\nStatus: **${isClan ? "Clan Member" : "Guest Member"}**.\n\nUpload your **BGMI Basic Info** now.`,
           flags: 64
         });
       }
 
       // Create new linked profile
+      const config = await configManager.getGuildConfig(interaction.guild.id);
+      const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
+
       await Player.create({
         discordId: interaction.user.id,
         discordName: interaction.user.username,
@@ -52,11 +65,12 @@ module.exports = async function modalHandler(interaction) {
         uid,
         accountLevel: level,
         preferredModes,
-        clanJoinDate: member ? member.joinedAt : new Date()
+        isClanMember: isClan,
+        clanJoinDate: (isClan && member) ? member.joinedAt : (isClan ? new Date() : null)
       });
 
       return interaction.reply({
-        content: "✅ Profile saved.\n\nUpload your **BGMI Basic Info** now.",
+        content: `✅ Profile saved as **${isClan ? "Clan Member" : "Guest Member"}**.\n\nUpload your **BGMI Basic Info** screenshot now.`,
         flags: 64
       });
 
@@ -94,13 +108,20 @@ module.exports = async function modalHandler(interaction) {
 
     const preferredModes = modes.split(",").map(m => m.trim());
 
+    const config = await configManager.getGuildConfig(interaction.guild.id);
+    const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+    const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
+
     const player = await Player.findOneAndUpdate(
       { discordId: interaction.user.id },
       {
         ign,
         uid,
         accountLevel: level,
-        preferredModes
+        preferredModes,
+        isClanMember: isClan,
+        // Only update join date if they just became a clan member and it wasn't set
+        $set: (isClan && member) ? { clanJoinDate: member.joinedAt } : {}
       },
       { returnDocument: 'after' }
     );
@@ -113,7 +134,7 @@ module.exports = async function modalHandler(interaction) {
     }
 
     return interaction.reply({
-      content: "✅ Profile beautifully updated!",
+      content: `✅ Profile updated! Status: **${isClan ? "Clan Member" : "Guest Member"}**.`,
       flags: 64
     });
 

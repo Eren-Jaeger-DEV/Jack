@@ -59,6 +59,11 @@ async function addPoints(guildId, userId, ign, points) {
     return { success: false, error: `Points must be between 1 and ${MAX_POINTS}.` };
   }
 
+  const { player: globalPlayer } = await resolvePlayer({ userId });
+  if (!globalPlayer || !globalPlayer.isClanMember) {
+    return { success: false, error: '❌ Only clan members can participate in clan battles.' };
+  }
+
   const battle = await getActiveBattle(guildId);
   if (!battle) return { success: false, error: 'No active clan battle.' };
 

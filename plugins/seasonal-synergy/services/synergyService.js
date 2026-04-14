@@ -89,6 +89,10 @@ async function addWeeklyEnergy(target, points, isAdmin = false) {
     return { success: false, error: error || 'Player not found in database.' };
   }
 
+  if (!player.isClanMember) {
+    return { success: false, error: '❌ Only clan members can participate in seasonal synergy.' };
+  }
+
   const today = getTodayString();
 
   if (!isAdmin && player.lastWeeklySubmission === today) {
@@ -180,6 +184,7 @@ async function getTopPlayers(field = 'seasonSynergy', limit = 3) {
  */
 async function getLeaderboardPage(guild, page = 0) {
   const allPlayers = await Player.find({
+    isClanMember: true,
     $or: [
       { weeklySynergy: { $gt: 0 } },
       { seasonSynergy: { $gt: 0 } },

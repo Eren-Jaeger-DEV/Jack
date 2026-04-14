@@ -187,7 +187,7 @@ async function handleIGNRegistration(message, reg) {
 
     if (clanRoleId && !message.member.roles.cache.has(clanRoleId)) {
       await message.react('❌');
-      return message.reply('❌ You must be a clan member to register.');
+      return message.reply(`❌ **Intra Clan Matches** are exclusive to clan members. You are currently registered as a guest—contact staff if you believe this is an error.`);
     }
 
     // Attempt to register
