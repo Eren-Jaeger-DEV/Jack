@@ -131,7 +131,8 @@ module.exports = {
     this._interactionHandler = async (interaction) => {
       if (interaction.isButton() || interaction.isStringSelectMenu()) {
         const customId = interaction.customId;
-        if (customId.startsWith('synergy_')) {
+        // Only route to automation panel if it's NOT a leaderboard pagination button
+        if (customId.startsWith('synergy_') && !customId.startsWith('synergy_lb_')) {
           return panelHandler.handleInteraction(interaction);
         }
       }
