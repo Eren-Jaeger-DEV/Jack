@@ -127,16 +127,17 @@ async function handleInteraction(interaction) {
       // Step 2: Handle unmatched players
       if (unmatched.length > 0) {
         session.unmatched = unmatched; // Store for resolution
+        session.updatedPlayerIds = updates.map(u => u.player.discordId); // Track who was updated
         
         let unmatchedMsg = `✅ Updated **${results.success}** players.\n\n⚠️ **Unmatched Players Found (${unmatched.length}):**\n`;
         unmatchedMsg += unmatched.map(u => `- \`${u.name}\` (W: ${u.weekly}, S: ${u.season})`).join('\n');
-        unmatchedMsg += '\n\nPlease resolve these manually using the menus below.';
+        unmatchedMsg += '\n\nPlease resolve these manually using the buttons below.';
 
         await interaction.editReply(unmatchedMsg);
 
         // Send manual resolution prompts for each unmatched player
         for (let i = 0; i < unmatched.length; i++) {
-          await sendManualResolutionPrompt(interaction.channel, unmatched[i], i, user.id);
+          await sendManualResolutionPrompt(interaction.channel, unmatched[i], i);
         }
       } else {
         await interaction.editReply(`✅ **Success!** Updated **${results.success}** players. All members from screenshots matched perfectly.`);
@@ -153,6 +154,20 @@ async function handleInteraction(interaction) {
     }
   }
 
+  // Handle manual resolution buttons
+  if (customId.startsWith('synergy_ignore_btn_')) {
+    const index = customId.split('_')[3];
+    return interaction.update({ content: `✅ Ignored entry index **${index}**.`, components: [], embeds: [] });
+  }
+
+  if (customId.startsWith('synergy_link_btn_')) {
+    const index = parseInt(customId.split('_')[3]);
+    const session = sessionService.getSession(user.id);
+    if (!session) return interaction.reply({ content: '❌ Session expired.', flags: [MessageFlags.Ephemeral] });
+
+    return showPlayerSelectMenu(interaction, index, session);
+  }
+
   // Handle manual resolution select menu
   if (customId.startsWith('synergy_resolve_')) {
     const session = sessionService.getSession(user.id);
@@ -165,6 +180,7 @@ async function handleInteraction(interaction) {
     const { name, weekly, season } = unmatchedEntry;
     const targetUserId = interaction.values[0];
 
+    // Note: 'ignore' was moved to buttons, but keeping safety check
     if (targetUserId === 'ignore') {
       return interaction.update({ content: `✅ Ignored entry for \`${name}\`.`, components: [], embeds: [] });
     }
@@ -174,8 +190,11 @@ async function handleInteraction(interaction) {
 
     player.weeklySynergy = parseInt(weekly);
     player.seasonSynergy = parseInt(season);
-    player.lastWeeklySubmission = new Date().toISOString().split('T')[0]; // Simple YYYY-MM-DD
+    player.lastWeeklySubmission = new Date().toISOString().split('T')[0];
     await player.save();
+
+    // Track that this player was updated so they don't show up in next dropdowns
+    session.updatedPlayerIds.push(targetUserId);
 
     await interaction.update({ 
       content: `✅ Linked \`${name}\` to **${player.ign || targetUserId}**. Values updated!`, 
@@ -189,30 +208,58 @@ async function handleInteraction(interaction) {
   }
 }
 
-async function sendManualResolutionPrompt(channel, unmatchedEntry, index, moderatorId) {
+async function sendManualResolutionPrompt(channel, unmatchedEntry, index) {
   const { name, weekly, season } = unmatchedEntry;
   
-  // Get all clan members from DB to populate select menu
-  const players = await Player.find({ isClanMember: true }).sort({ ign: 1 }).limit(24);
+  const ignoreBtn = new ButtonBuilder()
+    .setCustomId(`synergy_ignore_btn_${index}`)
+    .setLabel('Ignore')
+    .setStyle(ButtonStyle.Danger);
+
+  const linkBtn = new ButtonBuilder()
+    .setCustomId(`synergy_link_btn_${index}`)
+    .setLabel(`Link "${name}" to a player`)
+    .setStyle(ButtonStyle.Success);
+
+  const row = new ActionRowBuilder().addComponents(ignoreBtn, linkBtn);
+
+  await channel.send({
+    content: `🔍 **Manual Resolution Required**\nCould not find a match for \`${name}\` from the screenshot.\n**Values:** Weekly: ${weekly}, Season: ${season}`,
+    components: [row]
+  });
+}
+
+async function showPlayerSelectMenu(interaction, index, session) {
+  const unmatchedEntry = session.unmatched[index];
+  const { name } = unmatchedEntry;
+
+  // Get all clan members from DB, excluding those already updated in this session
+  const players = await Player.find({ 
+    isClanMember: true,
+    discordId: { $nin: session.updatedPlayerIds } 
+  }).sort({ ign: 1 }).limit(25);
   
+  if (players.length === 0) {
+    return interaction.reply({ content: '❌ No available clan members left to link.', flags: [MessageFlags.Ephemeral] });
+  }
+
   const options = players.map(p => ({
     label: p.ign || 'Unknown IGN',
     description: `UID: ${p.uid || 'N/A'}`,
     value: p.discordId
   }));
 
-  options.push({ label: 'Ignore this entry', value: 'ignore' });
-
   const select = new StringSelectMenuBuilder()
     .setCustomId(`synergy_resolve_${index}`)
-    .setPlaceholder(`Link "${name}" to a player...`)
+    .setPlaceholder(`Select database player for "${name}"...`)
     .addOptions(options);
 
   const row = new ActionRowBuilder().addComponents(select);
 
-  await channel.send({
-    content: `🔍 **Manual Resolution Required**\nCould not find a match for \`${name}\` from the screenshot.\n**Values:** Weekly: ${weekly}, Season: ${season}`,
-    components: [row]
+  await interaction.update({
+    content: `Select the target player for **${name}**:`,
+    components: [row],
+    embeds: []
   });
 }
 

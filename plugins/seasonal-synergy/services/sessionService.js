@@ -9,7 +9,7 @@
 
 const logger = require('../../../utils/logger');
 
-// Store: userId -> { guildId, channelId, imageUrls: [], expires: number, unmatched: [] }
+// Store: userId -> { guildId, channelId, imageUrls: [], expires: number, unmatched: [], updatedPlayerIds: [] }
 const sessions = new Map();
 const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -30,6 +30,7 @@ function startSession(userId, guildId, channelId) {
     channelId,
     imageUrls: [],
     unmatched: [],
+    updatedPlayerIds: [],
     expires
   };
   
