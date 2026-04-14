@@ -396,25 +396,35 @@ async function getPlayerSynergy(userId) {
 
 /**
  * Identify a player by their name (IGN or Discord name).
+ * Uses strict normalization to ignore spacing and special characters.
  */
 async function resolveMemberByName(guild, name) {
   if (!name) return null;
-  const cleanName = name.toLowerCase().trim();
-
-  // 1. Try exact IGN match
-  let player = await Player.findOne({ ign: new RegExp(`^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
   
-  // 2. Try partial IGN match
-  if (!player) {
-    player = await Player.findOne({ ign: new RegExp(cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') });
+  const normalize = (str) => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+  const target = normalize(name);
+  if (!target) return null;
+
+  // Fetch all clan members to search in-memory (faster and allows fuzzy logic)
+  const players = await Player.find({ isClanMember: true });
+
+  for (const player of players) {
+    const pIgn = normalize(player.ign);
+    const pDiscord = normalize(player.discordName);
+
+    // 1. Check exact normalized IGN match
+    if (pIgn === target) return player;
+
+    // 2. Check exact normalized Discord name
+    if (pDiscord === target) return player;
+    
+    // 3. Fallback: Check if one contains the other (for names like "ZEN | KELLISTO" vs "KELLISTO")
+    if (pIgn.length > 3 && target.length > 3) {
+      if (pIgn.includes(target) || target.includes(pIgn)) return player;
+    }
   }
 
-  // 3. Try Discord name match
-  if (!player) {
-    player = await Player.findOne({ discordName: new RegExp(cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') });
-  }
-
-  return player;
+  return null;
 }
 
 /**
