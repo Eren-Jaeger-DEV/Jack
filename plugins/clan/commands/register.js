@@ -5,6 +5,7 @@ const {
   TextInputStyle,
   ActionRowBuilder
 } = require("discord.js");
+const configManager = require("../../../bot/utils/configManager");
 
 module.exports = {
 
@@ -22,6 +23,16 @@ module.exports = {
   async run(ctx) {
 
     /* PREFIX COMMAND */
+
+    const config = await configManager.getGuildConfig(ctx.guild.id);
+    const regChannelId = config?.settings?.registrationChannelId;
+
+    if (regChannelId && ctx.channel.id !== regChannelId) {
+      return ctx.reply({
+        content: `❌ Registration is only allowed in <#${regChannelId}>.`,
+        flags: 64
+      });
+    }
 
     if (!ctx.isInteraction) {
       return ctx.reply("Use `/register` to open the registration form.");
