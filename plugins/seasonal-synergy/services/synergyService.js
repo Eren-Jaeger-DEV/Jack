@@ -394,6 +394,60 @@ async function getPlayerSynergy(userId) {
   };
 }
 
+/**
+ * Identify a player by their name (IGN or Discord name).
+ */
+async function resolveMemberByName(guild, name) {
+  if (!name) return null;
+  const cleanName = name.toLowerCase().trim();
+
+  // 1. Try exact IGN match
+  let player = await Player.findOne({ ign: new RegExp(`^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+  
+  // 2. Try partial IGN match
+  if (!player) {
+    player = await Player.findOne({ ign: new RegExp(cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') });
+  }
+
+  // 3. Try Discord name match
+  if (!player) {
+    player = await Player.findOne({ discordName: new RegExp(cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') });
+  }
+
+  return player;
+}
+
+/**
+ * Bulk update energy for multiple players.
+ * @param {Array<{player: Object, weekly: number, season: number}>} updates
+ */
+async function bulkUpdateEnergy(updates) {
+  const results = { success: 0, failed: 0 };
+  const today = getTodayString();
+
+  for (const update of updates) {
+    try {
+      const { player, weekly, season } = update;
+      
+      // Update synergy values
+      // We prioritize the screenshot values. If the screenshot value is 0 (or less than current),
+      // we might want to decide whether to overwrite or just set.
+      // Usually, the screenshot IS the truth for the current state.
+      player.weeklySynergy = weekly;
+      player.seasonSynergy = season;
+      player.lastWeeklySubmission = today;
+      
+      await player.save();
+      results.success++;
+    } catch (err) {
+      logger.error("SeasonalSynergy", `Bulk update failed for a player: ${err.message}`);
+      results.failed++;
+    }
+  }
+
+  return results;
+}
+
 /* ═══════════════════════════════════════════
  *  EXPORTS
  * ═══════════════════════════════════════════ */
@@ -465,5 +519,7 @@ module.exports = {
   MAX_WEEKLY_ENERGY,
   getSynergyChannelId,
   getSeasonWinnerRoleId,
-  getWeeklyMvpRoleId
+  getWeeklyMvpRoleId,
+  bulkUpdateEnergy,
+  resolveMemberByName
 };

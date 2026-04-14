@@ -261,4 +261,71 @@ module.exports = {
       return null; // null = error, distinct from 0 points
     }
   }
+  async extractLeaderboardData(imageUrls) {
+    if (!imageUrls || imageUrls.length === 0) return [];
+    try {
+      const imagesData = await Promise.all(imageUrls.map(url => this._fetchImageData(url)));
+      const validImages = imagesData.filter(Boolean);
+      if (validImages.length === 0) return [];
+
+      const prompt = `Analyze these ${validImages.length} clan leaderboard screenshots from a mobile game (e.g. PUBG/BGMI). 
+Multiple screenshots might represent a scrolled list, so some members might appear more than once or overlap.
+
+YOUR TASK:
+1. Extract every unique member from the list.
+2. For each member, identify their "Weekly Energy" and "Season Energy".
+3. If a member appears multiple times with different values (unlikely if screenshots are sequential), pick the highest values.
+4. Clean names of any leading/trailing status indicators like "Idle", "Online", or "Last online: ...". 
+5. Return the data as a PURE JSON ARRAY of objects.
+
+JSON Structure:
+[
+  { "name": "MEMBER_NAME", "weekly": number, "season": number }
+]
+
+CRITICAL: Return ONLY the JSON array. Do not include markdown code blocks or any other text.`;
+      
+      const executeExtraction = async (retryCount = 0) => {
+        try {
+          const genAI = this._getGenAI();
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const parts = [
+            { text: prompt },
+            ...validImages.map(img => ({ inline_data: { mime_type: img.mimeType, data: img.data } }))
+          ];
+          return await model.generateContent(parts);
+        } catch (error) {
+          if (error.message.includes("429") && retryCount < API_KEYS.length - 1) {
+            this._rotateKey();
+            return await executeExtraction(retryCount + 1);
+          }
+          throw error;
+        }
+      };
+
+      const result = await executeExtraction();
+      const text = result.response.text().trim();
+      
+      // Clean potential markdown blocks
+      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      try {
+        const data = JSON.parse(jsonStr);
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        logger.error("JackAI", `JSON Parse failed for leaderboard OCR: ${e.message}`);
+        // Fallback: try to find anything that looks like a JSON array
+        const match = jsonStr.match(/\[\s*\{.*\}\s*\]/s);
+        if (match) {
+          try {
+            return JSON.parse(match[0]);
+          } catch (e2) {}
+        }
+        return [];
+      }
+    } catch (e) {
+      logger.error("JackAI", `Leaderboard extraction failed: ${e.message}`);
+      return [];
+    }
+  }
 };

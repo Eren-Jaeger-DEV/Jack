@@ -13,6 +13,8 @@ const Season = require('./models/Season');
 const profileService = require('../clan/services/profileService');
 const { addLog } = require('../../utils/logger');
 const logger = require('../../utils/logger');
+const panelHandler = require('./handlers/panelHandler');
+const sessionService = require('./services/sessionService');
 
 /**
  * Get current date/time in Asia/Kolkata timezone.
@@ -49,6 +51,11 @@ module.exports = {
         console.error('[SeasonalSynergy] Restart recovery error:', err.message);
       }
     }, 5000); // Wait 5s for client to be fully ready
+
+    // Initialize Automation Panel
+    setTimeout(() => {
+      panelHandler.ensurePanel(client);
+    }, 8000);
 
     /* ═══════════════════════════════════════════
      *  PATCH 1 — WEEKLY RESET (IST TIMEZONE)
@@ -122,6 +129,13 @@ module.exports = {
      *  BUTTON HANDLER — Leaderboard Pagination
      * ═══════════════════════════════════════════ */
     this._interactionHandler = async (interaction) => {
+      if (interaction.isButton() || interaction.isStringSelectMenu()) {
+        const customId = interaction.customId;
+        if (customId.startsWith('synergy_')) {
+          return panelHandler.handleInteraction(interaction);
+        }
+      }
+
       if (!interaction.isButton()) return;
       if (!interaction.customId.startsWith('synergy_lb_')) return;
 
@@ -175,12 +189,38 @@ module.exports = {
     };
 
     client.on('interactionCreate', this._interactionHandler);
+
+    /* ═══════════════════════════════════════════
+     *  MESSAGE LISTENER — Screenshot Collection
+     * ═══════════════════════════════════════════ */
+    this._messageHandler = async (message) => {
+      if (message.author.bot || !message.guild) return;
+      if (message.channel.id !== panelHandler.MOD_CHANNEL_ID) return;
+
+      const session = sessionService.getSession(message.author.id);
+      if (!session) return;
+
+      const images = message.attachments.filter(a => a.contentType?.startsWith('image/'));
+      if (images.size > 0) {
+        for (const [, img] of images) {
+          sessionService.addImage(message.author.id, img.url);
+        }
+        await message.react('✅').catch(() => {});
+        addLog("Synergy", `Collected ${images.size} attachment(s) from ${message.author.tag}`);
+      }
+    };
+
+    client.on('messageCreate', this._messageHandler);
   },
 
   unload(client) {
     if (this._interactionHandler) {
       client.removeListener('interactionCreate', this._interactionHandler);
       this._interactionHandler = null;
+    }
+    if (this._messageHandler) {
+      client.removeListener('messageCreate', this._messageHandler);
+      this._messageHandler = null;
     }
   }
 };
