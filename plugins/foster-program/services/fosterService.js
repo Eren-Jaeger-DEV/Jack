@@ -29,6 +29,14 @@ function getIST() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
 }
 
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 async function getActiveProgram(guildId) {
   return FosterProgram.findOne({ guildId, active: true });
 }
@@ -400,11 +408,12 @@ async function rotateCycle(guild, client, program, force = false) {
     program.cycle += 1;
     const mentors = program.pairs.map(p => p.mentorId); const partners = program.pairs.map(p => p.partnerId);
     let newPairs = []; let attempts = 0;
-    while (attempts < 100) {
-      let shuf = [...partners].sort(() => 0.5 - Math.random());
+    while (attempts < 500) {
+      let shuf = shuffleArray([...partners]);
       let ok = true;
       for (let i = 0; i < mentors.length; i++) {
-        if (program.previousPairs.some(pp => pp[0] === mentors[i] && pp[1] === shuf[i])) { ok = false; break; }
+        const isDuplicate = program.previousPairs.some(pp => pp[0] === mentors[i] && pp[1] === shuf[i]);
+        if (isDuplicate) { ok = false; break; }
       }
       if (ok) {
         for (let i = 0; i < mentors.length; i++) {
@@ -415,6 +424,16 @@ async function rotateCycle(guild, client, program, force = false) {
       }
       attempts++;
     }
+
+    if (newPairs.length === 0) {
+      // Fallback: Just random shuffle if no perfect unique shuffle found after 500 attempts
+      let shuf = shuffleArray([...partners]);
+      for (let i = 0; i < mentors.length; i++) {
+        newPairs.push({ mentorId: mentors[i], partnerId: shuf[i], points: 0, initialPoints: 0 });
+        program.previousPairs.push([mentors[i], shuf[i]]);
+      }
+    }
+
     program.pairs = newPairs; program.status = 'PAIRING_VERIFICATION'; program.lastRotation = getIST();
     await program.save(); await postOrientation(client, program, guild);
   } else if (program.term === 1) {
