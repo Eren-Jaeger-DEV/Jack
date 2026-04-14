@@ -33,26 +33,58 @@ const commandMap = {
     'mute': { text: 'Deploying Communication Silence', type: 3 },
     'unmute': { text: 'Restoring Voice Channels', type: 2 },
     'warn': { text: 'Documenting Rule Violations', type: 3 },
+    'unwarn': { text: 'Clearing Incident Records', type: 0 },
     'lock': { text: 'Securing Perimeter Channels', type: 3 },
     'unlock': { text: 'Restoring Public Access', type: 0 },
+    'clear': { text: 'Purging Command History', type: 3 },
+    'clearall': { text: 'Sanitizing Channel Data', type: 3 },
     'mod': { text: 'Global System Safety', type: 3 },
+    'admin': { text: 'Classified System Protocols', type: 3 },
+    'enable': { text: 'Activating System Modules', type: 0 },
+    'disable': { text: 'Deactivating System Modules', type: 0 },
 
     // Infrastructure & Management
     'clan': { text: 'Analyzing Clan Architecture', type: 3 },
+    'register': { text: 'Processing New Registrations', type: 0 },
     'profile': { text: 'Reviewing Player Dossiers', type: 3 },
     'uid': { text: 'Querying Network Database', type: 3 },
+    'ign': { text: 'Querying Network Database', type: 3 },
     'battle': { text: 'Active Engagements', type: 5 },
     'editbp': { text: 'Adjusting Strategic Metrics', type: 0 },
+    'edittotalbp': { text: 'Recalculating Rankings', type: 3 },
     'rank': { text: 'Processing Performance Data', type: 3 },
+    'leaderboard': { text: 'Retrieving Competitive Data', type: 3 },
+    'rradd': { text: 'Configuring Role Gateways', type: 0 },
+    'rrcreate': { text: 'Defining Role Gateways', type: 0 },
+
+    // Asset Procurement & Economy
     'popmarket': { text: 'Monitoring Market Pulse', type: 3 },
+    'sellpop': { text: 'Processing Market Transaction', type: 0 },
+    'cancelpop': { text: 'Terminating Market Listing', type: 0 },
+    'sync': { text: 'Synchronizing Central Database', type: 0 },
+    'emojiadd': { text: 'Ingesting Visual Assets', type: 0 },
+    'emojibank': { text: 'Accessing Asset Vault', type: 3 },
+    'stickeradd': { text: 'Ingesting Media Assets', type: 0 },
+    'packadd': { text: 'Compiling Asset Packages', type: 0 },
+
+    // Tactical Coordination
+    'fs-start': { text: 'Initializing Foster Program', type: 3 },
+    'foster': { text: 'Managing Neophyte Allocations', type: 3 },
+    'createteam': { text: 'Assembling Tactical Squad', type: 0 },
+    'teamup': { text: 'Reviewing Squad Formations', type: 3 },
+    'hud': { text: 'Calibrating Tactical HUD', type: 3 },
+    'poll': { text: 'Processing Internal Consensus', type: 3 },
 
     // Metrics & Analytics
     'we': { text: 'Analyzing Synergy Data', type: 3 },
     'se': { text: 'Processing Seasonal Rankings', type: 3 },
+    'synergy-setup': { text: 'Calibrating Synergy Node', type: 0 },
+    'regstatus': { text: 'Auditing Registration Flow', type: 3 },
     'serverinfo': { text: 'Running System Analytics', type: 3 },
-    'admin': { text: 'Classified System Protocols', type: 3 },
+    'userinfo': { text: 'Background Check: Active User', type: 0 },
+    'ping': { text: 'Measuring Network Latency', type: 3 },
     'settings': { text: 'Calibrating System Nodes', type: 0 },
-    'ping': { text: 'Measuring Network Latency', type: 3 }
+    'help': { text: 'Retrieving Operations Manual', type: 0 }
 };
 
 /**
