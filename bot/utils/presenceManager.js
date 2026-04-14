@@ -22,7 +22,11 @@ const defaultActivities = [
     { text: "Active Clan Engagements", type: 5 },   // COMPETING
     { text: "System Node Stability", type: 3 },
     { text: "Secure Command Stream", type: 2 },     // LISTENING
-    { text: "Market Pulse & Metrics", type: 3 }
+    { text: "Market Pulse & Metrics", type: 3 },
+    { text: "Cross-Sector Syncing", type: 0 },
+    { text: "Operational Integrity", type: 3 },
+    { text: "Data-Stream Validation", type: 3 },
+    { text: "Cluster Resource Allocation", type: 0 }
 ];
 
 const commandMap = {
@@ -38,24 +42,40 @@ const commandMap = {
     'unlock': { text: 'Restoring Public Access', type: 0 },
     'clear': { text: 'Purging Command History', type: 3 },
     'clearall': { text: 'Sanitizing Channel Data', type: 3 },
+    'clearwarns': { text: 'Wiping Security Infractions', type: 3 },
+    'nickname': { text: 'Updating Identity Metadata', type: 0 },
+    'addrole': { text: 'Modifying Privilege Level', type: 0 },
+    'removerole': { text: 'Modifying Privilege Level', type: 0 },
     'mod': { text: 'Global System Safety', type: 3 },
     'admin': { text: 'Classified System Protocols', type: 3 },
     'enable': { text: 'Activating System Modules', type: 0 },
     'disable': { text: 'Deactivating System Modules', type: 0 },
+    'setlog': { text: 'Calibrating Audit Stream', type: 0 },
+    'announce': { text: 'Broadcasting Global Directive', type: 2 },
 
     // Infrastructure & Management
     'clan': { text: 'Analyzing Clan Architecture', type: 3 },
+    'clanroster': { text: 'Auditing Clan Personnel', type: 3 },
     'register': { text: 'Processing New Registrations', type: 0 },
     'profile': { text: 'Reviewing Player Dossiers', type: 3 },
+    'editprofile': { text: 'Updating Personnel Metadata', type: 0 },
+    'profilecreate': { text: 'Finalizing Dossier Creation', type: 0 },
+    'profiletransfer': { text: 'Migrating Account Data', type: 0 },
     'uid': { text: 'Querying Network Database', type: 3 },
     'ign': { text: 'Querying Network Database', type: 3 },
+    'ignall': { text: 'Batch Querying Network Data', type: 3 },
+    'unlinked': { text: 'Identifying Unlinked Nodes', type: 3 },
     'battle': { text: 'Active Engagements', type: 5 },
+    'bp': { text: 'Reviewing Battle Distribution', type: 3 },
     'editbp': { text: 'Adjusting Strategic Metrics', type: 0 },
     'edittotalbp': { text: 'Recalculating Rankings', type: 3 },
     'rank': { text: 'Processing Performance Data', type: 3 },
     'leaderboard': { text: 'Retrieving Competitive Data', type: 3 },
+    'rankbackground': { text: 'Calibrating Visual Identity', type: 3 },
     'rradd': { text: 'Configuring Role Gateways', type: 0 },
+    'rrremove': { text: 'Configuring Role Gateways', type: 0 },
     'rrcreate': { text: 'Defining Role Gateways', type: 0 },
+    'rrdelete': { text: 'Terminating Role Gateways', type: 3 },
 
     // Asset Procurement & Economy
     'popmarket': { text: 'Monitoring Market Pulse', type: 3 },
@@ -64,16 +84,24 @@ const commandMap = {
     'sync': { text: 'Synchronizing Central Database', type: 0 },
     'emojiadd': { text: 'Ingesting Visual Assets', type: 0 },
     'emojibank': { text: 'Accessing Asset Vault', type: 3 },
+    'emojicreate': { text: 'Synthesizing Visual Assets', type: 0 },
+    'emojiremove': { text: 'Decommissioning Visual Assets', type: 3 },
     'stickeradd': { text: 'Ingesting Media Assets', type: 0 },
+    'stickerbank': { text: 'Accessing Media Vault', type: 3 },
     'packadd': { text: 'Compiling Asset Packages', type: 0 },
+    'packcreate': { text: 'Structuring New Asset Packs', type: 0 },
 
     // Tactical Coordination
     'fs-start': { text: 'Initializing Foster Program', type: 3 },
+    'fs-replace': { text: 'Optimizing Partner Allocation', type: 0 },
+    'fs-pairremove': { text: 'Terminating Mentorship Link', type: 3 },
     'foster': { text: 'Managing Neophyte Allocations', type: 3 },
     'createteam': { text: 'Assembling Tactical Squad', type: 0 },
+    'leaveteam': { text: 'Dissolving Squad Link', type: 0 },
     'teamup': { text: 'Reviewing Squad Formations', type: 3 },
     'hud': { text: 'Calibrating Tactical HUD', type: 3 },
     'poll': { text: 'Processing Internal Consensus', type: 3 },
+    'ticketpanel': { text: 'Deploying Support Interface', type: 0 },
 
     // Metrics & Analytics
     'we': { text: 'Analyzing Synergy Data', type: 3 },
@@ -82,10 +110,17 @@ const commandMap = {
     'regstatus': { text: 'Auditing Registration Flow', type: 3 },
     'serverinfo': { text: 'Running System Analytics', type: 3 },
     'userinfo': { text: 'Background Check: Active User', type: 0 },
+    'memberlist': { text: 'Compiling Personnel Manifest', type: 3 },
+    'setup-overview': { text: 'Deploying Overview Interface', type: 0 },
     'ping': { text: 'Measuring Network Latency', type: 3 },
     'settings': { text: 'Calibrating System Nodes', type: 0 },
-    'help': { text: 'Retrieving Operations Manual', type: 0 }
+    'help': { text: 'Retrieving Operations Manual', type: 0 },
+    'achievement': { text: 'Archiving System Accomplishments', type: 3 },
+    'record': { text: 'Initializing Session Recording', type: 2 },
+    'tttlb': { text: 'Auditing Combat Logic History', type: 3 },
+    'prefix': { text: 'Modifying Command Protocols', type: 0 }
 };
+
 
 /**
  * Jumpstarts the automatic idle rotation of the bot's presence.
