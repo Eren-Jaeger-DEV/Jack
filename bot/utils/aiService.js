@@ -260,7 +260,7 @@ module.exports = {
       logger.error("JackAI", `Synergy extraction failed: ${e.message}`);
       return null; // null = error, distinct from 0 points
     }
-  }
+  },
   async extractLeaderboardData(imageUrls) {
     if (!imageUrls || imageUrls.length === 0) return [];
     try {

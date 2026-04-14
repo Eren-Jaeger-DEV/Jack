@@ -143,8 +143,6 @@ async function handleInteraction(interaction) {
         sessionService.endSession(user.id);
       }
 
-    } catch (err) {
-
       // Refresh real leaderboard
       const season = await synergyService.getActiveSeason(guild.id);
       if (season) await synergyService.refreshLeaderboard(client, season);
