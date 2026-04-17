@@ -32,7 +32,10 @@ async function initControlPanel(client) {
 
     // Check if message already exists
     const messages = await channel.messages.fetch({ limit: 10 });
-    const existingPanel = messages.find(m => m.author.id === client.user.id && m.components.length > 0);
+    const existingPanel = messages.find(m => 
+      m.author.id === client.user.id && 
+      m.embeds?.[0]?.title?.includes('Personal Voice Channel')
+    );
     
     if (existingPanel) {
       addLog("TempVC", "Control panel ready");
