@@ -8,7 +8,7 @@
  * tictactoeHandler so the button handler and this command share state.
  */
 
-const { SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 const { startGame } = require('../handlers/tictactoe');
 
 module.exports = {
@@ -16,36 +16,21 @@ module.exports = {
   aliases: ['ttt'],
   category: 'games',
   description: 'Challenge another user to a game of TicTacToe',
-  usage: '/tictactoe [user]  |  j tictactoe [user]',
+  usage: "j tictactoe [user]",
   details: 'Starts a TicTacToe match. If a user is specified, it challenges them. If not, you play against an intelligent AI.',
 
-  data: new SlashCommandBuilder()
-    .setName('tictactoe')
-    .setDescription('Challenge someone to a game of TicTacToe!')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('Optional: The opponent (leave empty to play vs AI)')
-        .setRequired(false)
-    ),
-
   async run(ctx) {
-    let opponent;
 
-    if (ctx.type === 'slash') {
-      opponent = ctx.options.getUser('user');
-    } else {
-      // Prefix support
-      opponent = ctx.message.mentions.users.first();
-      
-      // If no mention, try to resolve from ID/mention in first argument
-      if (!opponent && ctx.args[0]) {
-        try {
-          const id = ctx.args[0].replace(/[<@!>]/g, '');
-          opponent = await ctx.client.users.fetch(id).catch(() => null);
-        } catch {
-          opponent = null;
-        }
+    // Prefix support
+    let opponent = ctx.message.mentions.users.first();
+    
+    // If no mention, try to resolve from ID/mention in first argument
+    if (!opponent && ctx.args[0]) {
+      try {
+        const id = ctx.args[0].replace(/[<@!>]/g, '');
+        opponent = await ctx.client.users.fetch(id).catch(() => null);
+      } catch {
+        opponent = null;
       }
     }
 

@@ -38,7 +38,7 @@ async function run() {
 
       // 2. Post Pairing Orientation Board (↔️)
       console.log('🖼️ Generating Pairing Board & Submission Thread...');
-      await fosterService.postOrientation(client, program);
+      await fosterService.postOrientation(client, program, guild);
 
       // 3. Post Dual Leaderboard Board (🏆)
       console.log('📊 Generating Dual Leaderboard Rankings...');

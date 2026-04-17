@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder
-} = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
 
@@ -9,36 +6,13 @@ module.exports = {
   category: "utility",
   description: "Get information about a user",
   aliases: ["ui","whois","user"],
-  usage: "/userinfo [@user]  |  j userinfo [@user]",
+  usage: "j userinfo [@user]",
   details: "Shows detailed info about a user: roles, join date, creation date, etc.",
 
-  data: new SlashCommandBuilder()
-    .setName('userinfo')
-    .setDescription('Get information about a user')
-    .addUserOption(option =>
-      option.setName('user')
-        .setDescription('User to check')
-        .setRequired(false)),
 
   async run(ctx) {
 
-    let user;
-
-    /* PREFIX */
-
-    if (ctx.type === "prefix") {
-
-      user = ctx.message.mentions.users.first() || ctx.user;
-
-    }
-
-    /* SLASH */
-
-    if (ctx.type === "slash") {
-
-      user = ctx.interaction.options.getUser('user') || ctx.user;
-
-    }
+    const user = ctx.message.mentions.users.first() || ctx.user;
 
     const member = await ctx.guild.members.fetch(user.id);
 

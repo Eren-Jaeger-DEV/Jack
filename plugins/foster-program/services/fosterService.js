@@ -514,5 +514,6 @@ async function startActiveProgram(guild, client, program) {
 module.exports = { 
   getActiveProgram, sendStartConfirmation, initiateRegistration, 
   processThreadRegistration, processWildcardEntry, 
-  rotateCycle, checkRotationAndPhase, submitSynergyCard, refreshLeaderboard, ROLES 
+  rotateCycle, checkRotationAndPhase, submitSynergyCard, refreshLeaderboard, 
+  postOrientation, ROLES 
 };

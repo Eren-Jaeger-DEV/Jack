@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const TicTacToeStats = require("../../../bot/database/models/TicTacToeStats");
 
 module.exports = {
@@ -6,12 +6,9 @@ module.exports = {
   category: "games",
   description: "View the TicTacToe leaderboard",
   aliases: ["tttleaderboard", "ttt-top"],
-  usage: "/tttlb  |  j tttlb",
+  usage: "j tttlb",
   details: "Shows the top 10 TicTacToe players based on wins.",
   
-  data: new SlashCommandBuilder()
-    .setName("tttlb")
-    .setDescription("View the TicTacToe leaderboard"),
 
   async run(ctx) {
     // Fetch top 10 players by wins

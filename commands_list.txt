@@ -1,0 +1,152 @@
+JACK BOT COMMANDS LIST
+======================
+
+TOTAL COMMANDS: 105
+SLASH COMMANDS: 95
+PREFIX-ONLY: 10
+
+[ADMIN] (20 commands)
+1. achievement (Slash: YES) | Triggers: achievement
+2. addxp (Slash: YES) | Triggers: addxp, xp+, givexp
+3. announce (Slash: YES) | Triggers: announce, ann
+4. disable (Slash: YES) | Triggers: disable, cmdoff, disablecmd
+5. enable (Slash: YES) | Triggers: enable, cmdon, enablecmd
+6. removexp (Slash: YES) | Triggers: removexp, xp-, takexp
+7. resetxp (Slash: YES) | Triggers: resetxp, clearxp, xpreset
+8. resetxpall (Slash: YES) | Triggers: resetxpall, wipelevels, clearallxp
+9. sayit (Slash: YES) | Triggers: sayit
+10. setai (Slash: YES) | Triggers: setai
+11. setfoster (Slash: YES) | Triggers: setfoster, fosterchannel, foster-channel
+12. setlevel (Slash: YES) | Triggers: setlevel, lvlset, forcelvl
+13. setlog (Slash: YES) | Triggers: setlog, modlog, setmodlog
+14. setup (Slash: YES) | Triggers: setup, setup-admin-guide, adminguide
+15. setup-control-panel (Slash: YES) | Triggers: setup-control-panel
+16. setup-overview (Slash: YES) | Triggers: setup-overview
+17. setupgreeting (Slash: YES) | Triggers: setupgreeting, setgreet, greetconfig
+18. setxp (Slash: YES) | Triggers: setxp, xpset, forcexp
+19. ticketpanel (Slash: YES) | Triggers: ticketpanel, ticket, tickets
+20. xpresetweekly (Slash: YES) | Triggers: xpresetweekly, xpweeklyreset, clearweeklyxp
+
+[AUDIT] (1 commands)
+1. regstatus (Slash: YES) | Triggers: regstatus, rs
+
+[CARD-DATABASE] (1 commands)
+1. card (Slash: YES) | Triggers: card
+
+[CLAN] (11 commands)
+1. clanroster (Slash: YES) | Triggers: clanroster, roster, players
+2. deleteplayer (Slash: YES) | Triggers: deleteplayer, delplayer, removeplayer
+3. editprofile (Slash: YES) | Triggers: editprofile, editp, updateprofile
+4. ign (Slash: YES) | Triggers: ign, gamename, ingamename
+5. ignall (Slash: YES) | Triggers: ignall, alligns, listigns
+6. profile (Slash: YES) | Triggers: profile, p, playerprofile
+7. profilecreate (Slash: YES) | Triggers: profilecreate, pc, createprofile
+8. profiletransfer (Slash: YES) | Triggers: profiletransfer, pt, transferprofile
+9. register (Slash: YES) | Triggers: register, reg, joinroster
+10. uid (Slash: YES) | Triggers: uid, playeruid, bgmiuid
+11. unlinked (Slash: YES) | Triggers: unlinked, unlinkedprofiles, listunlinked
+
+[CLAN-BATTLE] (3 commands)
+1. bp (Slash: YES) | Triggers: bp, battlepoint
+2. editbp (Slash: YES) | Triggers: editbp, editbattlepoint
+3. edittotalbp (Slash: YES) | Triggers: edittotalbp, edittotalbattlepoint
+
+[EMOJI] (8 commands)
+1. emoji (Slash: YES) | Triggers: emoji, moji, sendemoji
+2. emojiadd (Slash: YES) | Triggers: emojiadd, emojiget, getmoji
+3. emojibank (Slash: YES) | Triggers: emojibank, emojilist, mojis
+4. emojibrowse (Slash: YES) | Triggers: emojibrowse, emojivault, browsemoji
+5. emojicleanup (Slash: YES) | Triggers: emojicleanup, mojiscan, emojiscan
+6. emojiremove (Slash: YES) | Triggers: emojiremove, emojidel, delmoji
+7. emojislots (Slash: YES) | Triggers: emojislots, slots, emojicap
+8. emojitemp (Slash: YES) | Triggers: emojitemp, tempemoji, borrowmoji
+
+[FOSTER-PROGRAM] (3 commands)
+1. fs-pairremove (Slash: YES) | Triggers: fs-pairremove, pairremove, foster-pairremove, removepair
+2. fs-replace (Slash: YES) | Triggers: fs-replace, fosterreplace, foster-replace
+3. fs-start (Slash: YES) | Triggers: fs-start, fosterstart, fsstart, /fs-start
+
+[FUN] (1 commands)
+1. action (Slash: YES) | Triggers: action, do, react
+
+[GAMES] (2 commands)
+1. tictactoe (Slash: NO) | Triggers: tictactoe, ttt
+2. tttlb (Slash: NO) | Triggers: tttlb, tttleaderboard, ttt-top
+
+[LEVELING] (3 commands)
+1. leaderboard (Slash: YES) | Triggers: leaderboard, lb, top, levels
+2. rank (Slash: YES) | Triggers: rank, level, xp
+3. rankbackground (Slash: YES) | Triggers: rankbackground, rankbg, setbg
+
+[MARKET] (3 commands)
+1. cancelpop (Slash: YES) | Triggers: cancelpop, popcancel, unsell
+2. popmarket (Slash: YES) | Triggers: popmarket, market, marketplace
+3. sell (Slash: YES) | Triggers: sell, sellpop, listpop
+
+[MISC] (1 commands)
+1. ask (Slash: YES) | Triggers: ask
+
+[MODERATION] (16 commands)
+1. addrole (Slash: YES) | Triggers: addrole, ar, giverole, roleadd
+2. ban (Slash: YES) | Triggers: ban, banish
+3. clear (Slash: YES) | Triggers: clear, purge, delete, clean
+4. clearall (Slash: YES) | Triggers: clearall, nuke, wipe
+5. clearwarns (Slash: YES) | Triggers: clearwarns, warnsclear, clearwarnings
+6. kick (Slash: YES) | Triggers: kick, boot, remove
+7. lock (Slash: YES) | Triggers: lock, lockdown, lockchannel
+8. mute (Slash: YES) | Triggers: mute, timeout, silence, shutup
+9. nickname (Slash: YES) | Triggers: nickname, nick, setnick, rename
+10. removerole (Slash: YES) | Triggers: removerole, rr-role, takerole, roledel
+11. unban (Slash: YES) | Triggers: unban, pardon, forgive
+12. unlock (Slash: YES) | Triggers: unlock, unlockchannel, open
+13. unmute (Slash: YES) | Triggers: unmute, untimeout, unsilence
+14. unwarn (Slash: YES) | Triggers: unwarn, removewarn, warnremove
+15. warn (Slash: YES) | Triggers: warn, strike, warning
+16. warnings (Slash: YES) | Triggers: warnings, warns, checkwarns
+
+[PACKS] (4 commands)
+1. packadd (Slash: YES) | Triggers: packadd, addpack, packemoji
+2. packcreate (Slash: YES) | Triggers: packcreate, newpack, createpack
+3. packimport (Slash: YES) | Triggers: packimport, importpack, downloadpack
+4. packremove (Slash: YES) | Triggers: packremove, removepack, packdelete
+
+[RECORDER] (1 commands)
+1. record (Slash: YES) | Triggers: record
+
+[ROLES] (4 commands)
+1. rradd (Slash: YES) | Triggers: rradd, addreactionrole, rr-add
+2. rrcreate (Slash: YES) | Triggers: rrcreate, createreactionrole, rr-create, newrr
+3. rrdelete (Slash: YES) | Triggers: rrdelete, deletereactionrole, rr-delete, delrr
+4. rrremove (Slash: YES) | Triggers: rrremove, removereactionrole, rr-remove
+
+[SEASONAL-SYNERGY] (3 commands)
+1. se (Slash: YES) | Triggers: se, seasonenergy
+2. synergy-setup (Slash: YES) | Triggers: synergy-setup
+3. we (Slash: YES) | Triggers: we, weeklyenergy
+
+[STICKER] (5 commands)
+1. sticker (Slash: YES) | Triggers: sticker, sendsticker, getstick
+2. stickeradd (Slash: YES) | Triggers: stickeradd, stickerget, getsticker
+3. stickerbank (Slash: YES) | Triggers: stickerbank, stickerlist, stickers
+4. stickerbrowse (Slash: YES) | Triggers: stickerbrowse, stickervault, browsesticker
+5. stickerremove (Slash: YES) | Triggers: stickerremove, stickerdel, delsticker
+
+[TEAMUP] (3 commands)
+1. createteam (Slash: NO) | Triggers: createteam, teamcreate
+2. deleteteam (Slash: NO) | Triggers: deleteteam, disbandteam, teamdelete
+3. leaveteam (Slash: NO) | Triggers: leaveteam, teamleave
+
+[UTILITY] (12 commands)
+1. afk (Slash: NO) | Triggers: afk, away, setafk
+2. avatar (Slash: NO) | Triggers: avatar, av, pfp, icon
+3. help (Slash: YES) | Triggers: help, h, commands, cmds
+4. hud (Slash: YES) | Triggers: hud
+5. memberlist (Slash: YES) | Triggers: memberlist, members, ml, memberroles
+6. ping (Slash: YES) | Triggers: ping, latency, pong
+7. poll (Slash: YES) | Triggers: poll, vote, yesno
+8. prefix (Slash: YES) | Triggers: prefix
+9. prefixtest (Slash: NO) | Triggers: prefixtest, testprefix, prefix
+10. serverinfo (Slash: NO) | Triggers: serverinfo, si, server, guildinfo
+11. steal (Slash: YES) | Triggers: steal, snatch, stealemoji
+12. userinfo (Slash: NO) | Triggers: userinfo, ui, whois, user
+

@@ -1,5 +1,4 @@
 const {
-  SlashCommandBuilder,
   EmbedBuilder
 } = require('discord.js');
 
@@ -9,12 +8,9 @@ module.exports = {
   category: "utility",
   description: "Show information about the server",
   aliases: ["si","server","guildinfo"],
-  usage: "/serverinfo  |  j serverinfo",
+  usage: "j serverinfo",
   details: "Shows detailed info about the server: owner, member count, channels, boosts, etc.",
 
-  data: new SlashCommandBuilder()
-    .setName('serverinfo')
-    .setDescription('Show information about the server'),
 
   async run(ctx) {
 

@@ -1,5 +1,5 @@
 const Afk = require("../../../bot/database/models/Afk");
-const { SlashCommandBuilder } = require("discord.js");
+
 
 module.exports = {
 
@@ -7,38 +7,13 @@ module.exports = {
   category: "utility",
   description: "Set yourself as AFK",
   aliases: ["away","setafk"],
-  usage: "/afk [reason]  |  j afk [reason]",
+  usage: "j afk [reason]",
   details: "Marks you as AFK. Bot will mention others when they ping you.",
 
-  data: new SlashCommandBuilder()
-    .setName("afk")
-    .setDescription("Set yourself as AFK")
-    .addStringOption(option =>
-      option
-        .setName("reason")
-        .setDescription("Reason")
-        .setRequired(false)
-    ),
 
   async run(ctx) {
 
-    let reason;
-
-    /* SLASH */
-
-    if (ctx.type === "slash") {
-
-      reason = ctx.options.getString("reason") || "AFK";
-
-    }
-
-    /* PREFIX */
-
-    if (ctx.type === "prefix") {
-
-      reason = ctx.args.join(" ") || "AFK";
-
-    }
+    const reason = ctx.args.join(" ") || "AFK";
 
     const member = await ctx.guild.members.fetch(ctx.user.id);
 

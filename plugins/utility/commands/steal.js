@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, AttachmentBuilder } = require("discord.js");
+const { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, AttachmentBuilder } = require("discord.js");
 const perms = require("../../../bot/utils/permissionUtils");
 const { storeEmojiInBank } = require("../../../bot/utils/emojiDownloader");
 const { storeStickerInBank } = require("../../../bot/utils/stickerDownloader");
@@ -10,14 +10,9 @@ module.exports = {
   category: "utility",
   description: "Steal an emoji or sticker by replying to a message and store it globally.",
   aliases: ["snatch","stealemoji"],
-  usage: "/steal (reply to a message with emoji/sticker)  |  j steal",
+  usage: "j steal (reply to a message with emoji/sticker)",
   details: "Steals an emoji or sticker from a replied message and stores it in the Global Vault.",
 
-  data: new SlashCommandBuilder()
-    .setName("steal")
-    .setDescription("Steal an emoji or sticker to the Global Vault (Must be used as a prefix command for replies)")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
-    // A slash command variant could accept an ID or raw string, but replying is overwhelmingly simpler via Prefix.
 
   async run(ctx) {
 
@@ -28,20 +23,16 @@ module.exports = {
 
     // Since stealing replies to messages, it fundamentally works best as a message command ("j steal")
     // If it's a slash command without a target message id, we error
-    let targetMessage = null;
-
-    if (ctx.type === "slash") {
-       return ctx.reply({ content: "❌ Steal works best as a Prefix Command. Simply reply to a message with `jack steal`.", flags: 64 });
-    } else {
-       // Is it a reply?
-       if (!ctx.message.reference || !ctx.message.reference.messageId) {
-         return ctx.reply("❌ Please reply to a message containing the emoji or sticker you want to steal. E.g: `j steal [name]`");
-       }
-       try {
-         targetMessage = await ctx.channel.messages.fetch(ctx.message.reference.messageId);
-       } catch {
-         return ctx.reply("❌ Could not fetch the replied message.");
-       }
+    // Is it a reply?
+    if (!ctx.message.reference || !ctx.message.reference.messageId) {
+      return ctx.reply("❌ Please reply to a message containing the emoji or sticker you want to steal. E.g: `j steal [name]`");
+    }
+    
+    let targetMessage;
+    try {
+      targetMessage = await ctx.channel.messages.fetch(ctx.message.reference.messageId);
+    } catch {
+      return ctx.reply("❌ Could not fetch the replied message.");
     }
 
     // Check for Custom Emoji
