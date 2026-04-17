@@ -72,7 +72,10 @@ module.exports = {
       return ctx.reply('❌ I lack permission.');
 
     if (ctx.member.roles.highest.position <= member.roles.highest.position)
-      return ctx.reply('❌ Cannot kick this user.');
+      return ctx.reply('❌ **Jack:** You lack the disciplinary authority for this action.');
+
+    if (!member.kickable)
+      return ctx.reply('❌ **Jack:** I lack the disciplinary authority for this action. (Role Hierarchy)');
 
     await member.kick(reason);
 

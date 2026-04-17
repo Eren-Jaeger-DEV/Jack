@@ -1,0 +1,632 @@
+[
+  {
+    "name": "ask",
+    "category": "misc",
+    "description": "Consult with Jack AI (Strategist)",
+    "file": "bot/commands/ask.js"
+  },
+  {
+    "name": "achievement",
+    "category": "admin",
+    "description": "Manually edit a player",
+    "file": "plugins/admin/commands/achievement.js"
+  },
+  {
+    "name": "announce",
+    "category": "admin",
+    "description": "Create a beautiful announcement in any channel",
+    "file": "plugins/admin/commands/announce.js"
+  },
+  {
+    "name": "disable",
+    "category": "admin",
+    "description": "Disable a command category in a channel or server-wide",
+    "file": "plugins/admin/commands/disable.js"
+  },
+  {
+    "name": "enable",
+    "category": "admin",
+    "description": "Enable a command category in a channel or server-wide",
+    "file": "plugins/admin/commands/enable.js"
+  },
+  {
+    "name": "setai",
+    "category": "admin",
+    "description": "Sets the smart AI channel for the server",
+    "file": "plugins/admin/commands/setai.js"
+  },
+  {
+    "name": "setfoster",
+    "category": "admin",
+    "description": "Set the Foster Program channel",
+    "file": "plugins/admin/commands/setfoster.js"
+  },
+  {
+    "name": "setlog",
+    "category": "admin",
+    "description": "Set the moderation log channel",
+    "file": "plugins/admin/commands/setlog.js"
+  },
+  {
+    "name": "setup",
+    "category": "admin",
+    "description": "Setup the permanent admin guide dashboard",
+    "file": "plugins/admin/commands/setupAdminGuide.js"
+  },
+  {
+    "name": "regstatus",
+    "category": "audit",
+    "description": "Audit clan member registration status",
+    "file": "plugins/audit/commands/regstatus.js"
+  },
+  {
+    "name": "card",
+    "category": "card-database",
+    "description": "Card database management commands",
+    "file": "plugins/card-database/commands/sync.js"
+  },
+  {
+    "name": "hud",
+    "category": "utility",
+    "description": "Access your Celestial HUD (Live Status)",
+    "file": "plugins/celestial-hud/commands/hud.js"
+  },
+  {
+    "name": "clanroster",
+    "category": "clan",
+    "description": "View the full clan player roster",
+    "file": "plugins/clan/commands/clanroster.js"
+  },
+  {
+    "name": "deleteplayer",
+    "category": "clan",
+    "description": "Delete a player",
+    "file": "plugins/clan/commands/deleteplayer.js"
+  },
+  {
+    "name": "editprofile",
+    "category": "clan",
+    "description": "Edit your BGMI player profile",
+    "file": "plugins/clan/commands/editprofile.js"
+  },
+  {
+    "name": "ign",
+    "category": "clan",
+    "description": "View a player",
+    "file": "plugins/clan/commands/ign.js"
+  },
+  {
+    "name": "ignall",
+    "category": "clan",
+    "description": "View a list of all player IGNs in the database (Admin Only)",
+    "file": "plugins/clan/commands/ignall.js"
+  },
+  {
+    "name": "profile",
+    "category": "clan",
+    "description": "Show BGMI player profile",
+    "file": "plugins/clan/commands/profile.js"
+  },
+  {
+    "name": "profilecreate",
+    "category": "clan",
+    "description": "Create an unlinked BGMI player profile (Admin Only)",
+    "file": "plugins/clan/commands/profilecreate.js"
+  },
+  {
+    "name": "profiletransfer",
+    "category": "clan",
+    "description": "Link an unlinked profile to a Discord user (Admin Only)",
+    "file": "plugins/clan/commands/profiletransfer.js"
+  },
+  {
+    "name": "register",
+    "category": "clan",
+    "description": "Register your BGMI player profile",
+    "file": "plugins/clan/commands/register.js"
+  },
+  {
+    "name": "uid",
+    "category": "clan",
+    "description": "View a player",
+    "file": "plugins/clan/commands/uid.js"
+  },
+  {
+    "name": "unlinked",
+    "category": "clan",
+    "description": "View all unlinked player profiles (Admin Only)",
+    "file": "plugins/clan/commands/unlinked.js"
+  },
+  {
+    "name": "bp",
+    "category": "clan-battle",
+    "description": "Submit your daily battle contribution points",
+    "file": "plugins/clan-battle/commands/bp.js"
+  },
+  {
+    "name": "editbp",
+    "category": "clan-battle",
+    "description": "Edit a player",
+    "file": "plugins/clan-battle/commands/editbp.js"
+  },
+  {
+    "name": "edittotalbp",
+    "category": "clan-battle",
+    "description": "Edit a player",
+    "file": "plugins/clan-battle/commands/edittotalbp.js"
+  },
+  {
+    "name": "emojiadd",
+    "category": "emoji",
+    "description": "Summon a specific emoji from the Global Vault to your server.",
+    "file": "plugins/emoji/commands/emojiAdd.js"
+  },
+  {
+    "name": "emojibank",
+    "category": "emoji",
+    "description": "View the Global Emoji Bank list.",
+    "file": "plugins/emoji/commands/emojiBank.js"
+  },
+  {
+    "name": "emojibrowse",
+    "category": "emoji",
+    "description": "Browse the visual interface of the Global Emoji Vault.",
+    "file": "plugins/emoji/commands/emojiBrowse.js"
+  },
+  {
+    "name": "emojicleanup",
+    "category": "emoji",
+    "description": "Scans for server emojis unused in the CDN for 30+ days.",
+    "file": "plugins/emoji/commands/emojiCleanup.js"
+  },
+  {
+    "name": "emojiremove",
+    "category": "emoji",
+    "description": "Remove an emoji from the global vault.",
+    "file": "plugins/emoji/commands/emojiRemove.js"
+  },
+  {
+    "name": "emoji",
+    "category": "emoji",
+    "description": "Summon an emoji from the global CDN directly into chat.",
+    "file": "plugins/emoji/commands/emojiSearch.js"
+  },
+  {
+    "name": "emojislots",
+    "category": "emoji",
+    "description": "Check the current server emoji and sticker slot usage.",
+    "file": "plugins/emoji/commands/emojiSlots.js"
+  },
+  {
+    "name": "emojitemp",
+    "category": "emoji",
+    "description": "Temporarily install a global emoji for 10 minutes to save slots.",
+    "file": "plugins/emoji/commands/emojiTemp.js"
+  },
+  {
+    "name": "fs-pairremove",
+    "category": "foster-program",
+    "description": "Remove a pair from the active Foster Program",
+    "file": "plugins/foster-program/commands/fs-pairremove.js"
+  },
+  {
+    "name": "fs-replace",
+    "category": "foster-program",
+    "description": "Replace a mentor or newbie in an active Foster Program pair",
+    "file": "plugins/foster-program/commands/fs-replace.js"
+  },
+  {
+    "name": "fs-start",
+    "category": "foster-program",
+    "description": "Start the Foster Program v2 (Staff Only)",
+    "file": "plugins/foster-program/commands/fs-start.js"
+  },
+  {
+    "name": "action",
+    "category": "fun",
+    "description": "Perform a fun action (hug, slap, kiss, etc.)",
+    "file": "plugins/fun/commands/action.js"
+  },
+  {
+    "name": "tictactoe",
+    "category": "games",
+    "description": "Challenge another user to a game of TicTacToe",
+    "file": "plugins/games/commands/tictactoe.js"
+  },
+  {
+    "name": "tttlb",
+    "category": "games",
+    "description": "View the TicTacToe leaderboard",
+    "file": "plugins/games/commands/tttlb.js"
+  },
+  {
+    "name": "setupgreeting",
+    "category": "admin",
+    "description": "Configure channels for welcome and goodbye messages.",
+    "file": "plugins/greeting/commands/setupgreeting.js"
+  },
+  {
+    "name": "addxp",
+    "category": "admin",
+    "description": "Add XP to a user",
+    "file": "plugins/leveling/commands/admin/addxp.js"
+  },
+  {
+    "name": "removexp",
+    "category": "admin",
+    "description": "Remove XP from a user",
+    "file": "plugins/leveling/commands/admin/removexp.js"
+  },
+  {
+    "name": "xpresetweekly",
+    "category": "admin",
+    "description": "Reset weekly XP for EVERYONE in the server",
+    "file": "plugins/leveling/commands/admin/resetweekly.js"
+  },
+  {
+    "name": "resetxp",
+    "category": "admin",
+    "description": "Reset all XP for a user",
+    "file": "plugins/leveling/commands/admin/resetxp.js"
+  },
+  {
+    "name": "resetxpall",
+    "category": "admin",
+    "description": "Reset ALL XP for EVERYONE in the server",
+    "file": "plugins/leveling/commands/admin/resetxpall.js"
+  },
+  {
+    "name": "setlevel",
+    "category": "admin",
+    "description": "Set Level for a user",
+    "file": "plugins/leveling/commands/admin/setlevel.js"
+  },
+  {
+    "name": "setxp",
+    "category": "admin",
+    "description": "Set XP for a user",
+    "file": "plugins/leveling/commands/admin/setxp.js"
+  },
+  {
+    "name": "leaderboard",
+    "category": "leveling",
+    "description": "View the server XP leaderboard",
+    "file": "plugins/leveling/commands/leaderboard.js"
+  },
+  {
+    "name": "rank",
+    "category": "leveling",
+    "description": "Show your or another user",
+    "file": "plugins/leveling/commands/rank.js"
+  },
+  {
+    "name": "rankbackground",
+    "category": "leveling",
+    "description": "Set your custom rank card background",
+    "file": "plugins/leveling/commands/rankbackground.js"
+  },
+  {
+    "name": "cancelpop",
+    "category": "market",
+    "description": "Cancel your active POP market listing",
+    "file": "plugins/market/commands/cancelpop.js"
+  },
+  {
+    "name": "popmarket",
+    "category": "market",
+    "description": "Force refresh the POP marketplace panel",
+    "file": "plugins/market/commands/popmarket.js"
+  },
+  {
+    "name": "sell",
+    "category": "market",
+    "description": "List your POP for sale on the marketplace",
+    "file": "plugins/market/commands/sellpop.js"
+  },
+  {
+    "name": "addrole",
+    "category": "moderation",
+    "description": "Add a role to a user",
+    "file": "plugins/moderation/commands/addrole.js"
+  },
+  {
+    "name": "ban",
+    "category": "moderation",
+    "description": "Ban a member from the server",
+    "file": "plugins/moderation/commands/ban.js"
+  },
+  {
+    "name": "clear",
+    "category": "moderation",
+    "description": "Delete multiple messages from a channel",
+    "file": "plugins/moderation/commands/clear.js"
+  },
+  {
+    "name": "clearall",
+    "category": "moderation",
+    "description": "Delete all messages in the channel (Nuke)",
+    "file": "plugins/moderation/commands/clearall.js"
+  },
+  {
+    "name": "clearwarns",
+    "category": "moderation",
+    "description": "Clear all warnings from a user",
+    "file": "plugins/moderation/commands/clearwarns.js"
+  },
+  {
+    "name": "kick",
+    "category": "moderation",
+    "description": "Kick a member from the server",
+    "file": "plugins/moderation/commands/kick.js"
+  },
+  {
+    "name": "lock",
+    "category": "moderation",
+    "description": "Lock the current channel",
+    "file": "plugins/moderation/commands/lock.js"
+  },
+  {
+    "name": "mute",
+    "category": "moderation",
+    "description": "Timeout a member for a specified duration",
+    "file": "plugins/moderation/commands/mute.js"
+  },
+  {
+    "name": "nickname",
+    "category": "moderation",
+    "description": "Change a user",
+    "file": "plugins/moderation/commands/nickname.js"
+  },
+  {
+    "name": "removerole",
+    "category": "moderation",
+    "description": "Remove a role from a user",
+    "file": "plugins/moderation/commands/removerole.js"
+  },
+  {
+    "name": "unban",
+    "category": "moderation",
+    "description": "Unban a user from the server",
+    "file": "plugins/moderation/commands/unban.js"
+  },
+  {
+    "name": "unlock",
+    "category": "moderation",
+    "description": "Unlock the current channel",
+    "file": "plugins/moderation/commands/unlock.js"
+  },
+  {
+    "name": "unmute",
+    "category": "moderation",
+    "description": "Remove timeout from a member",
+    "file": "plugins/moderation/commands/unmute.js"
+  },
+  {
+    "name": "unwarn",
+    "category": "moderation",
+    "description": "Remove a warning from a user",
+    "file": "plugins/moderation/commands/unwarn.js"
+  },
+  {
+    "name": "warn",
+    "category": "moderation",
+    "description": "Warn a user with a reason",
+    "file": "plugins/moderation/commands/warn.js"
+  },
+  {
+    "name": "warnings",
+    "category": "moderation",
+    "description": "View warnings for a user",
+    "file": "plugins/moderation/commands/warnings.js"
+  },
+  {
+    "name": "packadd",
+    "category": "packs",
+    "description": "Add an existing global emoji to an Emoji Pack",
+    "file": "plugins/packs/commands/packAdd.js"
+  },
+  {
+    "name": "packcreate",
+    "category": "packs",
+    "description": "Create an empty Emoji Pack in the Global Vault",
+    "file": "plugins/packs/commands/packCreate.js"
+  },
+  {
+    "name": "packimport",
+    "category": "packs",
+    "description": "Download a full Global Emoji Pack into your server automatically.",
+    "file": "plugins/packs/commands/packImport.js"
+  },
+  {
+    "name": "packremove",
+    "category": "packs",
+    "description": "Remove an emoji from its Emoji Pack",
+    "file": "plugins/packs/commands/packRemove.js"
+  },
+  {
+    "name": "prefix",
+    "category": "utility",
+    "description": "Manage the bot",
+    "file": "plugins/prefix/commands/prefix.js"
+  },
+  {
+    "name": "record",
+    "category": "recorder",
+    "description": "Manage voice recordings",
+    "file": "plugins/recorder/commands/record.js"
+  },
+  {
+    "name": "rradd",
+    "category": "roles",
+    "description": "Add a Role option to a Reaction Role Panel",
+    "file": "plugins/roles/commands/rrAdd.js"
+  },
+  {
+    "name": "rrcreate",
+    "category": "roles",
+    "description": "Create a new Reaction Role Custom Panel",
+    "file": "plugins/roles/commands/rrCreate.js"
+  },
+  {
+    "name": "rrdelete",
+    "category": "roles",
+    "description": "Delete an active Reaction Role Panel permanently",
+    "file": "plugins/roles/commands/rrDelete.js"
+  },
+  {
+    "name": "rrremove",
+    "category": "roles",
+    "description": "Remove a Role option from a Reaction Role Panel",
+    "file": "plugins/roles/commands/rrRemove.js"
+  },
+  {
+    "name": "sayit",
+    "category": "admin",
+    "description": "No description",
+    "file": "plugins/say/commands/sayit.js"
+  },
+  {
+    "name": "se",
+    "category": "seasonal-synergy",
+    "description": "Set season energy for a user (Admin)",
+    "file": "plugins/seasonal-synergy/commands/se.js"
+  },
+  {
+    "name": "synergy-setup",
+    "category": "seasonal-synergy",
+    "description": "Deploy the Synergy Automation Panel to the moderation channel",
+    "file": "plugins/seasonal-synergy/commands/synergy-setup.js"
+  },
+  {
+    "name": "we",
+    "category": "seasonal-synergy",
+    "description": "Submit your weekly energy points",
+    "file": "plugins/seasonal-synergy/commands/we.js"
+  },
+  {
+    "name": "setup-control-panel",
+    "category": "admin",
+    "description": "No description",
+    "file": "plugins/server-overview/commands/setup-control-panel.js"
+  },
+  {
+    "name": "setup-overview",
+    "category": "admin",
+    "description": "No description",
+    "file": "plugins/server-overview/commands/setup-overview.js"
+  },
+  {
+    "name": "stickeradd",
+    "category": "sticker",
+    "description": "Summon a specific sticker from the Global Vault to your server.",
+    "file": "plugins/sticker/commands/stickerAdd.js"
+  },
+  {
+    "name": "stickerbank",
+    "category": "sticker",
+    "description": "View the Global Sticker Bank list.",
+    "file": "plugins/sticker/commands/stickerBank.js"
+  },
+  {
+    "name": "stickerbrowse",
+    "category": "sticker",
+    "description": "Browse the visual interface of the Global Sticker Vault.",
+    "file": "plugins/sticker/commands/stickerBrowse.js"
+  },
+  {
+    "name": "stickerremove",
+    "category": "sticker",
+    "description": "Remove a sticker from the global vault.",
+    "file": "plugins/sticker/commands/stickerRemove.js"
+  },
+  {
+    "name": "sticker",
+    "category": "sticker",
+    "description": "Summon a sticker from the global CDN directly into chat (Bypasses server slots).",
+    "file": "plugins/sticker/commands/stickerSend.js"
+  },
+  {
+    "name": "createteam",
+    "category": "teamup",
+    "description": "Create a new team for gaming or esports.",
+    "file": "plugins/teamup/commands/createteam.js"
+  },
+  {
+    "name": "deleteteam",
+    "category": "teamup",
+    "description": "Disband and delete your current team.",
+    "file": "plugins/teamup/commands/deleteteam.js"
+  },
+  {
+    "name": "leaveteam",
+    "category": "teamup",
+    "description": "Leave your current team.",
+    "file": "plugins/teamup/commands/leaveteam.js"
+  },
+  {
+    "name": "ticketpanel",
+    "category": "admin",
+    "description": "Create the advanced ticket panel with category selection",
+    "file": "plugins/tickets/commands/ticketpanel.js"
+  },
+  {
+    "name": "afk",
+    "category": "utility",
+    "description": "Set yourself as AFK",
+    "file": "plugins/utility/commands/afk.js"
+  },
+  {
+    "name": "avatar",
+    "category": "utility",
+    "description": "Show a user",
+    "file": "plugins/utility/commands/avatar.js"
+  },
+  {
+    "name": "help",
+    "category": "utility",
+    "description": "View the interactive help menu with all available commands.",
+    "file": "plugins/utility/commands/help.js"
+  },
+  {
+    "name": "memberlist",
+    "category": "utility",
+    "description": "List all server members with their roles",
+    "file": "plugins/utility/commands/memberlist.js"
+  },
+  {
+    "name": "ping",
+    "category": "utility",
+    "description": "Check bot latency",
+    "file": "plugins/utility/commands/ping.js"
+  },
+  {
+    "name": "poll",
+    "category": "utility",
+    "description": "Create a Yes/No poll",
+    "file": "plugins/utility/commands/poll.js"
+  },
+  {
+    "name": "prefixtest",
+    "category": "utility",
+    "description": "Test prefix system",
+    "file": "plugins/utility/commands/prefixTest.js"
+  },
+  {
+    "name": "serverinfo",
+    "category": "utility",
+    "description": "Show information about the server",
+    "file": "plugins/utility/commands/serverinfo.js"
+  },
+  {
+    "name": "steal",
+    "category": "utility",
+    "description": "Steal an emoji or sticker by replying to a message and store it globally.",
+    "file": "plugins/utility/commands/steal.js"
+  },
+  {
+    "name": "userinfo",
+    "category": "utility",
+    "description": "Get information about a user",
+    "file": "plugins/utility/commands/userinfo.js"
+  }
+]

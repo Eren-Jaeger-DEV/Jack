@@ -1,0 +1,1128 @@
+[
+  {
+    "name": "ask",
+    "isSlash": true,
+    "aliases": [],
+    "category": "misc",
+    "description": "Consult with Jack AI (Strategist)",
+    "file": "bot/commands/ask.js"
+  },
+  {
+    "name": "achievement",
+    "isSlash": true,
+    "aliases": [],
+    "category": "admin",
+    "description": "Manually edit a player",
+    "file": "plugins/admin/commands/achievement.js"
+  },
+  {
+    "name": "announce",
+    "isSlash": true,
+    "aliases": [
+      "ann"
+    ],
+    "category": "admin",
+    "description": "Create a beautiful announcement in any channel",
+    "file": "plugins/admin/commands/announce.js"
+  },
+  {
+    "name": "disable",
+    "isSlash": true,
+    "aliases": [
+      "cmdoff",
+      "disablecmd"
+    ],
+    "category": "admin",
+    "description": "Disable a command category in a channel or server-wide",
+    "file": "plugins/admin/commands/disable.js"
+  },
+  {
+    "name": "enable",
+    "isSlash": true,
+    "aliases": [
+      "cmdon",
+      "enablecmd"
+    ],
+    "category": "admin",
+    "description": "Enable a command category in a channel or server-wide",
+    "file": "plugins/admin/commands/enable.js"
+  },
+  {
+    "name": "setai",
+    "isSlash": true,
+    "aliases": [],
+    "category": "admin",
+    "description": "Sets the smart AI channel for the server",
+    "file": "plugins/admin/commands/setai.js"
+  },
+  {
+    "name": "setfoster",
+    "isSlash": true,
+    "aliases": [
+      "fosterchannel",
+      "foster-channel"
+    ],
+    "category": "admin",
+    "description": "Set the Foster Program channel",
+    "file": "plugins/admin/commands/setfoster.js"
+  },
+  {
+    "name": "setlog",
+    "isSlash": true,
+    "aliases": [
+      "modlog",
+      "setmodlog"
+    ],
+    "category": "admin",
+    "description": "Set the moderation log channel",
+    "file": "plugins/admin/commands/setlog.js"
+  },
+  {
+    "name": "setup",
+    "isSlash": true,
+    "aliases": [
+      "setup-admin-guide",
+      "adminguide"
+    ],
+    "category": "admin",
+    "description": "Setup the permanent admin guide dashboard",
+    "file": "plugins/admin/commands/setupAdminGuide.js"
+  },
+  {
+    "name": "regstatus",
+    "isSlash": true,
+    "aliases": [
+      "rs"
+    ],
+    "category": "audit",
+    "description": "Audit clan member registration status",
+    "file": "plugins/audit/commands/regstatus.js"
+  },
+  {
+    "name": "card",
+    "isSlash": true,
+    "aliases": [],
+    "category": "card-database",
+    "description": "Card database management commands",
+    "file": "plugins/card-database/commands/sync.js"
+  },
+  {
+    "name": "hud",
+    "isSlash": true,
+    "aliases": [],
+    "category": "utility",
+    "description": "Access your Celestial HUD (Live Status)",
+    "file": "plugins/celestial-hud/commands/hud.js"
+  },
+  {
+    "name": "clanroster",
+    "isSlash": true,
+    "aliases": [
+      "roster",
+      "players"
+    ],
+    "category": "clan",
+    "description": "View the full clan player roster",
+    "file": "plugins/clan/commands/clanroster.js"
+  },
+  {
+    "name": "deleteplayer",
+    "isSlash": true,
+    "aliases": [
+      "delplayer",
+      "removeplayer"
+    ],
+    "category": "clan",
+    "description": "Delete a player",
+    "file": "plugins/clan/commands/deleteplayer.js"
+  },
+  {
+    "name": "editprofile",
+    "isSlash": true,
+    "aliases": [
+      "editp",
+      "updateprofile"
+    ],
+    "category": "clan",
+    "description": "Edit your BGMI player profile",
+    "file": "plugins/clan/commands/editprofile.js"
+  },
+  {
+    "name": "ign",
+    "isSlash": true,
+    "aliases": [
+      "gamename",
+      "ingamename"
+    ],
+    "category": "clan",
+    "description": "View a player",
+    "file": "plugins/clan/commands/ign.js"
+  },
+  {
+    "name": "ignall",
+    "isSlash": true,
+    "aliases": [
+      "alligns",
+      "listigns"
+    ],
+    "category": "clan",
+    "description": "View a list of all player IGNs in the database (Admin Only)",
+    "file": "plugins/clan/commands/ignall.js"
+  },
+  {
+    "name": "profile",
+    "isSlash": true,
+    "aliases": [
+      "p",
+      "playerprofile"
+    ],
+    "category": "clan",
+    "description": "Show BGMI player profile",
+    "file": "plugins/clan/commands/profile.js"
+  },
+  {
+    "name": "profilecreate",
+    "isSlash": true,
+    "aliases": [
+      "pc",
+      "createprofile"
+    ],
+    "category": "clan",
+    "description": "Create an unlinked BGMI player profile (Admin Only)",
+    "file": "plugins/clan/commands/profilecreate.js"
+  },
+  {
+    "name": "profiletransfer",
+    "isSlash": true,
+    "aliases": [
+      "pt",
+      "transferprofile"
+    ],
+    "category": "clan",
+    "description": "Link an unlinked profile to a Discord user (Admin Only)",
+    "file": "plugins/clan/commands/profiletransfer.js"
+  },
+  {
+    "name": "register",
+    "isSlash": true,
+    "aliases": [
+      "reg",
+      "joinroster"
+    ],
+    "category": "clan",
+    "description": "Register your BGMI player profile",
+    "file": "plugins/clan/commands/register.js"
+  },
+  {
+    "name": "uid",
+    "isSlash": true,
+    "aliases": [
+      "playeruid",
+      "bgmiuid"
+    ],
+    "category": "clan",
+    "description": "View a player",
+    "file": "plugins/clan/commands/uid.js"
+  },
+  {
+    "name": "unlinked",
+    "isSlash": true,
+    "aliases": [
+      "unlinkedprofiles",
+      "listunlinked"
+    ],
+    "category": "clan",
+    "description": "View all unlinked player profiles (Admin Only)",
+    "file": "plugins/clan/commands/unlinked.js"
+  },
+  {
+    "name": "bp",
+    "isSlash": true,
+    "aliases": [
+      "battlepoint"
+    ],
+    "category": "clan-battle",
+    "description": "Submit your daily battle contribution points",
+    "file": "plugins/clan-battle/commands/bp.js"
+  },
+  {
+    "name": "editbp",
+    "isSlash": true,
+    "aliases": [
+      "editbattlepoint"
+    ],
+    "category": "clan-battle",
+    "description": "Edit a player",
+    "file": "plugins/clan-battle/commands/editbp.js"
+  },
+  {
+    "name": "edittotalbp",
+    "isSlash": true,
+    "aliases": [
+      "edittotalbattlepoint"
+    ],
+    "category": "clan-battle",
+    "description": "Edit a player",
+    "file": "plugins/clan-battle/commands/edittotalbp.js"
+  },
+  {
+    "name": "emojiadd",
+    "isSlash": true,
+    "aliases": [
+      "emojiget",
+      "getmoji"
+    ],
+    "category": "emoji",
+    "description": "Summon a specific emoji from the Global Vault to your server.",
+    "file": "plugins/emoji/commands/emojiAdd.js"
+  },
+  {
+    "name": "emojibank",
+    "isSlash": true,
+    "aliases": [
+      "emojilist",
+      "mojis"
+    ],
+    "category": "emoji",
+    "description": "View the Global Emoji Bank list.",
+    "file": "plugins/emoji/commands/emojiBank.js"
+  },
+  {
+    "name": "emojibrowse",
+    "isSlash": true,
+    "aliases": [
+      "emojivault",
+      "browsemoji"
+    ],
+    "category": "emoji",
+    "description": "Browse the visual interface of the Global Emoji Vault.",
+    "file": "plugins/emoji/commands/emojiBrowse.js"
+  },
+  {
+    "name": "emojicleanup",
+    "isSlash": true,
+    "aliases": [
+      "mojiscan",
+      "emojiscan"
+    ],
+    "category": "emoji",
+    "description": "Scans for server emojis unused in the CDN for 30+ days.",
+    "file": "plugins/emoji/commands/emojiCleanup.js"
+  },
+  {
+    "name": "emojiremove",
+    "isSlash": true,
+    "aliases": [
+      "emojidel",
+      "delmoji"
+    ],
+    "category": "emoji",
+    "description": "Remove an emoji from the global vault.",
+    "file": "plugins/emoji/commands/emojiRemove.js"
+  },
+  {
+    "name": "emoji",
+    "isSlash": true,
+    "aliases": [
+      "moji",
+      "sendemoji"
+    ],
+    "category": "emoji",
+    "description": "Summon an emoji from the global CDN directly into chat.",
+    "file": "plugins/emoji/commands/emojiSearch.js"
+  },
+  {
+    "name": "emojislots",
+    "isSlash": true,
+    "aliases": [
+      "slots",
+      "emojicap"
+    ],
+    "category": "emoji",
+    "description": "Check the current server emoji and sticker slot usage.",
+    "file": "plugins/emoji/commands/emojiSlots.js"
+  },
+  {
+    "name": "emojitemp",
+    "isSlash": true,
+    "aliases": [
+      "tempemoji",
+      "borrowmoji"
+    ],
+    "category": "emoji",
+    "description": "Temporarily install a global emoji for 10 minutes to save slots.",
+    "file": "plugins/emoji/commands/emojiTemp.js"
+  },
+  {
+    "name": "fs-pairremove",
+    "isSlash": true,
+    "aliases": [
+      "pairremove",
+      "foster-pairremove",
+      "removepair"
+    ],
+    "category": "foster-program",
+    "description": "Remove a pair from the active Foster Program",
+    "file": "plugins/foster-program/commands/fs-pairremove.js"
+  },
+  {
+    "name": "fs-replace",
+    "isSlash": true,
+    "aliases": [
+      "fosterreplace",
+      "foster-replace"
+    ],
+    "category": "foster-program",
+    "description": "Replace a mentor or newbie in an active Foster Program pair",
+    "file": "plugins/foster-program/commands/fs-replace.js"
+  },
+  {
+    "name": "fs-start",
+    "isSlash": true,
+    "aliases": [
+      "fosterstart",
+      "fsstart",
+      "/fs-start"
+    ],
+    "category": "foster-program",
+    "description": "Start the Foster Program v2 (Staff Only)",
+    "file": "plugins/foster-program/commands/fs-start.js"
+  },
+  {
+    "name": "action",
+    "isSlash": true,
+    "aliases": [
+      "do",
+      "react"
+    ],
+    "category": "fun",
+    "description": "Perform a fun action (hug, slap, kiss, etc.)",
+    "file": "plugins/fun/commands/action.js"
+  },
+  {
+    "name": "tictactoe",
+    "isSlash": false,
+    "aliases": [
+      "ttt"
+    ],
+    "category": "games",
+    "description": "Challenge another user to a game of TicTacToe",
+    "file": "plugins/games/commands/tictactoe.js"
+  },
+  {
+    "name": "tttlb",
+    "isSlash": false,
+    "aliases": [
+      "tttleaderboard",
+      "ttt-top"
+    ],
+    "category": "games",
+    "description": "View the TicTacToe leaderboard",
+    "file": "plugins/games/commands/tttlb.js"
+  },
+  {
+    "name": "setupgreeting",
+    "isSlash": true,
+    "aliases": [
+      "setgreet",
+      "greetconfig"
+    ],
+    "category": "admin",
+    "description": "Configure channels for welcome and goodbye messages.",
+    "file": "plugins/greeting/commands/setupgreeting.js"
+  },
+  {
+    "name": "addxp",
+    "isSlash": true,
+    "aliases": [
+      "xp+",
+      "givexp"
+    ],
+    "category": "admin",
+    "description": "Add XP to a user",
+    "file": "plugins/leveling/commands/admin/addxp.js"
+  },
+  {
+    "name": "removexp",
+    "isSlash": true,
+    "aliases": [
+      "xp-",
+      "takexp"
+    ],
+    "category": "admin",
+    "description": "Remove XP from a user",
+    "file": "plugins/leveling/commands/admin/removexp.js"
+  },
+  {
+    "name": "xpresetweekly",
+    "isSlash": true,
+    "aliases": [
+      "xpweeklyreset",
+      "clearweeklyxp"
+    ],
+    "category": "admin",
+    "description": "Reset weekly XP for EVERYONE in the server",
+    "file": "plugins/leveling/commands/admin/resetweekly.js"
+  },
+  {
+    "name": "resetxp",
+    "isSlash": true,
+    "aliases": [
+      "clearxp",
+      "xpreset"
+    ],
+    "category": "admin",
+    "description": "Reset all XP for a user",
+    "file": "plugins/leveling/commands/admin/resetxp.js"
+  },
+  {
+    "name": "resetxpall",
+    "isSlash": true,
+    "aliases": [
+      "wipelevels",
+      "clearallxp"
+    ],
+    "category": "admin",
+    "description": "Reset ALL XP for EVERYONE in the server",
+    "file": "plugins/leveling/commands/admin/resetxpall.js"
+  },
+  {
+    "name": "setlevel",
+    "isSlash": true,
+    "aliases": [
+      "lvlset",
+      "forcelvl"
+    ],
+    "category": "admin",
+    "description": "Set Level for a user",
+    "file": "plugins/leveling/commands/admin/setlevel.js"
+  },
+  {
+    "name": "setxp",
+    "isSlash": true,
+    "aliases": [
+      "xpset",
+      "forcexp"
+    ],
+    "category": "admin",
+    "description": "Set XP for a user",
+    "file": "plugins/leveling/commands/admin/setxp.js"
+  },
+  {
+    "name": "leaderboard",
+    "isSlash": true,
+    "aliases": [
+      "lb",
+      "top",
+      "levels"
+    ],
+    "category": "leveling",
+    "description": "View the server XP leaderboard",
+    "file": "plugins/leveling/commands/leaderboard.js"
+  },
+  {
+    "name": "rank",
+    "isSlash": true,
+    "aliases": [
+      "level",
+      "xp"
+    ],
+    "category": "leveling",
+    "description": "Show your or another user",
+    "file": "plugins/leveling/commands/rank.js"
+  },
+  {
+    "name": "rankbackground",
+    "isSlash": true,
+    "aliases": [
+      "rankbg",
+      "setbg"
+    ],
+    "category": "leveling",
+    "description": "Set your custom rank card background",
+    "file": "plugins/leveling/commands/rankbackground.js"
+  },
+  {
+    "name": "cancelpop",
+    "isSlash": true,
+    "aliases": [
+      "popcancel",
+      "unsell"
+    ],
+    "category": "market",
+    "description": "Cancel your active POP market listing",
+    "file": "plugins/market/commands/cancelpop.js"
+  },
+  {
+    "name": "popmarket",
+    "isSlash": true,
+    "aliases": [
+      "market",
+      "marketplace"
+    ],
+    "category": "market",
+    "description": "Force refresh the POP marketplace panel",
+    "file": "plugins/market/commands/popmarket.js"
+  },
+  {
+    "name": "sell",
+    "isSlash": true,
+    "aliases": [
+      "sellpop",
+      "listpop"
+    ],
+    "category": "market",
+    "description": "List your POP for sale on the marketplace",
+    "file": "plugins/market/commands/sellpop.js"
+  },
+  {
+    "name": "addrole",
+    "isSlash": true,
+    "aliases": [
+      "ar",
+      "giverole",
+      "roleadd"
+    ],
+    "category": "moderation",
+    "description": "Add a role to a user",
+    "file": "plugins/moderation/commands/addrole.js"
+  },
+  {
+    "name": "ban",
+    "isSlash": true,
+    "aliases": [
+      "banish"
+    ],
+    "category": "moderation",
+    "description": "Ban a member from the server",
+    "file": "plugins/moderation/commands/ban.js"
+  },
+  {
+    "name": "clear",
+    "isSlash": true,
+    "aliases": [
+      "purge",
+      "delete",
+      "clean"
+    ],
+    "category": "moderation",
+    "description": "Delete multiple messages from a channel",
+    "file": "plugins/moderation/commands/clear.js"
+  },
+  {
+    "name": "clearall",
+    "isSlash": true,
+    "aliases": [
+      "nuke",
+      "wipe"
+    ],
+    "category": "moderation",
+    "description": "Delete all messages in the channel (Nuke)",
+    "file": "plugins/moderation/commands/clearall.js"
+  },
+  {
+    "name": "clearwarns",
+    "isSlash": true,
+    "aliases": [
+      "warnsclear",
+      "clearwarnings"
+    ],
+    "category": "moderation",
+    "description": "Clear all warnings from a user",
+    "file": "plugins/moderation/commands/clearwarns.js"
+  },
+  {
+    "name": "kick",
+    "isSlash": true,
+    "aliases": [
+      "boot",
+      "remove"
+    ],
+    "category": "moderation",
+    "description": "Kick a member from the server",
+    "file": "plugins/moderation/commands/kick.js"
+  },
+  {
+    "name": "lock",
+    "isSlash": true,
+    "aliases": [
+      "lockdown",
+      "lockchannel"
+    ],
+    "category": "moderation",
+    "description": "Lock the current channel",
+    "file": "plugins/moderation/commands/lock.js"
+  },
+  {
+    "name": "mute",
+    "isSlash": true,
+    "aliases": [
+      "timeout",
+      "silence",
+      "shutup"
+    ],
+    "category": "moderation",
+    "description": "Timeout a member for a specified duration",
+    "file": "plugins/moderation/commands/mute.js"
+  },
+  {
+    "name": "nickname",
+    "isSlash": true,
+    "aliases": [
+      "nick",
+      "setnick",
+      "rename"
+    ],
+    "category": "moderation",
+    "description": "Change a user",
+    "file": "plugins/moderation/commands/nickname.js"
+  },
+  {
+    "name": "removerole",
+    "isSlash": true,
+    "aliases": [
+      "rr-role",
+      "takerole",
+      "roledel"
+    ],
+    "category": "moderation",
+    "description": "Remove a role from a user",
+    "file": "plugins/moderation/commands/removerole.js"
+  },
+  {
+    "name": "unban",
+    "isSlash": true,
+    "aliases": [
+      "pardon",
+      "forgive"
+    ],
+    "category": "moderation",
+    "description": "Unban a user from the server",
+    "file": "plugins/moderation/commands/unban.js"
+  },
+  {
+    "name": "unlock",
+    "isSlash": true,
+    "aliases": [
+      "unlockchannel",
+      "open"
+    ],
+    "category": "moderation",
+    "description": "Unlock the current channel",
+    "file": "plugins/moderation/commands/unlock.js"
+  },
+  {
+    "name": "unmute",
+    "isSlash": true,
+    "aliases": [
+      "untimeout",
+      "unsilence"
+    ],
+    "category": "moderation",
+    "description": "Remove timeout from a member",
+    "file": "plugins/moderation/commands/unmute.js"
+  },
+  {
+    "name": "unwarn",
+    "isSlash": true,
+    "aliases": [
+      "removewarn",
+      "warnremove"
+    ],
+    "category": "moderation",
+    "description": "Remove a warning from a user",
+    "file": "plugins/moderation/commands/unwarn.js"
+  },
+  {
+    "name": "warn",
+    "isSlash": true,
+    "aliases": [
+      "strike",
+      "warning"
+    ],
+    "category": "moderation",
+    "description": "Warn a user with a reason",
+    "file": "plugins/moderation/commands/warn.js"
+  },
+  {
+    "name": "warnings",
+    "isSlash": true,
+    "aliases": [
+      "warns",
+      "checkwarns"
+    ],
+    "category": "moderation",
+    "description": "View warnings for a user",
+    "file": "plugins/moderation/commands/warnings.js"
+  },
+  {
+    "name": "packadd",
+    "isSlash": true,
+    "aliases": [
+      "addpack",
+      "packemoji"
+    ],
+    "category": "packs",
+    "description": "Add an existing global emoji to an Emoji Pack",
+    "file": "plugins/packs/commands/packAdd.js"
+  },
+  {
+    "name": "packcreate",
+    "isSlash": true,
+    "aliases": [
+      "newpack",
+      "createpack"
+    ],
+    "category": "packs",
+    "description": "Create an empty Emoji Pack in the Global Vault",
+    "file": "plugins/packs/commands/packCreate.js"
+  },
+  {
+    "name": "packimport",
+    "isSlash": true,
+    "aliases": [
+      "importpack",
+      "downloadpack"
+    ],
+    "category": "packs",
+    "description": "Download a full Global Emoji Pack into your server automatically.",
+    "file": "plugins/packs/commands/packImport.js"
+  },
+  {
+    "name": "packremove",
+    "isSlash": true,
+    "aliases": [
+      "removepack",
+      "packdelete"
+    ],
+    "category": "packs",
+    "description": "Remove an emoji from its Emoji Pack",
+    "file": "plugins/packs/commands/packRemove.js"
+  },
+  {
+    "name": "prefix",
+    "isSlash": true,
+    "aliases": [],
+    "category": "utility",
+    "description": "Manage the bot",
+    "file": "plugins/prefix/commands/prefix.js"
+  },
+  {
+    "name": "record",
+    "isSlash": true,
+    "aliases": [],
+    "category": "recorder",
+    "description": "Manage voice recordings",
+    "file": "plugins/recorder/commands/record.js"
+  },
+  {
+    "name": "rradd",
+    "isSlash": true,
+    "aliases": [
+      "addreactionrole",
+      "rr-add"
+    ],
+    "category": "roles",
+    "description": "Add a Role option to a Reaction Role Panel",
+    "file": "plugins/roles/commands/rrAdd.js"
+  },
+  {
+    "name": "rrcreate",
+    "isSlash": true,
+    "aliases": [
+      "createreactionrole",
+      "rr-create",
+      "newrr"
+    ],
+    "category": "roles",
+    "description": "Create a new Reaction Role Custom Panel",
+    "file": "plugins/roles/commands/rrCreate.js"
+  },
+  {
+    "name": "rrdelete",
+    "isSlash": true,
+    "aliases": [
+      "deletereactionrole",
+      "rr-delete",
+      "delrr"
+    ],
+    "category": "roles",
+    "description": "Delete an active Reaction Role Panel permanently",
+    "file": "plugins/roles/commands/rrDelete.js"
+  },
+  {
+    "name": "rrremove",
+    "isSlash": true,
+    "aliases": [
+      "removereactionrole",
+      "rr-remove"
+    ],
+    "category": "roles",
+    "description": "Remove a Role option from a Reaction Role Panel",
+    "file": "plugins/roles/commands/rrRemove.js"
+  },
+  {
+    "name": "sayit",
+    "isSlash": true,
+    "aliases": [],
+    "category": "admin",
+    "description": "No description",
+    "file": "plugins/say/commands/sayit.js"
+  },
+  {
+    "name": "se",
+    "isSlash": true,
+    "aliases": [
+      "seasonenergy"
+    ],
+    "category": "seasonal-synergy",
+    "description": "Set season energy for a user (Admin)",
+    "file": "plugins/seasonal-synergy/commands/se.js"
+  },
+  {
+    "name": "synergy-setup",
+    "isSlash": true,
+    "aliases": [],
+    "category": "seasonal-synergy",
+    "description": "Deploy the Synergy Automation Panel to the moderation channel",
+    "file": "plugins/seasonal-synergy/commands/synergy-setup.js"
+  },
+  {
+    "name": "we",
+    "isSlash": true,
+    "aliases": [
+      "weeklyenergy"
+    ],
+    "category": "seasonal-synergy",
+    "description": "Submit your weekly energy points",
+    "file": "plugins/seasonal-synergy/commands/we.js"
+  },
+  {
+    "name": "setup-control-panel",
+    "isSlash": true,
+    "aliases": [],
+    "category": "admin",
+    "description": "No description",
+    "file": "plugins/server-overview/commands/setup-control-panel.js"
+  },
+  {
+    "name": "setup-overview",
+    "isSlash": true,
+    "aliases": [],
+    "category": "admin",
+    "description": "No description",
+    "file": "plugins/server-overview/commands/setup-overview.js"
+  },
+  {
+    "name": "stickeradd",
+    "isSlash": true,
+    "aliases": [
+      "stickerget",
+      "getsticker"
+    ],
+    "category": "sticker",
+    "description": "Summon a specific sticker from the Global Vault to your server.",
+    "file": "plugins/sticker/commands/stickerAdd.js"
+  },
+  {
+    "name": "stickerbank",
+    "isSlash": true,
+    "aliases": [
+      "stickerlist",
+      "stickers"
+    ],
+    "category": "sticker",
+    "description": "View the Global Sticker Bank list.",
+    "file": "plugins/sticker/commands/stickerBank.js"
+  },
+  {
+    "name": "stickerbrowse",
+    "isSlash": true,
+    "aliases": [
+      "stickervault",
+      "browsesticker"
+    ],
+    "category": "sticker",
+    "description": "Browse the visual interface of the Global Sticker Vault.",
+    "file": "plugins/sticker/commands/stickerBrowse.js"
+  },
+  {
+    "name": "stickerremove",
+    "isSlash": true,
+    "aliases": [
+      "stickerdel",
+      "delsticker"
+    ],
+    "category": "sticker",
+    "description": "Remove a sticker from the global vault.",
+    "file": "plugins/sticker/commands/stickerRemove.js"
+  },
+  {
+    "name": "sticker",
+    "isSlash": true,
+    "aliases": [
+      "sendsticker",
+      "getstick"
+    ],
+    "category": "sticker",
+    "description": "Summon a sticker from the global CDN directly into chat (Bypasses server slots).",
+    "file": "plugins/sticker/commands/stickerSend.js"
+  },
+  {
+    "name": "createteam",
+    "isSlash": false,
+    "aliases": [
+      "teamcreate"
+    ],
+    "category": "teamup",
+    "description": "Create a new team for gaming or esports.",
+    "file": "plugins/teamup/commands/createteam.js"
+  },
+  {
+    "name": "deleteteam",
+    "isSlash": false,
+    "aliases": [
+      "disbandteam",
+      "teamdelete"
+    ],
+    "category": "teamup",
+    "description": "Disband and delete your current team.",
+    "file": "plugins/teamup/commands/deleteteam.js"
+  },
+  {
+    "name": "leaveteam",
+    "isSlash": false,
+    "aliases": [
+      "teamleave"
+    ],
+    "category": "teamup",
+    "description": "Leave your current team.",
+    "file": "plugins/teamup/commands/leaveteam.js"
+  },
+  {
+    "name": "ticketpanel",
+    "isSlash": true,
+    "aliases": [
+      "ticket",
+      "tickets"
+    ],
+    "category": "admin",
+    "description": "Create the advanced ticket panel with category selection",
+    "file": "plugins/tickets/commands/ticketpanel.js"
+  },
+  {
+    "name": "afk",
+    "isSlash": false,
+    "aliases": [
+      "away",
+      "setafk"
+    ],
+    "category": "utility",
+    "description": "Set yourself as AFK",
+    "file": "plugins/utility/commands/afk.js"
+  },
+  {
+    "name": "avatar",
+    "isSlash": false,
+    "aliases": [
+      "av",
+      "pfp",
+      "icon"
+    ],
+    "category": "utility",
+    "description": "Show a user",
+    "file": "plugins/utility/commands/avatar.js"
+  },
+  {
+    "name": "help",
+    "isSlash": true,
+    "aliases": [
+      "h",
+      "commands",
+      "cmds"
+    ],
+    "category": "utility",
+    "description": "View the interactive help menu with all available commands.",
+    "file": "plugins/utility/commands/help.js"
+  },
+  {
+    "name": "memberlist",
+    "isSlash": true,
+    "aliases": [
+      "members",
+      "ml",
+      "memberroles"
+    ],
+    "category": "utility",
+    "description": "List all server members with their roles",
+    "file": "plugins/utility/commands/memberlist.js"
+  },
+  {
+    "name": "ping",
+    "isSlash": true,
+    "aliases": [
+      "latency",
+      "pong"
+    ],
+    "category": "utility",
+    "description": "Check bot latency",
+    "file": "plugins/utility/commands/ping.js"
+  },
+  {
+    "name": "poll",
+    "isSlash": true,
+    "aliases": [
+      "vote",
+      "yesno"
+    ],
+    "category": "utility",
+    "description": "Create a Yes/No poll",
+    "file": "plugins/utility/commands/poll.js"
+  },
+  {
+    "name": "prefixtest",
+    "isSlash": false,
+    "aliases": [
+      "testprefix",
+      "prefix"
+    ],
+    "category": "utility",
+    "description": "Test prefix system",
+    "file": "plugins/utility/commands/prefixTest.js"
+  },
+  {
+    "name": "serverinfo",
+    "isSlash": false,
+    "aliases": [
+      "si",
+      "server",
+      "guildinfo"
+    ],
+    "category": "utility",
+    "description": "Show information about the server",
+    "file": "plugins/utility/commands/serverinfo.js"
+  },
+  {
+    "name": "steal",
+    "isSlash": true,
+    "aliases": [
+      "snatch",
+      "stealemoji"
+    ],
+    "category": "utility",
+    "description": "Steal an emoji or sticker by replying to a message and store it globally.",
+    "file": "plugins/utility/commands/steal.js"
+  },
+  {
+    "name": "userinfo",
+    "isSlash": false,
+    "aliases": [
+      "ui",
+      "whois",
+      "user"
+    ],
+    "category": "utility",
+    "description": "Get information about a user",
+    "file": "plugins/utility/commands/userinfo.js"
+  }
+]

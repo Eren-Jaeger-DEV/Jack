@@ -189,7 +189,9 @@ module.exports = {
             return await interaction.reply({ content: `✅ VC user limit set to ${limit === 0 ? "Unlimited" : limit}.`, flags: [MessageFlags.Ephemeral] });
           } catch (err) {
             console.error('[TempVC] Limit error:', err);
-            return await interaction.reply({ content: "❌ Failed to set user limit.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: "❌ Failed to set user limit.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
+            }
           }
         }
 
@@ -225,7 +227,9 @@ module.exports = {
             return await interaction.reply({ content: `✅ Kicked **${target.user.username}** from the VC.`, flags: [MessageFlags.Ephemeral] });
           } catch (err) {
             console.error('[TempVC] Kick error:', err);
-            return await interaction.reply({ content: "❌ Failed to kick member.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: "❌ Failed to kick member.", flags: [MessageFlags.Ephemeral] }).catch(()=>null);
+            }
           }
         }
 

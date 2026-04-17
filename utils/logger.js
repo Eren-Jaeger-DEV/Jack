@@ -90,17 +90,25 @@ function _timestamp() {
     return new Date().toTimeString().slice(0, 8);
 }
 
-function log(level, tag, message) {
+function log(level, tag, message, metadata) {
     const ts = `\x1b[90m[${_timestamp()}]\x1b[0m`;
-    console.log(`${ts} ${level.padEnd(14, " ")} \x1b[1m[${tag}]\x1b[0m ${message}`);
+    let metaStr = "";
+    if (metadata) {
+        try {
+            metaStr = `\n\x1b[90m${JSON.stringify(metadata, null, 2)}\x1b[0m`;
+        } catch (e) {
+            metaStr = "\n[Metadata Unserializable]";
+        }
+    }
+    console.log(`${ts} ${level.padEnd(14, " ")} \x1b[1m[${tag}]\x1b[0m ${message}${metaStr}`);
 }
 
 module.exports = {
     addLog,
     showBootReport,
     startupStats,
-    info: (tag, msg) => log(LOG_LEVELS.INFO, tag, msg),
-    warn: (tag, msg) => log(LOG_LEVELS.WARN, tag, msg),
-    error: (tag, msg) => log(LOG_LEVELS.ERROR, tag, msg),
-    critical: (tag, msg) => log(LOG_LEVELS.CRITICAL, tag, msg)
+    info: (tag, msg, meta) => log(LOG_LEVELS.INFO, tag, msg, meta),
+    warn: (tag, msg, meta) => log(LOG_LEVELS.WARN, tag, msg, meta),
+    error: (tag, msg, meta) => log(LOG_LEVELS.ERROR, tag, msg, meta),
+    critical: (tag, msg, meta) => log(LOG_LEVELS.CRITICAL, tag, msg, meta)
 };
