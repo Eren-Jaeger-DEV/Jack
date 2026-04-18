@@ -6,4 +6,5 @@ cloudflared-bin/
 *.deb
 plugins/**/data.json
 data/*.json
-data/inviteCache.json.env.test
+data/inviteCache.json
+.env.test
