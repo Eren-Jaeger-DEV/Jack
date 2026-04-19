@@ -259,7 +259,7 @@ async function postOrientation(client, program, guild) {
   const msg = await channel.send({ content: `<@&${ROLES.ADEPT}> <@&${ROLES.NEOPHYTE}>`, embeds: [embed] });
   const thread = await msg.startThread({ name: `✅ Verification (T${program.term} C${program.cycle})`, autoArchiveDuration: ThreadAutoArchiveDuration.OneDay });
   program.submissionThreadId = thread.id;
-  await thread.send('**Submit initial stat card screenshot here within 12 hours!**\nFormat: `initial [points]` + screenshot');
+  await thread.send('**Submit your "All Data" stat card screenshot here!**\nJack will automatically extract your points. Ensure the dropdown is set to **"ALL"** or **"SEASON 28"**.');
   await program.save();
 }
 
@@ -301,31 +301,80 @@ async function checkRotationAndPhase(client) {
   }
 }
 
-async function submitSynergyCard(userId, value, type, screenshotUrl, program) {
+async function submitSynergyCard(userId, value, type, selection, screenshotUrl, program) {
   const pix = program.pairs.findIndex(p => p.mentorId === userId || p.partnerId === userId);
   if (pix === -1) return { success: false, error: 'Not in an active pair.' };
-  const pair = program.pairs[pix]; const pid = pair.mentorId === userId ? pair.partnerId : pair.mentorId;
+  
+  const pair = program.pairs[pix]; 
+  const isMentor = pair.mentorId === userId;
+  const partnerId = isMentor ? pair.partnerId : pair.mentorId;
 
-  const eidx = program.pendingSubmissions.findIndex(s => s.pairIndex === pix && s.userId === pid && s.type === type);
+  // SEASON ENFORCEMENT: Check if the screenshot matches the required category
+  const currentSeason = "SEASON 28"; // This should ideally come from config
+  if (selection !== "ALL" && selection !== currentSeason) {
+    return { success: false, error: `Invalid category! Your screenshot shows **${selection}**, but the program requires **${currentSeason}** or **ALL**.` };
+  }
+
+  // Check for partner's pending submission of the SAME type
+  const eidx = program.pendingSubmissions.findIndex(s => s.pairIndex === pix && s.userId === partnerId && s.type === type);
+  
   if (eidx >= 0) {
-    const ex = program.pendingSubmissions[eidx];
-    if (ex.value !== value) { program.pendingSubmissions.splice(eidx, 1); await program.save(); return { success: false, error: 'Points mismatch!' }; }
+    const partnerSub = program.pendingSubmissions[eidx];
     
     if (type === 'initial') {
-      program.pairs[pix].initialPoints = value; program.pendingSubmissions.splice(eidx, 1);
-      await program.save(); return { success: true, matched: true, type, baseline: value };
+      // Save both initial baselines
+      if (isMentor) {
+        program.pairs[pix].mentorInitial = value;
+        program.pairs[pix].partnerInitial = partnerSub.value;
+      } else {
+        program.pairs[pix].partnerInitial = value;
+        program.pairs[pix].mentorInitial = partnerSub.value;
+      }
+      program.pendingSubmissions.splice(eidx, 1);
+      await program.save();
+      return { success: true, matched: true, type, value, partnerValue: partnerSub.value };
     } else {
-      const delta = Math.max(0, value - (program.pairs[pix].initialPoints || 0));
-      const split = delta / 2;
+      // Final Submission: Calculate pooled growth
+      const mentorInitial = program.pairs[pix].mentorInitial || 0;
+      const partnerInitial = program.pairs[pix].partnerInitial || 0;
+      
+      let mentorFinal, partnerFinal;
+      if (isMentor) {
+        mentorFinal = value;
+        partnerFinal = partnerSub.value;
+      } else {
+        partnerFinal = value;
+        mentorFinal = partnerSub.value;
+      }
+
+      // Growth calculation: (Final - Initial)
+      const mentorGrowth = Math.max(0, mentorFinal - mentorInitial);
+      const partnerGrowth = Math.max(0, partnerFinal - partnerInitial);
+      
+      const totalGrowth = mentorGrowth + partnerGrowth;
+      const split = totalGrowth / 2;
+
+      // Record points in global maps
       program.mentorPoints.set(pair.mentorId, (program.mentorPoints.get(pair.mentorId) || 0) + split);
       program.partnerPoints.set(pair.partnerId, (program.partnerPoints.get(pair.partnerId) || 0) + split);
-      program.pairs[pix].points += delta; program.pendingSubmissions.splice(eidx, 1);
-      program.submittedThisCycle.push(userId, pid); await program.save();
-      return { success: true, matched: true, type, points: delta, split };
+      
+      // Save final values to pair record
+      program.pairs[pix].mentorFinal = mentorFinal;
+      program.pairs[pix].partnerFinal = partnerFinal;
+      program.pairs[pix].points += totalGrowth; // Total growth for this cycle
+      
+      program.pendingSubmissions.splice(eidx, 1);
+      program.submittedThisCycle.push(userId, partnerId);
+      await program.save();
+      
+      return { success: true, matched: true, type, totalGrowth, split };
     }
   }
+
+  // No partner sub found, add current sub to pending
   program.pendingSubmissions.push({ pairIndex: pix, userId, value, type, screenshotUrl, timestamp: getIST() });
-  await program.save(); return { success: true, matched: false, type, waitingFor: pid };
+  await program.save();
+  return { success: true, matched: false, type, waitingFor: partnerId };
 }
 
 async function refreshLeaderboard(client, program) {

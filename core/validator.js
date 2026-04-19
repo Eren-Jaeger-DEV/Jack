@@ -12,15 +12,15 @@ const STRICT_MODE = process.env.STRICT_MODE === 'true' || process.env.NODE_ENV !
  * Validates a Command object against the blueprint schema.
  */
 function validateCommand(command, filePath) {
-    const required = ['name', 'category', 'data', 'run'];
+    const required = ['name', 'category', 'run']; // 'data' is optional for prefix-only commands
     const missing = required.filter(field => !command[field]);
 
     if (missing.length > 0) {
         return handleFailure("Command", `Missing required fields: ${missing.join(', ')}`, filePath);
     }
 
-    // 1. SlashCommandBuilder check
-    if (typeof command.data.toJSON !== 'function') {
+    // 1. SlashCommandBuilder check (Only if data is provided)
+    if (command.data && typeof command.data.toJSON !== 'function') {
         return handleFailure("Command", "Property 'data' must be an instance of SlashCommandBuilder.", filePath);
     }
 

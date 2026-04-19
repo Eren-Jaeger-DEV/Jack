@@ -227,10 +227,13 @@ module.exports = {
       const imageData = await this._fetchImageData(imageUrl);
       if (!imageData) return 0;
 
-      const prompt = "Analyze this BGMI 'All Data' stats card screenshot. Your goal is to extract the number for 'Team-up points earned'. \n\n" +
-                     "Look specifically for the text 'Team-up points earned' and return ONLY the numeric value found next to or below it. \n" +
-                     "If you see multiple numbers, provide the one associated with synergy or team-up points. \n" +
-                     "Return ONLY the numerical digits (e.g., '450'). If no points are readable, return '0'.";
+      const prompt = "Analyze this BGMI 'All Data' stats card screenshot. Your goal is to extract TWO things:\n\n" +
+                     "1. The 'Team-up points earned' (the big number on the right).\n" +
+                     "2. The 'Selection' from the dropdown menu in the upper right (it will say 'ALL', 'SEASON 28', etc.).\n\n" +
+                     "Look specifically for the text 'Team-up points earned' and return the numeric value.\n" +
+                     "Then look at the dropdown box in the header and return what is selected.\n\n" +
+                     "Return the result as a JSON object: { \"points\": number, \"selection\": \"string\" }.\n" +
+                     "If no points are readable, return { \"points\": 0, \"selection\": \"unknown\" }.";
       
       const executeExtraction = async (retryCount = 0) => {
         try {
@@ -252,10 +255,26 @@ module.exports = {
       const result = await executeExtraction();
 
       const text = result.response.text().trim();
-      const match = text.match(/\d+/);
-      if (!match) return null; // null = unreadable, distinct from 0 points
-      const points = parseInt(match[0], 10);
-      return isNaN(points) ? null : points;
+      logger.info("JackAI", `Raw Response: ${text}`);
+      
+      // Clean potential markdown blocks
+      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      try {
+        const data = JSON.parse(jsonStr);
+        return {
+          points: parseInt(data.points, 10) || 0,
+          selection: data.selection?.toUpperCase() || "UNKNOWN"
+        };
+      } catch (e) {
+        // Fallback: try to extract points via regex if JSON fails
+        const pointsMatch = text.match(/points":\s*(\d+)/) || text.match(/"points":\s*(\d+)/) || text.match(/(\d+)/);
+        const selectionMatch = text.match(/selection":\s*"([^"]+)"/) || text.match(/"selection":\s*"([^"]+)"/);
+        return {
+          points: pointsMatch ? parseInt(pointsMatch[pointsMatch.length - 1], 10) : 0,
+          selection: selectionMatch ? selectionMatch[selectionMatch.length - 1].toUpperCase() : "UNKNOWN"
+        };
+      }
     } catch (e) {
       logger.error("JackAI", `Synergy extraction failed: ${e.message}`);
       return null; // null = error, distinct from 0 points
@@ -327,5 +346,72 @@ CRITICAL: Return ONLY the JSON array. Do not include markdown code blocks or any
       logger.error("JackAI", `Leaderboard extraction failed: ${e.message}`);
       return [];
     }
+  },
+
+  async extractClanBattleData(imageUrls) {
+    if (!imageUrls || imageUrls.length === 0) return [];
+    try {
+      const imagesData = await Promise.all(imageUrls.map(url => this._fetchImageData(url)));
+      const validImages = imagesData.filter(Boolean);
+      if (validImages.length === 0) return [];
+
+      const prompt = `Analyze these ${validImages.length} "Contribution Point Rankings" screenshots from a clan battle in BGMI/PUBG Mobile.
+Multiple screenshots might represent a scrolled list, so some members might appear more than once or overlap.
+
+YOUR TASK:
+1. Extract every unique member from the list.
+2. For each member, identify their "Today's Points" and "Total Points".
+3. If a member appears multiple times, pick the entry with the highest "Total Points".
+4. Return the data as a PURE JSON ARRAY of objects.
+
+JSON Structure:
+[
+  { "name": "MEMBER_NAME", "today": number, "total": number }
+]
+
+CRITICAL: Return ONLY the JSON array. Do not include markdown code blocks or any other text.`;
+      
+      const executeExtraction = async (retryCount = 0) => {
+        try {
+          const genAI = this._getGenAI();
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const parts = [
+            { text: prompt },
+            ...validImages.map(img => ({ inline_data: { mime_type: img.mimeType, data: img.data } }))
+          ];
+          return await model.generateContent(parts);
+        } catch (error) {
+          if (error.message.includes("429") && retryCount < API_KEYS.length - 1) {
+            this._rotateKey();
+            return await executeExtraction(retryCount + 1);
+          }
+          throw error;
+        }
+      };
+
+      const result = await executeExtraction();
+      const text = result.response.text().trim();
+      
+      // Clean potential markdown blocks
+      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      try {
+        const data = JSON.parse(jsonStr);
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        logger.error("JackAI", `JSON Parse failed for clan battle OCR: ${e.message}`);
+        const match = jsonStr.match(/\[\s*\{.*\}\s*\]/s);
+        if (match) {
+          try {
+            return JSON.parse(match[0]);
+          } catch (e2) {}
+        }
+        return [];
+      }
+    } catch (e) {
+      logger.error("JackAI", `Clan Battle extraction failed: ${e.message}`);
+      return [];
+    }
   }
 };
+

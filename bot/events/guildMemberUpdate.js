@@ -1,4 +1,5 @@
 const configManager = require("../utils/configManager");
+const Player = require("../database/models/Player");
 
 module.exports = {
   name: "guildMemberUpdate",

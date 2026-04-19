@@ -17,10 +17,16 @@ const targetSchema = new mongoose.Schema({
 }, { _id: false });
 
 const pairSchema = new mongoose.Schema({
-  mentorId:      { type: String, required: true },
-  partnerId:     { type: String, required: true },
-  points:        { type: Number, default: 0 },
-  initialPoints: { type: Number, default: 0 }
+  mentorId:       { type: String, required: true },
+  partnerId:      { type: String, required: true },
+  
+  mentorInitial:  { type: Number, default: 0 },
+  partnerInitial: { type: Number, default: 0 },
+  
+  mentorFinal:    { type: Number, default: 0 },
+  partnerFinal:   { type: Number, default: 0 },
+  
+  points:         { type: Number, default: 0 } // Total pooled growth shared by this pair
 }, { _id: false });
 
 const fosterProgramSchema = new mongoose.Schema({

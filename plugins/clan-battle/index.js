@@ -1,17 +1,15 @@
-/**
- * index.js — Clan Battle Plugin Entry Point
- *
- * Responsibilities:
- *  1. Daily reset scheduler — resets todayPoints at midnight
- *  2. Leaderboard pagination button handler
- */
-
 const battleService = require('./services/battleService');
 const Battle = require('./models/Battle');
+const panelHandler = require('./handlers/panelHandler');
+const sessionService = require('./services/sessionService');
+const logger = require('../../utils/logger');
 
 module.exports = {
   load(client) {
-    // Silenced
+    // Initialize Automation Panel
+    setTimeout(() => {
+      panelHandler.ensurePanel(client);
+    }, 10000);
 
     /* ═══════════════════════════════════════════
      *  DAILY RESET — Check every 60 seconds
@@ -53,14 +51,21 @@ module.exports = {
     }, 60 * 1000);
 
     /* ═══════════════════════════════════════════
-     *  BUTTON HANDLER — Leaderboard Pagination
+     *  INTERACTION HANDLER — Routing
      * ═══════════════════════════════════════════ */
     this._interactionHandler = async (interaction) => {
+      const customId = interaction.customId;
+
+      // Route battle automation interactions
+      if (customId && customId.startsWith('battle_') && !customId.startsWith('battle_lb_')) {
+        return panelHandler.handleInteraction(interaction);
+      }
+
       if (!interaction.isButton()) return;
-      if (!interaction.customId.startsWith('battle_lb_')) return;
+      if (!customId.startsWith('battle_lb_')) return;
 
       try {
-        const parts = interaction.customId.split('_');
+        const parts = customId.split('_');
         const direction = parts[2]; 
         const currentPage = parseInt(parts[3]);
 
@@ -85,6 +90,28 @@ module.exports = {
     };
 
     client.on('interactionCreate', this._interactionHandler);
+
+    /* ═══════════════════════════════════════════
+     *  MESSAGE LISTENER — Screenshot Collection
+     * ═══════════════════════════════════════════ */
+    this._messageHandler = async (message) => {
+      if (message.author.bot || !message.guild) return;
+      if (message.channel.id !== panelHandler.MOD_CHANNEL_ID) return;
+
+      const session = sessionService.getSession(message.author.id);
+      if (!session) return;
+
+      const images = message.attachments.filter(a => a.contentType?.startsWith('image/'));
+      if (images.size > 0) {
+        for (const [, img] of images) {
+          sessionService.addImage(message.author.id, img.url);
+        }
+        await message.react('✅').catch(() => {});
+        logger.info("ClanBattle", `Collected ${images.size} battle attachment(s) from ${message.author.tag}`);
+      }
+    };
+
+    client.on('messageCreate', this._messageHandler);
   },
 
   unload(client) {
@@ -92,6 +119,9 @@ module.exports = {
       client.removeListener('interactionCreate', this._interactionHandler);
       this._interactionHandler = null;
     }
+    if (this._messageHandler) {
+      client.removeListener('messageCreate', this._messageHandler);
+      this._messageHandler = null;
+    }
   }
 };
-

@@ -392,6 +392,84 @@ async function getAllLeaderboardImages(client, battle) {
   return attachments;
 }
 
+/**
+ * Identify a player by their name (IGN or Discord name).
+ * Uses strict normalization to ignore spacing and special characters.
+ */
+async function resolveMemberByName(guild, name) {
+  if (!name) return null;
+  
+  const normalize = (str) => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+  const target = normalize(name);
+  if (!target) return null;
+
+  // Fetch all players to search in-memory
+  const players = await Player.find({ 
+    $or: [{ ign: { $ne: null } }, { discordName: { $ne: null } }] 
+  });
+
+  for (const player of players) {
+    const pIgn = normalize(player.ign);
+    const pDiscord = normalize(player.discordName);
+
+    // 1. Check exact normalized IGN match
+    if (pIgn === target) return player;
+
+    // 2. Check exact normalized Discord name
+    if (pDiscord === target) return player;
+    
+    // 3. Fallback: Check if one contains the other
+    if (pIgn.length > 3 && target.length > 3) {
+      if (pIgn.includes(target) || target.includes(pIgn)) return player;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Bulk update points for multiple players in a battle.
+ * @param {string} guildId
+ * @param {Array<{player: Object, today: number, total: number}>} updates
+ */
+async function bulkUpdateBattlePoints(guildId, updates) {
+  const battle = await getActiveBattle(guildId);
+  if (!battle) return { success: 0, failed: updates.length, error: 'No active battle.' };
+
+  const results = { success: 0, failed: 0 };
+  const today = getTodayString();
+
+  for (const update of updates) {
+    try {
+      const { player: globalPlayer, today: todayPts, total: totalPts } = update;
+      
+      const identifier = globalPlayer.discordId || globalPlayer.uid;
+      let playerEntry = battle.players.find(p => p.userId === identifier);
+
+      if (playerEntry) {
+        playerEntry.todayPoints = todayPts;
+        playerEntry.totalPoints = totalPts;
+        playerEntry.lastSubmittedDate = today;
+      } else {
+        battle.players.push({
+          userId: identifier,
+          ign: globalPlayer.ign,
+          todayPoints: todayPts,
+          totalPoints: totalPts,
+          lastSubmittedDate: today
+        });
+      }
+      results.success++;
+    } catch (err) {
+      logger.error("ClanBattle", `Bulk update failed for a player: ${err.message}`);
+      results.failed++;
+    }
+  }
+
+  await battle.save();
+  return results;
+}
+
 module.exports = {
   createBattle,
   getActiveBattle,
@@ -405,5 +483,8 @@ module.exports = {
   deleteOldLeaderboardMessage,
   buildFinalResults,
   getAllLeaderboardImages,
+  resolveMemberByName,
+  bulkUpdateBattlePoints,
   MAX_POINTS
 };
+

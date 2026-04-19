@@ -622,8 +622,8 @@ function registerHandler(client) {
     });
 
     // ── Trigger AI Move if it's the bot's turn ──────────────────────────────
-    if (game.active && game.players[game.turn] === client.user.id) {
-      handleAIMove(channelId, client);
+    if (game.active && game.players[game.turn] === interaction.client.user.id) {
+      handleAIMove(channelId, interaction.client);
     }
   });
 }
