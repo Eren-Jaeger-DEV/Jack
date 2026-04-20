@@ -3,8 +3,18 @@ const configManager = require("../utils/configManager");
 
 module.exports = async function modalHandler(interaction) {
 
-  if (interaction.customId === "player_register_modal" || interaction.customId === "admin_create_profile_modal") {
+  if (interaction.customId.startsWith("player_register_modal") || interaction.customId === "admin_create_profile_modal") {
     const isManual = interaction.customId === "admin_create_profile_modal";
+    
+    // Support target ID in customId: player_register_modal:TARGET_ID
+    const customIdParts = interaction.customId.split(":");
+    const targetUserId = customIdParts.length > 1 ? customIdParts[1] : interaction.user.id;
+    
+    // Fetch target user metadata
+    let targetUser = interaction.user;
+    if (targetUserId !== interaction.user.id) {
+        targetUser = await interaction.client.users.fetch(targetUserId).catch(() => interaction.user);
+    }
 
     const ign = interaction.fields.getTextInputValue("ign");
     const uid = interaction.fields.getTextInputValue("uid");
@@ -15,7 +25,7 @@ module.exports = async function modalHandler(interaction) {
 
     if (!isManual) {
       // Normal Discord registration
-      const existing = await Player.findOne({ discordId: interaction.user.id });
+      const existing = await Player.findOne({ discordId: targetUserId });
       if (existing) {
         return interaction.reply({
           content: "You already registered. Use /editprofile.",
@@ -25,15 +35,15 @@ module.exports = async function modalHandler(interaction) {
 
       // SMART CLAIM: Check if an unlinked profile exists with this exact IGN
       const unlinkedProfile = await Player.findOne({ ign: new RegExp(`^${ign}$`, "i"), status: "unlinked" });
-      const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+      const member = await interaction.guild.members.fetch(targetUserId).catch(() => null);
 
       if (unlinkedProfile) {
         // Claim the unlinked profile
         const config = await configManager.getGuildConfig(interaction.guild.id);
         const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
 
-        unlinkedProfile.discordId = interaction.user.id;
-        unlinkedProfile.discordName = interaction.user.username;
+        unlinkedProfile.discordId = targetUserId;
+        unlinkedProfile.discordName = targetUser.username;
         unlinkedProfile.status = "linked";
         unlinkedProfile.uid = uid;
         unlinkedProfile.accountLevel = level;
@@ -50,7 +60,7 @@ module.exports = async function modalHandler(interaction) {
         
         // Start a screenshot session
         const regService = require('../../plugins/clan/services/registrationService');
-        regService.startSession(interaction.user.id, { ign, isClan });
+        regService.startSession(targetUserId, { ign, isClan });
 
         return interaction.reply({
           content: `✅ Linked an existing profile for **${ign}** to your Discord!\nStatus: **${isClan ? "Clan Member" : "Discord Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,
@@ -63,8 +73,8 @@ module.exports = async function modalHandler(interaction) {
       const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
 
       await Player.create({
-        discordId: interaction.user.id,
-        discordName: interaction.user.username,
+        discordId: targetUserId,
+        discordName: targetUser.username,
         ign,
         uid,
         accountLevel: level,
@@ -75,7 +85,7 @@ module.exports = async function modalHandler(interaction) {
 
       // Start a screenshot session
       const regService = require('../../plugins/clan/services/registrationService');
-      regService.startSession(interaction.user.id, { ign, isClan });
+      regService.startSession(targetUserId, { ign, isClan });
 
       return interaction.reply({
         content: `✅ Profile saved as **${isClan ? "Clan Member" : "Discord Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,

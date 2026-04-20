@@ -18,7 +18,12 @@ module.exports = {
 
   data: new SlashCommandBuilder()
     .setName("register")
-    .setDescription("Register your BGMI player profile"),
+    .setDescription("Register a BGMI player profile")
+    .addUserOption(opt => 
+      opt.setName("user")
+        .setDescription("The user to register (Admin only)")
+        .setRequired(false)
+    ),
 
   async run(ctx) {
 
@@ -39,10 +44,19 @@ module.exports = {
     }
 
     /* SLASH COMMAND → OPEN MODAL */
+    const targetUser = ctx.options.getUser("user") || ctx.user;
+    
+    // Check if registering someone else
+    if (targetUser.id !== ctx.user.id) {
+      const { PermissionFlagsBits } = require("discord.js");
+      if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return ctx.reply({ content: "❌ You must be an administrator to register someone else.", flags: 64 });
+      }
+    }
 
     const modal = new ModalBuilder()
-      .setCustomId("player_register_modal")
-      .setTitle("BGMI Player Registration");
+      .setCustomId(`player_register_modal:${targetUser.id}`)
+      .setTitle(`Register: ${targetUser.username}`);
 
     const ign = new TextInputBuilder()
       .setCustomId("ign")
