@@ -49,16 +49,21 @@ module.exports = async (client, message) => {
       .setColor(session.isClan ? '#FFD700' : '#00FFCC')
       .setFooter({ text: `ID: ${message.author.id}` });
 
+    const { AttachmentBuilder } = require('discord.js');
+    const file = new AttachmentBuilder(attachment.url, { name: attachment.name });
+
     const dbMsg = await dbChannel.send({ 
       embeds: [dbEmbed.setImage(`attachment://${attachment.name}`)],
-      files: [{ attachment: attachment.url, name: attachment.name }]
+      files: [file]
     });
 
     // 2. Update Player Model in Database
     const player = await Player.findOne({ discordId: message.author.id });
     if (player) {
-      const newAttachment = dbMsg.attachments.first();
-      player.screenshot = newAttachment ? newAttachment.url : dbMsg.url; 
+      // Small delay or fetch to ensure attachments are available
+      const freshMsg = await dbChannel.messages.fetch(dbMsg.id).catch(() => dbMsg);
+      const newAttachment = freshMsg.attachments.first();
+      player.screenshot = newAttachment ? newAttachment.url : null;
       await player.save();
     }
 
