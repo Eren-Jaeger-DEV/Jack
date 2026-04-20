@@ -60,7 +60,8 @@ module.exports = async (client, message) => {
     // 2. Update Player Model in Database
     const player = await Player.findOne({ discordId: message.author.id });
     if (player) {
-      // Small delay or fetch to ensure attachments are available
+      // Small delay to ensure attachments are processed by Discord CDN
+      await new Promise(resolve => setTimeout(resolve, 2000));
       const freshMsg = await dbChannel.messages.fetch(dbMsg.id).catch(() => dbMsg);
       const newAttachment = freshMsg.attachments.first();
       player.screenshot = newAttachment ? newAttachment.url : null;
