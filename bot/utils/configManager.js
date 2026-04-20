@@ -52,39 +52,48 @@ async function getGuildConfig(guildId) {
 }
 
 /**
+ * Helper to flatten a nested object into dot notation.
+ * Example: { plugins: { clan: true } } -> { "plugins.clan": true }
+ */
+function flattenObject(obj, prefix = '') {
+  return Object.keys(obj).reduce((acc, k) => {
+    const pre = prefix.length ? prefix + '.' : '';
+    if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) {
+      Object.assign(acc, flattenObject(obj[k], pre + k));
+    } else {
+      acc[pre + k] = obj[k];
+    }
+    return acc;
+  }, {});
+}
+
+/**
  * Update a guild's configuration in both MongoDB and the in-memory cache.
  * @param {string} guildId 
  * @param {object} updates 
  */
 async function updateGuildConfig(guildId, updates) {
   try {
+    // Flatten updates to prevent nested object overwrites
+    const flattenedUpdates = flattenObject(updates);
+
     const config = await GuildConfig.findOneAndUpdate(
       { guildId },
-      { $set: updates },
+      { $set: flattenedUpdates },
       { returnDocument: 'after', upsert: true }
     );
     
     const configObj = config.toObject();
-    const oldConfig = configCache.get(guildId);
     configCache.set(guildId, configObj);
 
     // Trigger dynamic plugin toggles if botClient is ready
-    if (botClient && updates.plugins) {
-      for (const [plugin, enabled] of Object.entries(updates.plugins)) {
-        if (typeof botClient.togglePlugin === 'function') {
-          botClient.togglePlugin(plugin, enabled);
-        }
-      }
-    }
-    
-    // Also handle dot notation updates like plugins.clan
     if (botClient) {
-      for (const key of Object.keys(updates)) {
+      // Check for both direct object and dot notation
+      for (const [key, value] of Object.entries(flattenedUpdates)) {
         if (key.startsWith('plugins.')) {
           const pluginName = key.split('.')[1];
-          const enabled = updates[key];
           if (typeof botClient.togglePlugin === 'function') {
-            botClient.togglePlugin(pluginName, enabled);
+            botClient.togglePlugin(pluginName, value, guildId);
           }
         }
       }

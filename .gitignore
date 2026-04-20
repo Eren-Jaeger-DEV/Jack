@@ -8,3 +8,4 @@ plugins/**/data.json
 data/*.json
 data/inviteCache.json
 .env.test
+dashboard/frontend/.env
