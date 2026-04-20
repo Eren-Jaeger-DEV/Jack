@@ -50,22 +50,31 @@ module.exports = async (client, message) => {
       .setFooter({ text: `ID: ${message.author.id}` });
 
     const { AttachmentBuilder } = require('discord.js');
-    const file = new AttachmentBuilder(attachment.url, { name: attachment.name });
+    const file = new AttachmentBuilder(attachment.url, { name: 'player_stats.png' });
 
     const dbMsg = await dbChannel.send({ 
-      embeds: [dbEmbed.setImage(`attachment://${attachment.name}`)],
+      embeds: [dbEmbed.setImage('attachment://player_stats.png')],
       files: [file]
     });
 
     // 2. Update Player Model in Database
     const player = await Player.findOne({ discordId: message.author.id });
     if (player) {
-      // Small delay to ensure attachments are processed by Discord CDN
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const freshMsg = await dbChannel.messages.fetch(dbMsg.id).catch(() => dbMsg);
-      const newAttachment = freshMsg.attachments.first();
-      player.screenshot = newAttachment ? newAttachment.url : null;
+      let capturedUrl = null;
+      // Retry up to 3 times with a delay to ensure Discord CDN has processed the URL
+      for (let i = 0; i < 3; i++) {
+        const freshMsg = await dbChannel.messages.fetch(dbMsg.id).catch(() => dbMsg);
+        const newAttachment = freshMsg.attachments.first();
+        if (newAttachment?.url) {
+          capturedUrl = newAttachment.url;
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      
+      player.screenshot = capturedUrl;
       await player.save();
+      logger.info('Registration', `Screenshot URL for ${session.ign}: ${capturedUrl ? 'SUCCESS' : 'FAILED'}`);
     }
 
     // 3. Cleanup & Confirmation
