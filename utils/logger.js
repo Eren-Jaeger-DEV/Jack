@@ -90,12 +90,50 @@ function _timestamp() {
     return new Date().toTimeString().slice(0, 8);
 }
 
+/**
+ * Scans objects/strings for sensitive patterns and masks them.
+ */
+function _scrub(obj, keyName = "") {
+    if (!obj) return obj;
+
+    // 1. Check if the KEY itself is sensitive
+    const sensitiveKeys = ['token', 'secret', 'password', 'uri', 'key', 'auth', 'mongodb_uri', 'bot_token'];
+    if (sensitiveKeys.includes(keyName.toLowerCase())) {
+        return "[REDACTED]";
+    }
+
+    if (typeof obj === 'string') {
+        // Mask Mongo URIs
+        let clean = obj.replace(/mongodb(?:\+srv)?:\/\/[^\s]+:[^\s]+@[^\s]+/gi, 'mongodb://***:***@***');
+        
+        // Mask Discord Tokens (Resilient pattern)
+        clean = clean.replace(/[a-zA-Z0-9_-]{23,28}\.[a-zA-Z0-9_-]{6}\.[a-zA-Z0-9_-]{27,}/g, '[DISCORD_TOKEN]');
+        
+        // Mask general secrets in strings (e.g. "token: 12345")
+        clean = clean.replace(/(token|secret|key|password|uri)(["']?\s*[:=]\s*["']?)([a-zA-Z0-9._\-/]{8,})/gi, '$1$2[REDACTED]');
+        
+        return clean;
+    }
+    
+    if (Array.isArray(obj)) return obj.map(v => _scrub(v));
+    
+    if (typeof obj === 'object') {
+        const cleaned = {};
+        for (const [key, val] of Object.entries(obj)) {
+            cleaned[key] = _scrub(val, key);
+        }
+        return cleaned;
+    }
+    return obj;
+}
+
 function log(level, tag, message, metadata) {
     const ts = `\x1b[90m[${_timestamp()}]\x1b[0m`;
     let metaStr = "";
     if (metadata) {
         try {
-            metaStr = `\n\x1b[90m${JSON.stringify(metadata, null, 2)}\x1b[0m`;
+            const scrubbed = _scrub(metadata);
+            metaStr = `\n\x1b[90m${JSON.stringify(scrubbed, null, 2)}\x1b[0m`;
         } catch (e) {
             metaStr = "\n[Metadata Unserializable]";
         }

@@ -26,7 +26,11 @@ function hasRole(member, roleNames) {
  */
 function isManagement(member) {
     if (!member) return false;
-    return isOwner(member) || hasRole(member, ROLES.MANAGEMENT) || member.permissions.has(PermissionFlagsBits.Administrator);
+    // 🛡️ High-Priority Permission Check
+    if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
+    
+    // Fallback to designated roles
+    return isOwner(member) || hasRole(member, ROLES.MANAGEMENT);
 }
 
 /**

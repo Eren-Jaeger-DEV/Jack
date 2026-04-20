@@ -9,6 +9,7 @@ module.exports = {
   aliases: ["cmdoff","disablecmd"],
   usage: "/disable  |  j disable",
   details: "Disables a command category in a specific channel or server-wide.",
+  userPermissions: [PermissionFlagsBits.Administrator],
 
   data: new SlashCommandBuilder()
     .setName("disable")
@@ -38,14 +39,6 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async run(ctx) {
-
-    /* Permission check for prefix */
-
-    if (ctx.type === "prefix") {
-      if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator))
-        return ctx.reply("❌ No permission.");
-    }
-
     let category;
     let channelId;
 

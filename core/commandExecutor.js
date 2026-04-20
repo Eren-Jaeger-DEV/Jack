@@ -109,8 +109,16 @@ async function validate(ctx, command) {
         }
     }
 
-    // 3. User Permission Check (Optional: Could be expanded for RBAC)
-    // If command requires specific User permissions, check them here.
+    // 3. User Permission Check (Mandatory & Automatic)
+    if (ctx.guild && command.userPermissions) {
+        if (!ctx.member.permissions.has(command.userPermissions)) {
+            const missing = ctx.member.permissions.missing(command.userPermissions);
+            return { 
+                success: false, 
+                message: `⚠️ You are missing required permissions: \`${missing.join(", ")}\`` 
+            };
+        }
+    }
 
     return { success: true };
 }

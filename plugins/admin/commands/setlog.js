@@ -9,6 +9,7 @@ module.exports = {
   aliases: ["modlog","setmodlog"],
   usage: "/setlog  |  j setlog",
   details: "Sets the channel where moderation actions are logged.",
+  userPermissions: [PermissionFlagsBits.Administrator],
 
   data: new SlashCommandBuilder()
     .setName('setlog')
@@ -23,14 +24,6 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async run(ctx) {
-
-    /* Permission check for prefix */
-
-    if (ctx.type === "prefix") {
-      if (!ctx.member.permissions.has(PermissionFlagsBits.Administrator))
-        return ctx.reply("❌ No permission.");
-    }
-
     let channel;
 
     /* SLASH */

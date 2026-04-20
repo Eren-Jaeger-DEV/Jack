@@ -23,10 +23,17 @@ try {
 } catch (e) {}
 
 const frontendDir = path.join(__dirname, 'dashboard', 'frontend');
+
+// 🛡️ Security Shield: Filter sensitive envs before passing to Vite/Frontend process
+const filteredEnv = { ...process.env };
+const SENSITIVE_KEYS = ['BOT_TOKEN', 'MONGODB_URI', 'GOOGLE_API_KEYS', 'DISCORD_CLIENT_SECRET'];
+SENSITIVE_KEYS.forEach(key => delete filteredEnv[key]);
+
 const frontendProcess = spawn('npm', ['run', 'dev'], {
   cwd: frontendDir,
   stdio: 'ignore', // Silence VITE/NPM logs
-  shell: true
+  shell: true,
+  env: filteredEnv
 });
 
 addLog("Dashboard", "Running (3000 + 5173)");
