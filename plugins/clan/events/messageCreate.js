@@ -57,7 +57,8 @@ module.exports = async (client, message) => {
     // 2. Update Player Model in Database
     const player = await Player.findOne({ discordId: message.author.id });
     if (player) {
-      player.screenshot = dbMsg.url; // Save the message link or image URL
+      const newAttachment = dbMsg.attachments.first();
+      player.screenshot = newAttachment ? newAttachment.url : dbMsg.url; 
       await player.save();
     }
 
