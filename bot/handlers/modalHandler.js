@@ -53,7 +53,7 @@ module.exports = async function modalHandler(interaction) {
         regService.startSession(interaction.user.id, { ign, isClan });
 
         return interaction.reply({
-          content: `✅ Linked an existing profile for **${ign}** to your Discord!\nStatus: **${isClan ? "Clan Member" : "Guest Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now. Jack will save it to the database and clean up this channel.`,
+          content: `✅ Linked an existing profile for **${ign}** to your Discord!\nStatus: **${isClan ? "Clan Member" : "Discord Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,
           flags: 64
         });
       }
@@ -78,7 +78,7 @@ module.exports = async function modalHandler(interaction) {
       regService.startSession(interaction.user.id, { ign, isClan });
 
       return interaction.reply({
-        content: `✅ Profile saved as **${isClan ? "Clan Member" : "Guest Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now. Jack will save it to the database and clean up this channel.`,
+        content: `✅ Profile saved as **${isClan ? "Clan Member" : "Discord Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,
         flags: 64
       });
 
@@ -142,7 +142,7 @@ module.exports = async function modalHandler(interaction) {
     }
 
     return interaction.reply({
-      content: `✅ Profile updated! Status: **${isClan ? "Clan Member" : "Guest Member"}**.`,
+      content: `✅ Profile updated! Status: **${isClan ? "Clan Member" : "Discord Member"}**.`,
       flags: 64
     });
 

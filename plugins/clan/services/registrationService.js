@@ -76,8 +76,8 @@ function buildRoleSelection() {
         emoji: '🛡️'
       },
       {
-        label: 'Discord Member (Guest)',
-        description: 'You are a community member/guest.',
+        label: 'Discord Member',
+        description: 'You are a community member.',
         value: 'guest',
         emoji: '👥'
       }

@@ -42,7 +42,7 @@ module.exports = async (client, message) => {
       .setTitle(`📄 Player Profile: ${session.ign}`)
       .setDescription(
         `**Discord:** <@${message.author.id}> (${message.author.tag})\n` +
-        `**Status:** ${session.isClan ? 'Clan Member' : 'Guest Member'}\n` +
+        `**Status:** ${session.isClan ? 'Clan Member' : 'Discord Member'}\n` +
         `**Timestamp:** <t:${Math.floor(Date.now() / 1000)}:F>`
       )
       .setImage(attachment.url)
