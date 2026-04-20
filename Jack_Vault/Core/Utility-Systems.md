@@ -29,8 +29,9 @@ The bridge between bot events and Discord channels.
 
 ## [[Logger]] (`utils/logger.js`)
 The celestial console reporter.
-- **Ref-ID Injection**: Automatically adds unique IDs to error strings.
-- **Metadata Support**: Captures stack traces and context objects for debugging.
+- **Privacy Scrubber**: Automatically detects and masks Discord Tokens, Mongo URIs, and Secrets in logs.
+- **Ref-ID Injection**: Automatically adds unique IDs to error strings for tracking.
+- **Metadata Support**: Captures scrubbed context objects for debugging without leaking secrets.
 
 ---
 **Related Documents:** [[00 - Core Architecture]], [[Database]], [[Command-Executor]]

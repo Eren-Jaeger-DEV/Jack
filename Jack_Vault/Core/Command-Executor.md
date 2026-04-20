@@ -13,10 +13,11 @@ The `CommandExecutor` (`core/commandExecutor.js`) is the high-performance heart 
 > [!TIP] **Safety First**
 > The Executor ensures that one bad command cannot crash the entire bot. It implements a **Timeout Race** (120 seconds) to prevent infinite loops.
 
-### 🛡️ Layer 1: Permissions
-- Checks if the user has the required Discord permissions.
-- Checks if the **Bot** has the required permissions in that channel.
-- Handles "Owner Bypass" for bot administrators.
+### 🛡️ Layer 1: Automated Permissions
+- **Enforcement**: Checks `command.userPermissions` automatically in the core executor.
+- **Bot Safety**: Verifies if the **Bot** has the required permissions in the target channel.
+- **RBAC Resilience**: Uses `PermissionFlagsBits` for stability (immune to role renames).
+- **Owner Bypass**: Bot administrators bypass all standard permission checks.
 
 ### 🛡️ Layer 2: Cooldowns
 - Prevents spamming by enforcing per-user, per-command cooldowns.
