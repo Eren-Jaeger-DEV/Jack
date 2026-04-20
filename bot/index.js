@@ -28,11 +28,27 @@ require("./handlers/commandHandler")(client);
 require("./handlers/eventHandler")(client);
 
 /* Mongo */
+mongoose.set('strictQuery', false);
 
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => logger.addLog("Database", "Connected"))
-  .catch(err => logger.critical("Database", `Connection Failed: ${err.message}`));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    logger.addLog("Database", "Connected");
+  } catch (err) {
+    logger.critical("Database", `Connection Failed: ${err.message}`);
+    process.exit(1); // Production: Exit if DB is not available on startup
+  }
+};
+
+connectDB();
+
+mongoose.connection.on('error', err => {
+  logger.error("Database", `Runtime Error: ${err.message}`);
+});
+
+mongoose.connection.on('disconnected', () => {
+  logger.warn("Database", "Connection Lost. Attempting to reconnect...");
+});
 
 /* Ready */
 
@@ -58,6 +74,24 @@ client.once("clientReady", async () => {
     logger.showBootReport(client);
   }, 1500); 
 });
+
+/* Graceful Shutdown */
+async function shutdown() {
+  logger.warn("System", "Shutdown signal received. Cleaning up...");
+  try {
+    await mongoose.connection.close();
+    logger.addLog("Database", "Connection Closed");
+    client.destroy();
+    logger.addLog("System", "Bot Destroyed");
+    process.exit(0);
+  } catch (err) {
+    logger.error("System", `Shutdown Error: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 /* Login */
 

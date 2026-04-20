@@ -5,10 +5,12 @@ const { addLog } = require("./utils/logger");
 process.on('uncaughtException', (err) => {
     console.error('[FATAL] Uncaught Exception:', err.message);
     console.error(err.stack);
+    process.exit(1); // Force restart by process manager (PM2/systemd)
 });
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1); // Force restart
 });
 require("./bot/index");
 require("./dashboard/backend/server");
