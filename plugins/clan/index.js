@@ -19,7 +19,7 @@ module.exports = {
     }, 10000); // 10s delay to ensure client is ready
 
     this._interactionHandler = async (interaction) => {
-      if (!interaction.isButton() && !interaction.isStringSelectMenu()) return;
+      if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isUserSelectMenu()) return;
       if (!interaction.customId.startsWith('clan_reg_')) return;
 
       try {
