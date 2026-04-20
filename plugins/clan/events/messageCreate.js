@@ -52,29 +52,32 @@ module.exports = async (client, message) => {
     const { AttachmentBuilder } = require('discord.js');
     const file = new AttachmentBuilder(attachment.url, { name: 'player_stats.png' });
 
-    const dbMsg = await dbChannel.send({ 
-      embeds: [dbEmbed.setImage('attachment://player_stats.png')],
-      files: [file]
-    });
+    // Step 1: Send only the file first to get a permanent URL
+    const dbMsg = await dbChannel.send({ files: [file] });
+    let newAttachment = dbMsg.attachments.first();
+    
+    if (!newAttachment) {
+      const fresh = await dbChannel.messages.fetch(dbMsg.id).catch(() => null);
+      newAttachment = fresh?.attachments?.first();
+    }
+    
+    if (!newAttachment) {
+      logger.error('Registration', 'Failed to get attachment from DB message.');
+      return message.reply('❌ Error saving screenshot. Please try again.');
+    }
 
-    // 2. Update Player Model in Database
+    const screenshotUrl = newAttachment.url;
+
+    // Step 2: Update the embed with the permanent URL and edit the message
+    dbEmbed.setImage(screenshotUrl);
+    await dbMsg.edit({ embeds: [dbEmbed] });
+
+    // Step 3: Update Player Model in Database
     const player = await Player.findOne({ discordId: message.author.id });
     if (player) {
-      let capturedUrl = null;
-      // Retry up to 3 times with a delay to ensure Discord CDN has processed the URL
-      for (let i = 0; i < 3; i++) {
-        const freshMsg = await dbChannel.messages.fetch(dbMsg.id).catch(() => dbMsg);
-        const newAttachment = freshMsg.attachments.first();
-        if (newAttachment?.url) {
-          capturedUrl = newAttachment.url;
-          break;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1500));
-      }
-      
-      player.screenshot = capturedUrl;
+      player.screenshot = screenshotUrl;
       await player.save();
-      logger.info('Registration', `Screenshot URL for ${session.ign}: ${capturedUrl ? 'SUCCESS' : 'FAILED'}`);
+      logger.info('Registration', `Screenshot URL for ${session.ign}: ${screenshotUrl}`);
     }
 
     // 3. Cleanup & Confirmation
