@@ -170,8 +170,12 @@ module.exports = {
     if (interaction.isUserSelectMenu()) {
       const targetId = interaction.values[0];
       const targetUser = interaction.users.get(targetId);
+      
+      logger.info('ClanPlugin', `UserSelect: targetId=${targetId}, targetUser=${targetUser?.username}`);
 
-      // 1. Admin Registering Someone
+      if (!targetUser) {
+          return interaction.reply({ content: '❌ Could not resolve the selected user.', flags: [MessageFlags.Ephemeral] });
+      }
       if (customId === 'clan_reg_admin_user_select_reg_clan' || customId === 'clan_reg_admin_user_select_reg_guest') {
         const isClan = customId.includes('clan');
         const modal = new ModalBuilder()
