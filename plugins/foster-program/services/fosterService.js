@@ -259,7 +259,7 @@ async function postOrientation(client, program, guild) {
   const msg = await channel.send({ content: `<@&${ROLES.ADEPT}> <@&${ROLES.NEOPHYTE}>`, embeds: [embed] });
   const thread = await msg.startThread({ name: `✅ Verification (T${program.term} C${program.cycle})`, autoArchiveDuration: ThreadAutoArchiveDuration.OneDay });
   program.submissionThreadId = thread.id;
-  await thread.send('**Submit your "All Data" stat card screenshot here!**\nJack will automatically extract your points. Ensure the dropdown is set to **"ALL"** or **"SEASON 28"**.');
+  await thread.send('**Submit your "All Data" stat card screenshot here!**\nJack will automatically extract your points. Ensure the dropdown is set to **"SEASON 28"**.');
   await program.save();
 }
 
@@ -311,8 +311,12 @@ async function submitSynergyCard(userId, value, type, selection, screenshotUrl, 
 
   // SEASON ENFORCEMENT: Check if the screenshot matches the required category
   const currentSeason = "SEASON 28"; // This should ideally come from config
-  if (selection !== "ALL" && selection !== currentSeason) {
-    return { success: false, error: `Invalid category! Your screenshot shows **${selection}**, but the program requires **${currentSeason}** or **ALL**.` };
+  if (selection === "ALL") {
+    return { success: false, error: `Invalid category! "ALL" data is not accepted as it includes multiple seasons. Please set the dropdown to **${currentSeason}**.` };
+  }
+  
+  if (selection !== currentSeason) {
+    return { success: false, error: `Invalid category! Your screenshot shows **${selection}**, but the program requires **${currentSeason}**.` };
   }
 
   // Check for partner's pending submission of the SAME type
