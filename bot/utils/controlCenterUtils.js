@@ -101,7 +101,10 @@ function buildChannelsEmbed(config) {
         { name: 'Synergy Logs', id: settings.synergyChannelId }
     ];
 
-    const lines = channelMap.map(c => `• **${c.name}:** ${c.id ? `<#${c.id}>` : '`Not Set` '}`);
+    const lines = channelMap.map(c => {
+        const id = c.id;
+        return `• **${c.name}:** ${id ? `<#${id}>` : '`Not Set` '}`;
+    });
 
     return new EmbedBuilder()
         .setTitle('📡 Channel Configuration')

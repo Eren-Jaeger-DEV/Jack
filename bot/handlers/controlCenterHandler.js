@@ -20,6 +20,11 @@ module.exports = async function controlCenterHandler(interaction, client) {
     const guildId = interaction.guildId;
     const config = await configManager.getGuildConfig(guildId);
 
+    logger.info('ControlCenter', `Interaction from ${interaction.user.tag} in ${guildId}. Config found: ${!!config}`);
+    if (config) {
+        logger.info('ControlCenter', `Config Settings: ${JSON.stringify(config.settings || {})}`);
+    }
+
     try {
         // --- NAVIGATION ---
         if (interaction.customId === 'cc_nav_home') {
