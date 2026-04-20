@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const mongoose = require('mongoose');
-const { buildHomeEmbed, buildNavigationRow } = require('./bot/utils/controlCenterUtils');
-const configManager = require('./bot/utils/configManager');
+const { buildHomeEmbed, buildNavigationRow } = require('../bot/utils/controlCenterUtils');
+const configManager = require('../bot/utils/configManager');
 require('dotenv').config();
 
 const client = new Client({
