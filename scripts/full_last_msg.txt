@@ -1,0 +1,15 @@
+<USER_REQUEST>
+so i have scan our project by codex ai and it give nme the review can you confim his report that he is right about all thing ? see
+• Jack/ is a Node.js Discord bot project with an attached web dashboard. The
+  top-level entrypoint Jack/main.js:13 boots both the bot and the dashboard
+  backend, then force-kills ports 5173, 5174, and 3000 and starts the dashboard
+  frontend dev server. So this is built to run as one combined local stack, not
+  just a bot process.
+
+  The bot runtime starts in Jack/bot/index.js:11. It creates a discord.js
+  client, connects to MongoDB, loads core handlers, initializes a server map,
+  starts rotating presence, and then loads plugins on clientReady. Message flow
+  is centralized in Jack/bot/events/messageCreate.js:10: every guild message
+  goes through activity observation, AFK/screenshot handlers, then an AI channel
+  gate, and finally the prefix command handler. Prefix commands are routed in
+<truncated 2839 bytes>
