@@ -21,7 +21,6 @@ function buildHomeEmbed(client, guild, config) {
         )
         .setColor('#5865F2')
         .setThumbnail(client.user.displayAvatarURL())
-        .setImage('https://i.imgur.com/qE8m66M.gif') // Clean tech/circuitry aesthetic
         .setTimestamp()
         .setFooter({ text: 'Jack Management System • Premium Edition' });
 }
