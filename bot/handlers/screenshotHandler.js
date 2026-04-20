@@ -1,6 +1,8 @@
 const Player = require("../database/models/Player");
 
 module.exports = async function screenshotHandler(message) {
+  // Skip if this is in the new registration panel channel
+  if (message.channel.id === '1495460903628308752') return;
 
   let player = await Player.findOne({
     discordId: message.author.id
