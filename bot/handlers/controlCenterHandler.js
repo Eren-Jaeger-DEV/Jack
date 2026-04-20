@@ -48,6 +48,13 @@ module.exports = async function controlCenterHandler(interaction, client) {
             });
         }
 
+        else if (interaction.customId === 'cc_nav_refresh') {
+            await interaction.update({
+                embeds: [buildHomeEmbed(client, interaction.guild, config)],
+                components: [buildNavigationRow()]
+            });
+        }
+
         // --- PLUGIN TOGGLES ---
         else if (interaction.customId === 'cc_toggle_plugin') {
             const pluginName = interaction.values[0];

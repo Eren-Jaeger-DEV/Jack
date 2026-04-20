@@ -49,7 +49,12 @@ function buildNavigationRow() {
             .setCustomId('cc_nav_roles')
             .setLabel('Roles')
             .setStyle(ButtonStyle.Secondary)
-            .setEmoji('👑')
+            .setEmoji('👑'),
+        new ButtonBuilder()
+            .setCustomId('cc_nav_refresh')
+            .setLabel('Refresh')
+            .setStyle(ButtonStyle.Success)
+            .setEmoji('🔄')
     );
 }
 
