@@ -49,7 +49,10 @@ module.exports = async (client, message) => {
       .setColor(session.isClan ? '#FFD700' : '#00FFCC')
       .setFooter({ text: `ID: ${message.author.id}` });
 
-    const dbMsg = await dbChannel.send({ embeds: [dbEmbed] });
+    const dbMsg = await dbChannel.send({ 
+      embeds: [dbEmbed.setImage(`attachment://${attachment.name}`)],
+      files: [{ attachment: attachment.url, name: attachment.name }]
+    });
 
     // 2. Update Player Model in Database
     const player = await Player.findOne({ discordId: message.author.id });
