@@ -129,18 +129,18 @@ module.exports = {
      *  BUTTON HANDLER — Leaderboard Pagination
      * ═══════════════════════════════════════════ */
     this._interactionHandler = async (interaction) => {
-      if (interaction.isButton() || interaction.isStringSelectMenu()) {
-        const customId = interaction.customId;
-        // Only route to automation panel if it's NOT a leaderboard pagination button
-        if (customId.startsWith('synergy_') && !customId.startsWith('synergy_lb_')) {
-          return panelHandler.handleInteraction(interaction);
-        }
-      }
-
-      if (!interaction.isButton()) return;
-      if (!interaction.customId.startsWith('synergy_lb_')) return;
-
       try {
+        if (interaction.isButton() || interaction.isStringSelectMenu()) {
+          const customId = interaction.customId;
+          // Only route to automation panel if it's NOT a leaderboard pagination button
+          if (customId.startsWith('synergy_') && !customId.startsWith('synergy_lb_')) {
+            return panelHandler.handleInteraction(interaction);
+          }
+        }
+
+        if (!interaction.isButton()) return;
+        if (!interaction.customId.startsWith('synergy_lb_')) return;
+
         const parts = interaction.customId.split('_');
         const direction = parts[2]; 
         const currentPage = parseInt(parts[3]);
@@ -195,19 +195,23 @@ module.exports = {
      *  MESSAGE LISTENER — Screenshot Collection
      * ═══════════════════════════════════════════ */
     this._messageHandler = async (message) => {
-      if (message.author.bot || !message.guild) return;
-      if (message.channel.id !== panelHandler.MOD_CHANNEL_ID) return;
+      try {
+        if (message.author.bot || !message.guild) return;
+        if (message.channel.id !== panelHandler.MOD_CHANNEL_ID) return;
 
-      const session = sessionService.getSession(message.author.id);
-      if (!session) return;
+        const session = sessionService.getSession(message.author.id);
+        if (!session) return;
 
-      const images = message.attachments.filter(a => a.contentType?.startsWith('image/'));
-      if (images.size > 0) {
-        for (const [, img] of images) {
-          sessionService.addImage(message.author.id, img.url);
+        const images = message.attachments.filter(a => a.contentType?.startsWith('image/'));
+        if (images.size > 0) {
+          for (const [, img] of images) {
+            sessionService.addImage(message.author.id, img.url);
+          }
+          await message.react('✅').catch(() => {});
+          addLog("Synergy", `Collected ${images.size} attachment(s) from ${message.author.tag}`);
         }
-        await message.react('✅').catch(() => {});
-        addLog("Synergy", `Collected ${images.size} attachment(s) from ${message.author.tag}`);
+      } catch (err) {
+        logger.error("SeasonalSynergy", `Message processing error: ${err.message}`);
       }
     };
 

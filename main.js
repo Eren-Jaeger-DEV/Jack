@@ -3,14 +3,16 @@ require("dotenv").config({ quiet: true });
 const { addLog } = require("./utils/logger");
 
 process.on('uncaughtException', (err) => {
-    console.error('[FATAL] Uncaught Exception:', err.message);
-    console.error(err.stack);
-    process.exit(1); // Force restart by process manager (PM2/systemd)
+    console.error('\x1b[41m\x1b[37m[FATAL ERROR]\x1b[0m Uncaught Exception detected!');
+    console.error('\x1b[31mMessage:\x1b[0m', err.message);
+    console.error('\x1b[31mStack:\x1b[0m\n', err.stack);
+    process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
-    process.exit(1); // Force restart
+    console.error('\x1b[41m\x1b[37m[FATAL ERROR]\x1b[0m Unhandled Rejection at promise:', promise);
+    console.error('\x1b[31mReason:\x1b[0m', reason instanceof Error ? reason.stack : reason);
+    process.exit(1);
 });
 require("./bot/index");
 require("./dashboard/backend/server");
