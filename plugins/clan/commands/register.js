@@ -25,17 +25,17 @@ module.exports = {
     /* PREFIX COMMAND */
 
     const config = await configManager.getGuildConfig(ctx.guild.id);
-    const regChannelId = config?.settings?.registrationChannelId;
+    const panelChannelId = require('../services/registrationService').PANEL_CHANNEL_ID;
 
-    if (regChannelId && ctx.channel.id !== regChannelId) {
+    if (ctx.channel.id !== panelChannelId) {
       return ctx.reply({
-        content: `❌ Registration is only allowed in <#${regChannelId}>.`,
+        content: `❌ Registration has been moved to the persistent panel in <#${panelChannelId}>. Please head there to register, edit, or delete your profile.`,
         flags: 64
       });
     }
 
     if (!ctx.isInteraction) {
-      return ctx.reply("Use `/register` to open the registration form.");
+      return ctx.reply("Please use the buttons on the registration panel above.");
     }
 
     /* SLASH COMMAND → OPEN MODAL */

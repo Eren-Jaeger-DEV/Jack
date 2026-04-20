@@ -48,8 +48,12 @@ module.exports = async function modalHandler(interaction) {
         
         await unlinkedProfile.save();
         
+        // Start a screenshot session
+        const regService = require('../../plugins/clan/services/registrationService');
+        regService.startSession(interaction.user.id, { ign, isClan });
+
         return interaction.reply({
-          content: `✅ Linked an existing profile for **${ign}** to your Discord!\nStatus: **${isClan ? "Clan Member" : "Guest Member"}**.\n\nUpload your **BGMI Basic Info** now.`,
+          content: `✅ Linked an existing profile for **${ign}** to your Discord!\nStatus: **${isClan ? "Clan Member" : "Guest Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now. Jack will save it to the database and clean up this channel.`,
           flags: 64
         });
       }
@@ -69,8 +73,12 @@ module.exports = async function modalHandler(interaction) {
         clanJoinDate: (isClan && member) ? member.joinedAt : (isClan ? new Date() : null)
       });
 
+      // Start a screenshot session
+      const regService = require('../../plugins/clan/services/registrationService');
+      regService.startSession(interaction.user.id, { ign, isClan });
+
       return interaction.reply({
-        content: `✅ Profile saved as **${isClan ? "Clan Member" : "Guest Member"}**.\n\nUpload your **BGMI Basic Info** screenshot now.`,
+        content: `✅ Profile saved as **${isClan ? "Clan Member" : "Guest Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now. Jack will save it to the database and clean up this channel.`,
         flags: 64
       });
 
