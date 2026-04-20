@@ -129,6 +129,84 @@ function endSession(userId) {
   activeSessions.delete(userId);
 }
 
+/**
+ * Build Admin options for Registration choice.
+ */
+function buildAdminRegisterOptions() {
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('clan_reg_admin_own_reg')
+      .setLabel('Register My Profile')
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji('👤'),
+    new ButtonBuilder()
+      .setCustomId('clan_reg_admin_target_clan')
+      .setLabel('Register Clan Member')
+      .setStyle(ButtonStyle.Success)
+      .setEmoji('🛡️'),
+    new ButtonBuilder()
+      .setCustomId('clan_reg_admin_target_guest')
+      .setLabel('Register Discord Member')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('👥')
+  );
+
+  return { content: '🛡️ **Admin Registration Hub**\nWho are you registering today?', components: [row], flags: [MessageFlags.Ephemeral] };
+}
+
+/**
+ * Build Admin options for Edit choice.
+ */
+function buildAdminEditOptions() {
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('clan_reg_admin_own_edit')
+      .setLabel('Edit My Profile')
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji('📝'),
+    new ButtonBuilder()
+      .setCustomId('clan_reg_admin_target_edit')
+      .setLabel('Edit Someone Else')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('🔍')
+  );
+
+  return { content: '📝 **Admin Edit Hub**\nWhose profile needs an update?', components: [row], flags: [MessageFlags.Ephemeral] };
+}
+
+/**
+ * Build Admin options for Delete choice.
+ */
+function buildAdminDeleteOptions() {
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('clan_reg_admin_own_delete')
+      .setLabel('Delete My Profile')
+      .setStyle(ButtonStyle.Danger)
+      .setEmoji('🗑️'),
+    new ButtonBuilder()
+      .setCustomId('clan_reg_admin_target_delete')
+      .setLabel('Delete Someone Else')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('🚫')
+  );
+
+  return { content: '🗑️ **Admin Delete Hub**\nSelect the target for profile removal:', components: [row], flags: [MessageFlags.Ephemeral] };
+}
+
+/**
+ * Build a User Selection menu for target picking.
+ */
+function buildUserSelector(customId) {
+  const { UserSelectMenuBuilder } = require('discord.js');
+  const select = new UserSelectMenuBuilder()
+    .setCustomId(customId)
+    .setPlaceholder('Select the target member...');
+
+  const row = new ActionRowBuilder().addComponents(select);
+  return { content: '👥 **Target Selection**\nPlease select the member from the list below:', components: [row], flags: [MessageFlags.Ephemeral] };
+}
+
 module.exports = {
   PANEL_CHANNEL_ID,
   DB_CHANNEL_ID,
@@ -137,5 +215,9 @@ module.exports = {
   verifyRole,
   startSession,
   getSession,
-  endSession
+  endSession,
+  buildAdminRegisterOptions,
+  buildAdminEditOptions,
+  buildAdminDeleteOptions,
+  buildUserSelector
 };

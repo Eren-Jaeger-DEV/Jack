@@ -117,7 +117,15 @@ module.exports = async function modalHandler(interaction) {
     }
   }
 
-  if (interaction.customId === "edit_profile_modal") {
+  if (interaction.customId.startsWith("edit_profile_modal")) {
+    const customIdParts = interaction.customId.split(":");
+    const targetUserId = customIdParts.length > 1 ? customIdParts[1] : interaction.user.id;
+    
+    // Fetch target user metadata
+    let targetUser = interaction.user;
+    if (targetUserId !== interaction.user.id) {
+        targetUser = await interaction.client.users.fetch(targetUserId).catch(() => interaction.user);
+    }
 
     const ign = interaction.fields.getTextInputValue("ign");
     const uid = interaction.fields.getTextInputValue("uid");
@@ -127,11 +135,11 @@ module.exports = async function modalHandler(interaction) {
     const preferredModes = modes.split(",").map(m => m.trim());
 
     const config = await configManager.getGuildConfig(interaction.guild.id);
-    const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+    const member = await interaction.guild.members.fetch(targetUserId).catch(() => null);
     const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
 
     const player = await Player.findOneAndUpdate(
-      { discordId: interaction.user.id },
+      { discordId: targetUserId },
       {
         ign,
         uid,
