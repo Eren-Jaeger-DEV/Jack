@@ -21,7 +21,7 @@ function buildHomeEmbed(client, guild, config) {
         )
         .setColor('#5865F2')
         .setThumbnail(client.user.displayAvatarURL())
-        .setImage('https://cdn.discordapp.com/attachments/1353964404378701916/1402495184943452170/standard_2.gif') // Aesthetic banner
+        .setImage('https://i.imgur.com/qE8m66M.gif') // Clean tech/circuitry aesthetic
         .setTimestamp()
         .setFooter({ text: 'Jack Management System • Premium Edition' });
 }
