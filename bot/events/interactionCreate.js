@@ -10,6 +10,8 @@ const guideMenuHandler = require("../interactions/guideMenuHandler");
 const CommandUsage = require("../database/models/CommandUsage");
 const Player = require("../database/models/Player");
 const logger = require('../../utils/logger');
+const controlCenterHandler = require("../handlers/controlCenterHandler");
+
 
 
 
@@ -56,6 +58,10 @@ module.exports = {
         return guideMenuHandler(interaction);
       }
 
+      if (interaction.customId.startsWith("cc_")) {
+        return controlCenterHandler(interaction, client);
+      }
+
 
 
       /* POP Marketplace buttons */
@@ -88,6 +94,10 @@ module.exports = {
       try {
         if (interaction.customId.startsWith("guide_")) {
           return await guideMenuHandler(interaction);
+        }
+
+        if (interaction.customId.startsWith("cc_")) {
+          return await controlCenterHandler(interaction, client);
         }
 
         if (interaction.customId === "admin_select_action") {
