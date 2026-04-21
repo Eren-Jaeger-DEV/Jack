@@ -3,16 +3,16 @@ const Player = require("../../../bot/database/models/Player");
 
 module.exports = {
 
-  name: "guestroster",
+  name: "dcroster",
   category: "clan",
-  description: "View the full discord guest player roster",
-  aliases: ["guests", "jdmroster"],
-  usage: "/guestroster  |  j guestroster",
-  details: "Shows the full registered discord guest list with JDM ID, IGN, UID, and Discord mention.",
+  description: "View the full discord member player roster",
+  aliases: ["dc", "guests", "jdmroster"],
+  usage: "/dcroster  |  j dcroster",
+  details: "Shows the full registered discord member list with JDM ID, IGN, UID, and Discord mention.",
 
   data: new SlashCommandBuilder()
-    .setName("guestroster")
-    .setDescription("View the full discord guest player roster"),
+    .setName("dcroster")
+    .setDescription("View the full discord member player roster"),
 
   async run(ctx) {
 
@@ -20,7 +20,7 @@ module.exports = {
       .sort({ serialNumber: 1 });
 
     if (!players.length) {
-      return ctx.reply("❌ No guest members registered yet.");
+      return ctx.reply("❌ No discord members registered yet.");
     }
 
     // Header
@@ -40,10 +40,10 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle("🤝 Official Guest Roster")
+      .setTitle("🛡️ Official DC Member Roster")
       .setDescription(list)
-      .setColor("#FFD700") // Gold color for guests
-      .setFooter({ text: `Total Guests: ${players.length}` })
+      .setColor("#FFD700") // Gold color for members
+      .setFooter({ text: `Total Members: ${players.length}` })
       .setTimestamp();
 
     await ctx.reply({ embeds: [embed] });
