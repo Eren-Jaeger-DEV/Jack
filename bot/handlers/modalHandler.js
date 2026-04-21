@@ -70,9 +70,9 @@ module.exports = async function modalHandler(interaction) {
         
         await unlinkedProfile.save();
         
-        // Start a screenshot session
+        // Start a screenshot session for the uploader
         const regService = require('../../plugins/clan/services/registrationService');
-        regService.startSession(targetUserId, { ign, isClan });
+        regService.startSession(interaction.user.id, { ign, isClan, targetId: targetUserId });
 
         return interaction.reply({
           content: `✅ Linked an existing profile for **${ign}** to your Discord!\nStatus: **${isClan ? "Clan Member" : "Discord Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,
@@ -104,9 +104,9 @@ module.exports = async function modalHandler(interaction) {
         clanJoinDate: (isClan && member) ? member.joinedAt : (isClan ? new Date() : null)
       });
 
-      // Start a screenshot session
+      // Start a screenshot session for the uploader
       const regService = require('../../plugins/clan/services/registrationService');
-      regService.startSession(targetUserId, { ign, isClan });
+      regService.startSession(interaction.user.id, { ign, isClan, targetId: targetUserId });
 
       return interaction.reply({
         content: `✅ Profile saved as **${isClan ? "Clan Member" : "Discord Member"}**.\nYour Unique ID: **${serialNumber}**\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,
@@ -135,8 +135,12 @@ module.exports = async function modalHandler(interaction) {
         clanJoinDate: new Date() // Fallback since no member object
       });
 
+      // Start a screenshot session for the admin
+      const regService = require('../../plugins/clan/services/registrationService');
+      regService.startSession(interaction.user.id, { ign, isClan: true, targetId: null });
+
       return interaction.reply({
-        content: `✅ Unlinked profile for **${ign}** created successfully.\nUnique ID: **${serialNumber}**\n\nUpload the **BGMI Basic Info** screenshot for them now.`,
+        content: `✅ Unlinked profile for **${ign}** created successfully.\nUnique ID: **${serialNumber}**\n\n📸 **Final Step:** Please upload a screenshot of the **BGMI Basic Info** (Stats Card) in this channel now.`,
         flags: 64
       });
     }

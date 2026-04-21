@@ -73,7 +73,13 @@ module.exports = async (client, message) => {
     await dbMsg.edit({ embeds: [dbEmbed] });
 
     // Step 3: Update Player Model in Database
-    const player = await Player.findOne({ discordId: message.author.id });
+    let player;
+    if (session.targetId) {
+      player = await Player.findOne({ discordId: session.targetId });
+    } else {
+      player = await Player.findOne({ ign: new RegExp(`^${session.ign}$`, "i") });
+    }
+
     if (player) {
       player.screenshot = screenshotUrl;
       await player.save();
