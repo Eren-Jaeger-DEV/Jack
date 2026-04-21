@@ -131,6 +131,7 @@ module.exports = async function modalHandler(interaction) {
         status: "unlinked",
         isManual: true,
         createdBy: interaction.user.id,
+        isClanMember: true,
         serialNumber,
         clanJoinDate: new Date() // Fallback since no member object
       });

@@ -31,26 +31,38 @@ async function reorder() {
     const guild = await client.guilds.fetch(guildId);
 
     console.log('Fetching all registered players...');
-    const players = await Player.find({ discordId: { $ne: null } });
+    const players = await Player.find({ isClanMember: true });
     
     const memberData = [];
 
     for (const player of players) {
-      const member = await guild.members.fetch(player.discordId).catch(() => null);
-      if (!member) continue;
-
-      // Find highest role priority
-      let priority = 99;
-      for (let i = 0; i < ROLE_PRIORITY.length; i++) {
-        if (member.roles.cache.has(ROLE_PRIORITY[i])) {
-          priority = i;
-          break;
+      if (player.discordId) {
+        const member = await guild.members.fetch(player.discordId).catch(() => null);
+        
+        if (member) {
+          // Find highest role priority
+          let priority = 99;
+          for (let i = 0; i < ROLE_PRIORITY.length; i++) {
+            if (member.roles.cache.has(ROLE_PRIORITY[i])) {
+              priority = i;
+              break;
+            }
+          }
+          
+          if (priority < 99) {
+            memberData.push({ player, priority, joinedAt: member.joinedAt || player.createdAt });
+            continue;
+          }
         }
       }
 
-      if (priority < 99) {
-        memberData.push({ player, priority, joinedAt: member.joinedAt });
-      }
+      // If they don't have a discordId or the member wasn't found, 
+      // but they are marked as isClanMember, treat them as regular 'Clan Member' (Priority 3)
+      memberData.push({ 
+        player, 
+        priority: 3, 
+        joinedAt: player.clanJoinDate || player.createdAt 
+      });
     }
 
     // Sort by Priority (0 is highest), then by joinedAt (oldest first)
