@@ -61,6 +61,7 @@ module.exports = {
         .setTitle(`🎮 ${displayName}'s BGMI Profile`)
         .setColor("Blue")
         .addFields(
+          { name: "Serial ID", value: `**${player.serialNumber || "N/A"}**`, inline: true },
           { name: "IGN", value: player.ign || "N/A", inline: true },
           { name: "UID", value: player.uid || "N/A", inline: true },
           { name: "Account Level", value: `${player.accountLevel || "N/A"}`, inline: true },
