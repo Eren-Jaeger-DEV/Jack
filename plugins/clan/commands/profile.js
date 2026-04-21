@@ -56,36 +56,33 @@ module.exports = {
 
     /* ── BUILD PROFILE EMBED ── */
 
+    /* ── BUILD PROFILE EMBED ── */
+ 
     const buildProfileEmbed = async () => {
       const isClan = player.serialNumber?.startsWith('JCM');
-      const statusIcon = isClan ? "🛡️ Clan Member" : "🤝 DC Member";
       const embedColor = isClan ? "#00FFCC" : "#FFD700";
 
       const embed = new EmbedBuilder()
-        .setAuthor({ name: `${displayName}'s Player Profile`, iconURL: user.displayAvatarURL({ dynamic: true }) })
-        .setThumbnail(user.displayAvatarURL({ dynamic: true, size: 256 }))
+        .setTitle(`🎮 ${displayName}'s BGMI Profile`)
         .setColor(embedColor)
         .addFields(
-          { name: "🆔 Serial ID", value: `\`${player.serialNumber || "N/A"}\``, inline: true },
-          { name: "👤 IGN", value: `**${player.ign || "N/A"}**`, inline: true },
-          { name: "🔢 UID", value: `\`${player.uid || "N/A"}\``, inline: true },
+          { name: "Serial ID", value: `**${player.serialNumber || "N/A"}**`, inline: true },
+          { name: "IGN", value: player.ign || "N/A", inline: true },
+          { name: "UID", value: player.uid || "N/A", inline: true },
           
-          { name: "📊 Info & Status", value: [
-            `> **Level:** \`${player.accountLevel || "N/A"}\``,
-            `> **Modes:** \`${player.preferredModes?.join(", ") || "N/A"}\``,
-            `> **Status:** \`${statusIcon}\``
-          ].join('\n'), inline: false },
-
-          { name: "🔥 Season Synergy", value: `\`${synergyData?.seasonSynergy || 0}\``, inline: true },
-          { name: "🏆 Season Rank", value: `\`${rankDisplay(synergyData?.seasonRank)}\``, inline: true },
+          { name: "Account Level", value: `${player.accountLevel || "N/A"}`, inline: true },
+          { name: "Preferred Modes", value: player.preferredModes?.join(", ") || "N/A", inline: true },
           { name: "\u200b", value: "\u200b", inline: true },
 
-          { name: "📈 Weekly Synergy", value: `\`${synergyData?.weeklySynergy || 0}\``, inline: true },
-          { name: "📉 Weekly Rank", value: `\`${rankDisplay(synergyData?.weeklyRank)}\``, inline: true },
+          { name: "Season Synergy", value: `${synergyData?.seasonSynergy || 0}`, inline: true },
+          { name: "Season Rank", value: rankDisplay(synergyData?.seasonRank), inline: true },
+          { name: "\u200b", value: "\u200b", inline: true },
+
+          { name: "Weekly Synergy", value: `${synergyData?.weeklySynergy || 0}`, inline: true },
+          { name: "Weekly Rank", value: rankDisplay(synergyData?.weeklyRank), inline: true },
           { name: "\u200b", value: "\u200b", inline: true }
         )
-        .setFooter({ text: "Jack Clan Management System", iconURL: ctx.guild.iconURL() })
-        .setTimestamp();
+        .setFooter({ text: "Jack Clan System" });
 
       if (player.screenshot) embed.setImage(player.screenshot);
       return embed;
