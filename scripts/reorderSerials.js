@@ -53,16 +53,23 @@ async function reorder() {
             memberData.push({ player, priority, joinedAt: member.joinedAt || player.createdAt });
             continue;
           }
+        } else {
+          // If they have a discordId but are NOT in the server anymore, 
+          // they are definitely not a clan member anymore (ghost member)
+          await Player.updateOne({ _id: player._id }, { $set: { isClanMember: false }, $unset: { serialNumber: 1 } });
+          console.log(`🧹 Removed ghost member: ${player.ign} (Left Discord)`);
+          continue;
         }
       }
 
-      // If they don't have a discordId or the member wasn't found, 
-      // but they are marked as isClanMember, treat them as regular 'Clan Member' (Priority 3)
-      memberData.push({ 
-        player, 
-        priority: 3, 
-        joinedAt: player.clanJoinDate || player.createdAt 
-      });
+      // Handle unlinked members (manual adds who were never on Discord)
+      if (!player.discordId) {
+        memberData.push({ 
+          player, 
+          priority: 3, 
+          joinedAt: player.clanJoinDate || player.createdAt 
+        });
+      }
     }
 
     // Sort by Priority (0 is highest), then by joinedAt (oldest first)
