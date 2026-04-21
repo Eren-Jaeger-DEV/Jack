@@ -24,11 +24,20 @@ module.exports = {
       return ctx.reply("❌ No clan members registered yet.");
     }
 
-    let list = "";
+    // Header
+    let list = "` ID  | IGN             | UID        `\n";
+    
     for (let i = 0; i < players.length; i++) {
         const p = players[i];
+        
+        // Truncate/Pad IGN to 15 chars for alignment
+        const ign = (p.ign || "N/A").substring(0, 15).padEnd(15, ' ');
+        const id = p.serialNumber.padEnd(4, ' ');
+        const uid = (p.uid || "N/A").padEnd(10, ' ');
+        
         const discordMention = p.discordId ? `<@${p.discordId}>` : "Unlinked";
-        list += `**${p.serialNumber}** - ${p.ign} - ${p.uid} - ${discordMention}\n`;
+        
+        list += `\`${id} | ${ign} | ${uid} \` ${discordMention}\n`;
     }
 
     const embed = new EmbedBuilder()
