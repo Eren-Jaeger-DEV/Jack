@@ -8,40 +8,59 @@ module.exports = {
     if (newMember.user.bot) return;
 
     try {
-      const config = await configManager.getGuildConfig(newMember.guild.id);
-      const clanRoleId = config?.settings?.clanMemberRoleId;
+      const { hasClanRole, hasDiscordMemberRole, getNextSerialNumber } = require("../utils/serialGenerator");
 
-      if (!clanRoleId) return;
+      const hadClan = hasClanRole(oldMember);
+      const hasClan = hasClanRole(newMember);
+      const hadDiscord = hasDiscordMemberRole(oldMember);
+      const hasDiscord = hasDiscordMemberRole(newMember);
 
-      const hadRole = oldMember.roles.cache.has(clanRoleId);
-      const hasRole = newMember.roles.cache.has(clanRoleId);
+      // ── Status Changed ──
+      if (hadClan !== hasClan || hadDiscord !== hasDiscord) {
+        const player = await Player.findOne({ discordId: newMember.id });
+        if (!player) return; // Only track registered players
 
+        let newSerial = player.serialNumber;
+        let isClanMember = player.isClanMember;
 
-      // Trigger tracking only if the role state shifted
-      if (!hadRole && hasRole) {
+        if (!hadClan && hasClan) {
+          // Joined Clan: Upgrade to JCM
+          newSerial = await getNextSerialNumber(true);
+          isClanMember = true;
+          console.log(`[SerialSwap] Upgrading ${newMember.user.tag} to JCM: ${newSerial}`);
+        } else if (hadClan && !hasClan) {
+          // Left Clan: Downgrade to JDM or remove
+          if (hasDiscord) {
+            newSerial = await getNextSerialNumber(false);
+          } else {
+            newSerial = null; // No role, no serial
+          }
+          isClanMember = false;
+          console.log(`[SerialSwap] Downgrading ${newMember.user.tag} to JDM: ${newSerial}`);
+        } else if (!hadDiscord && hasDiscord && !hasClan) {
+          // Got Discord Member role (and no clan role): Assign JDM
+          if (!player.serialNumber) {
+            newSerial = await getNextSerialNumber(false);
+            console.log(`[SerialSwap] Assigning JDM to ${newMember.user.tag}: ${newSerial}`);
+          }
+        } else if (hadDiscord && !hasDiscord && !hasClan) {
+          // Lost Discord Member role (and no clan role): Remove serial
+          newSerial = null;
+          console.log(`[SerialSwap] Removing serial from ${newMember.user.tag} (No roles)`);
+        }
+
         await Player.findOneAndUpdate(
           { discordId: newMember.id },
           { 
-            isClanMember: true,
-            username: newMember.user.username,
-            avatar: newMember.user.avatar
-          },
-          { upsert: true, setDefaultsOnInsert: true }
-        ).catch(() => null);
-
-      } else if (hadRole && !hasRole) {
-        // User lost the role
-        await Player.findOneAndUpdate(
-          { discordId: newMember.id },
-          { 
-            isClanMember: false,
+            serialNumber: newSerial,
+            isClanMember: isClanMember,
             username: newMember.user.username,
             avatar: newMember.user.avatar
           }
-        ).catch(() => null);
+        );
       }
     } catch (err) {
-      console.error("[Clan Role Tracking Error]", err);
+      console.error("[Serial Swap Error]", err);
     }
   }
 };

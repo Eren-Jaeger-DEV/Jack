@@ -6,11 +6,12 @@ const Player = require('../database/models/Player');
  * @param {Object} options
  * @param {Object|string} [options.user] - The Discord User object or discord ID string.
  * @param {string} [options.uid] - The in-game UID string (can include "uid:" prefix).
+ * @param {string} [options.serial] - The unique serial number (e.g., JCM001).
  * @returns {Promise<{ player: Object|null, error: string|null }>}
  */
-async function resolvePlayer({ user, uid }) {
-  if (!user && !uid) {
-    return { player: null, error: 'You must provide either a Discord user or a UID.' };
+async function resolvePlayer({ user, uid, serial }) {
+  if (!user && !uid && !serial) {
+    return { player: null, error: 'You must provide either a Discord user, a UID, or a Serial Number.' };
   }
 
   let player = null;
@@ -23,6 +24,17 @@ async function resolvePlayer({ user, uid }) {
       // Strip out optional "uid:" prefix and whitespace
       const parsedUid = String(uid).replace(/^uid:/i, '').trim();
       player = await Player.findOne({ uid: parsedUid });
+    } else if (serial) {
+      // Normalize serial: "001" -> "JCM001", "0001" -> "JDM0001"
+      let parsedSerial = String(serial).trim().toUpperCase();
+      
+      if (/^\d{2}$/.test(parsedSerial)) {
+        parsedSerial = `JCM${parsedSerial}`;
+      } else if (/^\d{4}$/.test(parsedSerial)) {
+        parsedSerial = `JDM${parsedSerial}`;
+      }
+
+      player = await Player.findOne({ serialNumber: parsedSerial });
     }
 
     if (!player) {

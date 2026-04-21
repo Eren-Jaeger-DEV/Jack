@@ -8,6 +8,13 @@ const playerSchema = new mongoose.Schema({
     unique: true
   },
 
+  serialNumber: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true
+  },
+
   status: {
     type: String,
     enum: ["linked", "unlinked"],

@@ -17,25 +17,25 @@ module.exports = {
 
   async run(ctx) {
 
-    const players = await Player.find({})
-      .sort({ seasonSynergy: -1 });
+    const players = await Player.find({ serialNumber: /^JCM/ })
+      .sort({ serialNumber: 1 });
 
     if (!players.length) {
-      return ctx.reply("❌ No players registered yet.");
+      return ctx.reply("❌ No clan members registered yet.");
     }
 
     let list = "";
     for (let i = 0; i < players.length; i++) {
         const p = players[i];
-        const name = await resolveDisplayName(ctx.guild, p.discordId, p.ign);
-        list += `${i + 1}. **${name}** — UID: ${p.uid}\n`;
+        const discordMention = p.discordId ? `<@${p.discordId}>` : "Unlinked";
+        list += `**${p.serialNumber}** - ${p.ign} - ${p.uid} - ${discordMention}\n`;
     }
 
     const embed = new EmbedBuilder()
-      .setTitle("🎮 Clan Player Roster")
+      .setTitle("🛡️ Official Clan Roster")
       .setDescription(list)
-      .setColor("Blue")
-      .setFooter({ text: `Total Players: ${players.length}` })
+      .setColor("#00FFCC")
+      .setFooter({ text: `Total Members: ${players.length} / 60` })
       .setTimestamp();
 
     await ctx.reply({ embeds: [embed] });

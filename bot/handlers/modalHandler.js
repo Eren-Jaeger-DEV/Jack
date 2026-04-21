@@ -1,5 +1,6 @@
 const Player = require("../database/models/Player");
 const configManager = require("../utils/configManager");
+const { getNextSerialNumber, hasClanRole, hasDiscordMemberRole } = require("../utils/serialGenerator");
 
 module.exports = async function modalHandler(interaction) {
 
@@ -39,8 +40,8 @@ module.exports = async function modalHandler(interaction) {
 
       if (unlinkedProfile) {
         // Claim the unlinked profile
-        const config = await configManager.getGuildConfig(interaction.guild.id);
-        const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
+        const isClan = hasClanRole(member);
+        const isDiscord = hasDiscordMemberRole(member);
 
         unlinkedProfile.discordId = targetUserId;
         unlinkedProfile.discordName = targetUser.username;
@@ -49,6 +50,17 @@ module.exports = async function modalHandler(interaction) {
         unlinkedProfile.accountLevel = level;
         unlinkedProfile.preferredModes = preferredModes;
         unlinkedProfile.isClanMember = isClan;
+        
+        // Assign Serial Number based on roles
+        if (!unlinkedProfile.serialNumber || (unlinkedProfile.isClanMember !== isClan)) {
+          if (isClan) {
+            unlinkedProfile.serialNumber = await getNextSerialNumber(true);
+          } else if (isDiscord) {
+            unlinkedProfile.serialNumber = await getNextSerialNumber(false);
+          } else {
+            unlinkedProfile.serialNumber = null;
+          }
+        }
         
         if (isClan && member && !unlinkedProfile.clanJoinDate) {
           unlinkedProfile.clanJoinDate = member.joinedAt;
@@ -69,8 +81,16 @@ module.exports = async function modalHandler(interaction) {
       }
 
       // Create new linked profile
-      const config = await configManager.getGuildConfig(interaction.guild.id);
-      const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
+      const isClan = hasClanRole(member);
+      const isDiscord = hasDiscordMemberRole(member);
+
+      // Generate Serial Number
+      let serialNumber = null;
+      if (isClan) {
+        serialNumber = await getNextSerialNumber(true);
+      } else if (isDiscord) {
+        serialNumber = await getNextSerialNumber(false);
+      }
 
       await Player.create({
         discordId: targetUserId,
@@ -80,6 +100,7 @@ module.exports = async function modalHandler(interaction) {
         accountLevel: level,
         preferredModes,
         isClanMember: isClan,
+        serialNumber,
         clanJoinDate: (isClan && member) ? member.joinedAt : (isClan ? new Date() : null)
       });
 
@@ -88,7 +109,7 @@ module.exports = async function modalHandler(interaction) {
       regService.startSession(targetUserId, { ign, isClan });
 
       return interaction.reply({
-        content: `✅ Profile saved as **${isClan ? "Clan Member" : "Discord Member"}**.\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,
+        content: `✅ Profile saved as **${isClan ? "Clan Member" : "Discord Member"}**.\nYour Unique ID: **${serialNumber}**\n\n📸 **Final Step:** Please upload a screenshot of your **BGMI Basic Info** (Stats Card) in this channel now.`,
         flags: 64
       });
 
@@ -99,6 +120,9 @@ module.exports = async function modalHandler(interaction) {
         return interaction.reply({ content: `❌ A profile with IGN **${ign}** already exists.`, flags: 64 });
       }
 
+      // Generate Serial Number (Manual creations are usually clan members or upcoming ones, but we follow isClanMember flag if available)
+      const serialNumber = await getNextSerialNumber(true); // Default to JCM for manual clan adds
+
       await Player.create({
         ign,
         uid,
@@ -107,11 +131,12 @@ module.exports = async function modalHandler(interaction) {
         status: "unlinked",
         isManual: true,
         createdBy: interaction.user.id,
+        serialNumber,
         clanJoinDate: new Date() // Fallback since no member object
       });
 
       return interaction.reply({
-        content: `✅ Unlinked profile for **${ign}** created successfully.\n\nUpload the **BGMI Basic Info** screenshot for them now.`,
+        content: `✅ Unlinked profile for **${ign}** created successfully.\nUnique ID: **${serialNumber}**\n\nUpload the **BGMI Basic Info** screenshot for them now.`,
         flags: 64
       });
     }
@@ -134,9 +159,29 @@ module.exports = async function modalHandler(interaction) {
 
     const preferredModes = modes.split(",").map(m => m.trim());
 
-    const config = await configManager.getGuildConfig(interaction.guild.id);
     const member = await interaction.guild.members.fetch(targetUserId).catch(() => null);
-    const isClan = member?.roles.cache.has(config?.settings?.clanMemberRoleId || "1477856665817714699");
+    const isClan = hasClanRole(member);
+    const isDiscord = hasDiscordMemberRole(member);
+
+    const playerBefore = await Player.findOne({ discordId: targetUserId });
+    let serialNumber = playerBefore?.serialNumber;
+
+    // Check if membership status changed to update serial
+    if (playerBefore && playerBefore.isClanMember !== isClan) {
+      if (isClan) {
+        serialNumber = await getNextSerialNumber(true);
+      } else if (isDiscord) {
+        serialNumber = await getNextSerialNumber(false);
+      } else {
+        serialNumber = null;
+      }
+    } else if (playerBefore && !serialNumber) {
+      if (isClan) {
+        serialNumber = await getNextSerialNumber(true);
+      } else if (isDiscord) {
+        serialNumber = await getNextSerialNumber(false);
+      }
+    }
 
     const player = await Player.findOneAndUpdate(
       { discordId: targetUserId },
@@ -146,6 +191,7 @@ module.exports = async function modalHandler(interaction) {
         accountLevel: level,
         preferredModes,
         isClanMember: isClan,
+        serialNumber,
         // Only update join date if they just became a clan member and it wasn't set
         $set: (isClan && member) ? { clanJoinDate: member.joinedAt } : {}
       },
