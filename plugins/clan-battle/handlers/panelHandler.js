@@ -124,7 +124,7 @@ async function handleInteraction(interaction) {
       
       if (unmatched.length > 0) {
         session.unmatched = unmatched;
-        session.updatedPlayerIds = updates.map(u => u.player.discordId);
+        session.updatedPlayerIds = updates.map(u => u.player._id.toString());
         
         let unmatchedMsg = `✅ Updated **${results.success}** players.\n\n⚠️ **Unmatched Players Found (${unmatched.length}):**\n`;
         unmatchedMsg += unmatched.map(u => `- \`${u.name}\` (Today: ${u.today}, Total: ${u.total})`).join('\n');
@@ -174,9 +174,7 @@ async function handleInteraction(interaction) {
     if (!unmatchedEntry) return interaction.reply({ content: '❌ Entry not found.', flags: [MessageFlags.Ephemeral] });
 
     const { name, today, total } = unmatchedEntry;
-    const targetUserId = interaction.values[0];
-
-    const player = await Player.findOne({ discordId: targetUserId });
+    const player = await Player.findById(targetUserId);
     if (!player) return interaction.reply({ content: '❌ Player not found.', flags: [MessageFlags.Ephemeral] });
 
     // Update in battle
@@ -222,18 +220,19 @@ async function showPlayerSelectMenu(interaction, index, session) {
   const { name } = unmatchedEntry;
 
   const players = await Player.find({ 
-    discordId: { $nin: session.updatedPlayerIds },
-    $or: [{ ign: { $ne: null } }, { discordName: { $ne: null } }]
-  }).sort({ ign: 1 }).limit(25);
+    _id: { $nin: session.updatedPlayerIds },
+    isClanMember: true,
+    serialNumber: /^JCM/
+  }).sort({ serialNumber: 1 }).limit(25);
   
   if (players.length === 0) {
-    return interaction.reply({ content: '❌ No members left to link.', flags: [MessageFlags.Ephemeral] });
+    return interaction.reply({ content: '❌ No clan members (JCM) left to link.', flags: [MessageFlags.Ephemeral] });
   }
 
   const options = players.map(p => ({
-    label: p.ign || 'Unknown IGN',
+    label: `${p.serialNumber} - ${p.ign || 'Unknown'}`,
     description: `UID: ${p.uid || 'N/A'}`,
-    value: p.discordId
+    value: p._id.toString()
   }));
 
   const select = new StringSelectMenuBuilder()
