@@ -14,14 +14,16 @@ module.exports = {
       const UserActivity = mongoose.model('UserActivity');
 
       // 1. Fetch all data points concurrently
-      const [player, diary, level, activity] = await Promise.all([
+      const [player, diary, level, activity, activeBattle] = await Promise.all([
         Player.findOne({ discordId: userId }),
         MemberDiary.findOne({ discordId: userId }),
         Level.findOne({ userId }),
-        UserActivity.findOne({ discordId: userId })
+        UserActivity.findOne({ discordId: userId }),
+        mongoose.model('Battle').findOne({ active: true, "players.userId": userId })
       ]);
 
       const member = guild.members.cache.get(userId);
+      const battlePlayer = activeBattle ? activeBattle.players.find(p => p.userId === userId) : null;
 
       // 2. Build the structured Dossier
       return {
@@ -35,15 +37,19 @@ module.exports = {
           lastActive: activity?.lastActive ? this._relativeTime(activity.lastActive) : "Never",
           activityScore: activity?.activityScore || 0
         },
-        game: player ? {
+        clan_performance: player ? {
           ign: player.ign,
           uid: player.uid,
-          synergy: player.seasonSynergy,
+          weeklySynergy: player.weeklySynergy || 0,
+          seasonSynergy: player.seasonSynergy || 0,
+          clanBattlePoints: battlePlayer ? {
+            today: battlePlayer.todayPoints,
+            total: battlePlayer.totalPoints
+          } : "Not in active battle",
           role: player.role
-        } : null,
+        } : "Not Registered",
         progression: level ? {
-          level: level.level,
-          xp: level.xp,
+          xp_level: level.level,
           totalMessages: level.totalMessages
         } : null,
         personality: diary ? {
