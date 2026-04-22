@@ -229,11 +229,17 @@ module.exports = {
       const botMember = await guild.members.fetch(guild.client.user.id);
 
       // DIAGNOSTIC LOGGING
-      console.log(`[TIMEOUT_DEBUG] Bot Role Pos: ${botMember.roles.highest.position} | Target Role Pos: ${targetMember.roles.highest.position}`);
-      console.log(`[TIMEOUT_DEBUG] Is Moderateable: ${targetMember.moderateable} | Is Owner: ${targetId === guild.ownerId}`);
+      // MANUAL MODERATEABLE CHECK (since targetMember.moderateable can be undefined in some envs)
+      const isModerateable = targetMember.moderateable ?? (
+        botMember.roles.highest.position > targetMember.roles.highest.position && 
+        !targetMember.permissions.has(PermissionFlagsBits.Administrator) &&
+        targetId !== guild.ownerId
+      );
 
-      if (!targetMember.moderateable) {
-        return { success: false, message: `Timeout failed: Discord says this member is not moderateable by me. (Check if my role is truly above theirs or if they have Admin powers).` };
+      console.log(`[TIMEOUT_DEBUG] Final Is Moderateable: ${isModerateable}`);
+
+      if (!isModerateable) {
+        return { success: false, message: `Timeout failed: Discord says this member is not moderateable by me. This usually means their role is higher than mine, or they have Administrator powers.` };
       }
 
       await targetMember.timeout(minutes * 60 * 1000, `[JACK AI] ${reason}`);
