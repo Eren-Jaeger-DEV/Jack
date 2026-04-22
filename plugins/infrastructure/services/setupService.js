@@ -4,30 +4,50 @@ const GuildConfig = require('../../../bot/database/models/GuildConfig');
 /**
  * Builds the Infrastructure Health Report.
  */
+/**
+ * Builds the Infrastructure Health Report with a Premium Design.
+ */
 async function buildSetupEmbed(guild) {
   const config = await GuildConfig.findOne({ guildId: guild.id });
   const settings = config?.settings || {};
   const greeting = config?.greetingData || {};
 
-  const getStatus = (val) => (val && val !== 'null' && val !== 'undefined') ? '✅' : '❌';
+  const getStatus = (val) => (val && val !== 'null' && val !== 'undefined') ? '`🟢 Connected` ' : '`🔴 Disconnected`';
 
   const embed = new EmbedBuilder()
-    .setTitle('🛰️ Neural Bridge — System Setup')
-    .setColor('#5865F2')
-    .setDescription('Select a **System** from the menu below, then map its channel or role.')
+    .setTitle('🛰️ Neural Bridge — Advanced System Setup')
+    .setColor('#2F3136')
+    .setDescription('Configure the biological and synthetic links between Discord and Jack\'s core systems.')
     .addFields(
-      { name: '🛡️ Recruitment', value: `${getStatus(settings.classificationChannelId)} Classification Channel\n${getStatus(settings.clanMemberRoleId)} Clan Member Role`, inline: true },
-      { name: '👋 Greetings', value: `${getStatus(greeting.welcomeChannelId)} Welcome Channel\n${getStatus(greeting.goodbyeChannelId)} Goodbye Channel`, inline: true },
-      { name: '📜 Logs', value: `${getStatus(settings.logChannelId)} Global Logs\n${getStatus(settings.voiceLogChannelId)} Voice Logs`, inline: true },
-      { name: '👑 Authority', value: `${getStatus(settings.ownerRoleId)} Owner Role\n${getStatus(settings.managerRoleId)} Manager Role`, inline: true }
+      { 
+        name: '🛡️ Identity & Security', 
+        value: `**Classification:** ${getStatus(settings.classificationChannelId)}\n**Clan Role:** ${getStatus(settings.clanMemberRoleId)}\n**Owner Role:** ${getStatus(settings.ownerRoleId)}\n**Manager Role:** ${getStatus(settings.managerRoleId)}`, 
+        inline: false 
+      },
+      { 
+        name: '💬 Social Matrix', 
+        value: `**Welcome:** ${getStatus(greeting.welcomeChannelId)}\n**Goodbye:** ${getStatus(greeting.goodbyeChannelId)}\n**General:** ${getStatus(settings.generalChannelId)}`, 
+        inline: true 
+      },
+      { 
+        name: '📡 Infrastructure Logs', 
+        value: `**Global:** ${getStatus(settings.logChannelId)}\n**Voice:** ${getStatus(settings.voiceLogChannelId)}\n**Message:** ${getStatus(settings.messageLogChannelId)}\n**Server:** ${getStatus(settings.serverLogChannelId)}`, 
+        inline: true 
+      },
+      { 
+        name: '📊 Specialized Logging', 
+        value: `**Invite:** ${getStatus(settings.inviteLogChannelId)}\n**Member:** ${getStatus(settings.memberLogChannelId)}\n**Join-Leave:** ${getStatus(settings.joinLeaveLogChannelId)}\n**Tickets:** ${getStatus(settings.ticketsLogChannelId)}\n**Pop-Log:** ${getStatus(settings.popLogChannelId)}`, 
+        inline: false 
+      }
     )
-    .setFooter({ text: 'Neural Links are updated instantly upon selection.' });
+    .setImage('https://cdn.discordapp.com/attachments/1353964404378701916/1410195184943452170/neural_bridge_header.png')
+    .setFooter({ text: 'Neural Links are updated instantly upon selection.', iconURL: guild.iconURL() });
 
   return embed;
 }
 
 /**
- * Builds the selection rows.
+ * Builds the selection rows with granular options.
  */
 function buildSetupRows() {
   const systemRow = new ActionRowBuilder().addComponents(
@@ -35,15 +55,21 @@ function buildSetupRows() {
       .setCustomId('setup_target_select')
       .setPlaceholder('🎯 1. Select Target System...')
       .addOptions([
-        { label: 'Classification Channel', value: 'classificationChannelId', description: 'Where recruitment prompts appear.' },
-        { label: 'Clan Member Role', value: 'clanMemberRoleId', description: 'Role assigned to new recruits.' },
-        { label: 'Discord Member Role', value: 'discordMemberRoleId', description: 'Role for guest members.' },
-        { label: 'Welcome Channel', value: 'welcomeChannelId', description: 'Where greeting messages are sent.' },
-        { label: 'Goodbye Channel', value: 'goodbyeChannelId', description: 'Where leave messages are sent.' },
-        { label: 'Global Log Channel', value: 'logChannelId', description: 'Primary audit logs.' },
-        { label: 'Voice Log Channel', value: 'voiceLogChannelId', description: 'Logs for voice activity.' },
-        { label: 'Manager Role', value: 'managerRoleId', description: 'Staff who can classify members.' },
-        { label: 'Owner Role', value: 'ownerRoleId', description: 'Primary server owner role.' }
+        { label: 'Classification Channel', value: 'classificationChannelId', emoji: '🛡️' },
+        { label: 'Clan Member Role', value: 'clanMemberRoleId', emoji: '⚔️' },
+        { label: 'Owner Role', value: 'ownerRoleId', emoji: '👑' },
+        { label: 'Manager Role', value: 'managerRoleId', emoji: '⚙️' },
+        { label: 'Welcome Channel', value: 'welcomeChannelId', emoji: '👋' },
+        { label: 'Goodbye Channel', value: 'goodbyeChannelId', emoji: '🚪' },
+        { label: 'Global Log Channel', value: 'logChannelId', emoji: '📜' },
+        { label: 'Voice Log Channel', value: 'voiceLogChannelId', emoji: '🔊' },
+        { label: 'Message Log Channel', value: 'messageLogChannelId', emoji: '💬' },
+        { label: 'Server Log Channel', value: 'serverLogChannelId', emoji: '🌐' },
+        { label: 'Invite Log Channel', value: 'inviteLogChannelId', emoji: '📨' },
+        { label: 'Member Log Channel', value: 'memberLogChannelId', emoji: '👤' },
+        { label: 'Join-Leave Log Channel', value: 'joinLeaveLogChannelId', emoji: '🔄' },
+        { label: 'Tickets Log Channel', value: 'ticketsLogChannelId', emoji: '🎫' },
+        { label: 'Pop Log Channel', value: 'popLogChannelId', emoji: '💥' }
       ])
   );
 

@@ -66,6 +66,12 @@ const guildConfigSchema = new mongoose.Schema({
     modLogChannelId: { type: String },
     inviteLogChannelId: { type: String },
     marketLogChannelId: { type: String },
+    messageLogChannelId: { type: String },
+    joinLeaveLogChannelId: { type: String },
+    memberLogChannelId: { type: String },
+    serverLogChannelId: { type: String },
+    ticketsLogChannelId: { type: String },
+    popLogChannelId: { type: String },
     dealCategoryId: { type: String },
 
     
