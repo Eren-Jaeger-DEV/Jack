@@ -216,6 +216,157 @@ module.exports = {
   },
 
   /**
+   * DISCIPLINE: Timeout a member.
+   */
+  async timeout_member(args, invoker, guild) {
+    const { discord_id, minutes, reason } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.ModerateMembers]))) {
+      return { success: false, message: "Unauthorized. Insufficient permissions to moderate members." };
+    }
+    try {
+      const member = await guild.members.fetch(this._sanitizeId(discord_id));
+      await member.timeout(minutes * 60 * 1000, `[JACK AI] ${reason}`);
+      return { success: true, message: `Successfully placed ${member.user.tag} in timeout for ${minutes} minutes.` };
+    } catch (e) {
+      return { success: false, message: `Timeout failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * DISCIPLINE: Warn a member.
+   */
+  async warn_member(args, invoker, guild) {
+    const { discord_id, reason } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.ModerateMembers]))) {
+      return { success: false, message: "Unauthorized. Insufficient permissions to moderate members." };
+    }
+    const rawId = this._sanitizeId(discord_id);
+    try {
+      let diary = await MemberDiary.findOne({ discordId: rawId });
+      if (!diary) diary = new MemberDiary({ discordId: rawId });
+      diary.notes += `\\n[${new Date().toLocaleDateString()}] [WARNING] ${reason}`;
+      diary.reputationScore -= 10;
+      await diary.save();
+
+      try {
+        const member = await guild.members.fetch(rawId);
+        await member.send(`⚠️ **Official Warning from Clan Management:**\\nReason: ${reason}`);
+      } catch (err) {} // Ignore if DMs are closed
+      
+      return { success: true, message: `Warning issued and logged for user ID ${rawId}.` };
+    } catch (e) {
+      return { success: false, message: `Warning failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * PROMOTION: Assign a role by name.
+   */
+  async assign_role(args, invoker, guild) {
+    const { discord_id, role_name } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.ManageRoles]))) {
+      return { success: false, message: "Unauthorized. Insufficient permissions to manage roles." };
+    }
+    try {
+      const role = guild.roles.cache.find(r => r.name.toLowerCase() === role_name.toLowerCase());
+      if (!role) return { success: false, message: `Role '${role_name}' not found in the server.` };
+      
+      const member = await guild.members.fetch(this._sanitizeId(discord_id));
+      await member.roles.add(role);
+      return { success: true, message: `Successfully assigned role '${role.name}' to ${member.user.tag}.` };
+    } catch (e) {
+      return { success: false, message: `Role assignment failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * PROMOTION: Remove a role by name.
+   */
+  async remove_role(args, invoker, guild) {
+    const { discord_id, role_name } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.ManageRoles]))) {
+      return { success: false, message: "Unauthorized. Insufficient permissions to manage roles." };
+    }
+    try {
+      const role = guild.roles.cache.find(r => r.name.toLowerCase() === role_name.toLowerCase());
+      if (!role) return { success: false, message: `Role '${role_name}' not found in the server.` };
+      
+      const member = await guild.members.fetch(this._sanitizeId(discord_id));
+      await member.roles.remove(role);
+      return { success: true, message: `Successfully removed role '${role.name}' from ${member.user.tag}.` };
+    } catch (e) {
+      return { success: false, message: `Role removal failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * BROADCASTER: Send a formatted announcement to a channel.
+   */
+  async announce_message(args, invoker, guild) {
+    const { channel_id, title, description, color = "#00BFFF" } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.Administrator]))) {
+      return { success: false, message: "Unauthorized. Only Administrators can broadcast announcements." };
+    }
+    try {
+      const channel = guild.channels.cache.get(this._sanitizeId(channel_id));
+      if (!channel) return { success: false, message: `Channel not found: ${channel_id}` };
+      
+      const embed = new EmbedBuilder()
+        .setTitle(title)
+        .setDescription(description)
+        .setColor(color)
+        .setFooter({ text: "Clan Broadcast • Automated by Jack" });
+        
+      await channel.send({ embeds: [embed] });
+      return { success: true, message: `Announcement successfully sent to ${channel.name}.` };
+    } catch (e) {
+      return { success: false, message: `Announcement failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * CLAN DATABASE: Register a new player.
+   */
+  async register_player(args, invoker, guild) {
+    const { ign, uid } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.Administrator]))) {
+      return { success: false, message: "Unauthorized. Only Administrators can register players." };
+    }
+    try {
+      const existing = await Player.findOne({ uid: uid });
+      if (existing) return { success: false, message: `Player with UID ${uid} already exists.` };
+      
+      const newPlayer = new Player({ ign, uid, isClanMember: true, role: "Recruit", accountLevel: 1, seasonSynergy: 0 });
+      await newPlayer.save();
+      return { success: true, message: `Successfully registered new player: ${ign} (${uid}).` };
+    } catch (e) {
+      return { success: false, message: `Registration failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * CLAN DATABASE: Update player stats.
+   */
+  async update_stats(args, invoker, guild) {
+    const { uid, synergy, level } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.Administrator]))) {
+      return { success: false, message: "Unauthorized. Only Administrators can update player stats." };
+    }
+    try {
+      const player = await Player.findOne({ uid: uid });
+      if (!player) return { success: false, message: `Player with UID ${uid} not found.` };
+      
+      if (synergy !== undefined) player.seasonSynergy = synergy;
+      if (level !== undefined) player.accountLevel = level;
+      
+      await player.save();
+      return { success: true, message: `Successfully updated stats for ${player.ign}.` };
+    } catch (e) {
+      return { success: false, message: `Stat update failed: ${e.message}` };
+    }
+  },
+
+  /**
    * SERVER VISION: Fetch the current server roles of a user.
    */
   async get_user_roles(args, invoker, guild) {

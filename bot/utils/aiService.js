@@ -212,6 +212,41 @@ ${bibleInstruction}`;
               parameters: { type: "OBJECT", properties: { channel_id: { type: "STRING" }, amount: { type: "INTEGER" } }, required: ["channel_id", "amount"] }
             },
             {
+              name: "timeout_member",
+              description: "DISCIPLINE: Place a member in timeout for a specified duration.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, minutes: { type: "INTEGER" }, reason: { type: "STRING" } }, required: ["discord_id", "minutes", "reason"] }
+            },
+            {
+              name: "warn_member",
+              description: "DISCIPLINE: Issue an official warning to a member and log it in the database.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
+            },
+            {
+              name: "assign_role",
+              description: "PROMOTION: Assign a Discord role to a member by the role's name.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, role_name: { type: "STRING" } }, required: ["discord_id", "role_name"] }
+            },
+            {
+              name: "remove_role",
+              description: "PROMOTION: Remove a Discord role from a member by the role's name.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, role_name: { type: "STRING" } }, required: ["discord_id", "role_name"] }
+            },
+            {
+              name: "announce_message",
+              description: "BROADCASTER: Send a formatted announcement Embed to a specific channel.",
+              parameters: { type: "OBJECT", properties: { channel_id: { type: "STRING" }, title: { type: "STRING" }, description: { type: "STRING" }, color: { type: "STRING" } }, required: ["channel_id", "title", "description"] }
+            },
+            {
+              name: "register_player",
+              description: "CLAN DATABASE: Register a new player in the database with their IGN and UID.",
+              parameters: { type: "OBJECT", properties: { ign: { type: "STRING" }, uid: { type: "STRING" } }, required: ["ign", "uid"] }
+            },
+            {
+              name: "update_stats",
+              description: "CLAN DATABASE: Update a player's seasonSynergy or accountLevel in the database using their UID.",
+              parameters: { type: "OBJECT", properties: { uid: { type: "STRING" }, synergy: { type: "INTEGER" }, level: { type: "INTEGER" } }, required: ["uid"] }
+            },
+            {
               name: "verify_payment",
               description: "TRUST SYSTEM: Verify a user's payment screenshot, log it to the trust channel, and store it in memory.",
               parameters: { 
