@@ -242,10 +242,35 @@ module.exports = {
         return { success: false, message: `Timeout failed: Discord says this member is not moderateable by me. This usually means their role is higher than mine, or they have Administrator powers.` };
       }
 
-      await targetMember.timeout(minutes * 60 * 1000, `[JACK AI] ${reason}`);
+      // If minutes is 0 or less, we treat it as an untimeout
+      const duration = (minutes > 0) ? minutes * 60 * 1000 : null;
+      await targetMember.timeout(duration, `[JACK AI] ${reason}`);
+      
+      if (duration === null) {
+        return { success: true, message: `Successfully removed timeout for ${targetMember.user.tag}.` };
+      }
       return { success: true, message: `Successfully placed ${targetMember.user.tag} in timeout for ${minutes} minutes.` };
     } catch (e) {
       return { success: false, message: `Timeout failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * DISCIPLINE: Remove a member from timeout.
+   */
+  async untimeout_member(args, invoker, guild) {
+    const { discord_id, reason } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.ModerateMembers]))) {
+      return { success: false, message: "Unauthorized. Insufficient permissions to moderate members." };
+    }
+    try {
+      const targetId = this._sanitizeId(discord_id);
+      const targetMember = await guild.members.fetch(targetId);
+      
+      await targetMember.timeout(null, `[JACK AI] ${reason}`);
+      return { success: true, message: `Successfully removed timeout for ${targetMember.user.tag}.` };
+    } catch (e) {
+      return { success: false, message: `Untimeout failed: ${e.message}` };
     }
   },
 

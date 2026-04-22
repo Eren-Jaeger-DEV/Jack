@@ -233,6 +233,11 @@ ${bibleInstruction}`;
               parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, minutes: { type: "INTEGER" }, reason: { type: "STRING" } }, required: ["discord_id", "minutes", "reason"] }
             },
             {
+              name: "untimeout_member",
+              description: "DISCIPLINE: Lift the timeout restriction from a member immediately.",
+              parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
+            },
+            {
               name: "warn_member",
               description: "DISCIPLINE: Issue an official warning to a member and log it in the database.",
               parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
