@@ -26,7 +26,7 @@ async function getEmbedding(text, retryCount = 0) {
 
   try {
     const genAI = _getGenAI();
-    const model = genAI.getGenerativeModel({ model: "embedding-001" });
+    const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
     const result = await model.embedContent(text);
     return result.embedding.values;
   } catch (error) {

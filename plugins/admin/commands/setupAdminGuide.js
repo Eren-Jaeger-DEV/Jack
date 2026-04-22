@@ -7,7 +7,7 @@ const {
 } = require("../../../bot/utils/commandDocGenerator");
 
 module.exports = {
-  name: "setup",
+  name: "adminguide",
   category: "admin",
   description: "Setup the permanent admin guide dashboard",
   aliases: ["setup-admin-guide", "adminguide"],
@@ -15,7 +15,7 @@ module.exports = {
   details: "Posts the permanent staff command dashboard in the current channel. Refreshes automatically if already set.",
 
   data: new SlashCommandBuilder()
-    .setName("setup")
+    .setName("adminguide")
     .setDescription("Setup dashboards and persistent system panels")
     .addSubcommand(sub =>
       sub

@@ -52,7 +52,7 @@ function showBootReport(client) {
     const duration = Date.now() - startupStats.startTime;
     const botTag = client.user ? client.user.tag : "Disconnected";
 
-    console.clear();
+    // console.clear();
     banner.print();
 
     console.log("\x1b[1m\x1b[34m[ INITIALIZING CELESTIAL BOOT SEQUENCE ]\x1b[0m\n");

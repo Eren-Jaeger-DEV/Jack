@@ -2,8 +2,8 @@ const { PermissionFlagsBits, SlashCommandBuilder } = require('discord.js');
 const { buildSetupEmbed, buildSetupRows } = require('../services/setupService');
 
 module.exports = {
-  name: 'setupctrlpanel',
-  aliases: ['setup', 'infra'],
+  name: 'setup',
+  aliases: ['infra'],
   category: 'admin',
   description: 'Open the Neural Bridge dashboard to configure channels and roles.',
   permissions: [PermissionFlagsBits.Administrator],
