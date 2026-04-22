@@ -12,6 +12,7 @@ module.exports = (client) => {
     try {
       const event = require(`${eventsPath}/${file}`);
       const eventName = event.name || file.split(".")[0];
+      console.log(`[EventHandler] Registering event: ${eventName}`);
 
       client.on(eventName, (...args) => {
         try {
