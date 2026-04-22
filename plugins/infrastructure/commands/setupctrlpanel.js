@@ -15,7 +15,7 @@ module.exports = {
     await ctx.reply({ 
       embeds: [embed], 
       components: rows,
-      ephemeral: true 
+      ephemeral: false 
     });
   }
 };
