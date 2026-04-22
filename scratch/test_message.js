@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js');
+const mongoose = require('mongoose');
 require('dotenv').config();
 const messageCreate = require('../bot/events/messageCreate');
 
@@ -11,17 +12,28 @@ const mockMessage = {
     guild: { name: 'JACK • XZEEMO', id: '1341978655437619250' },
     channel: { 
         id: '1341978656096129065',
-        send: async (data) => console.log('BOT REPLY:', data),
+        send: async (data) => console.log('BOT REPLY:', JSON.stringify(data, null, 2)),
         sendTyping: async () => console.log('BOT IS TYPING...')
     },
     member: { 
         id: '771611262022844427',
         permissions: { has: () => true }
     },
-    reply: async (data) => console.log('BOT REPLY:', data)
+    reply: async (data) => console.log('BOT REPLY:', JSON.stringify(data, null, 2))
 };
 
-console.log('--- STARTING MANUAL EVENT TEST ---');
-messageCreate.execute(mockMessage, client)
-    .then(() => console.log('--- TEST COMPLETE ---'))
-    .catch(err => console.error('--- TEST FAILED ---', err));
+async function run() {
+    console.log('--- CONNECTING TO DB ---');
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('--- DB CONNECTED ---');
+
+    console.log('--- STARTING MANUAL EVENT TEST ---');
+    await messageCreate.execute(mockMessage, client);
+    console.log('--- TEST COMPLETE ---');
+    process.exit(0);
+}
+
+run().catch(err => {
+    console.error('--- TEST FAILED ---', err);
+    process.exit(1);
+});
