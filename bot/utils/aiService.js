@@ -222,6 +222,35 @@ ${bibleInstruction}`;
                 }, 
                 required: ["userId", "amount", "status", "confidence", "screenshotUrl"] 
               }
+            },
+            {
+              name: "get_clan_leaderboard",
+              description: "SYSTEM OPERATOR: Fetch the top or bottom clan members sorted by a specific stat (seasonSynergy, accountLevel).",
+              parameters: { type: "OBJECT", properties: { sort_by: { type: "STRING", enum: ["seasonSynergy", "accountLevel"] }, limit: { type: "INTEGER" }, order: { type: "STRING", enum: ["desc", "asc"] } }, required: ["sort_by"] }
+            },
+            {
+              name: "search_database",
+              description: "SYSTEM OPERATOR: Search the player database by IGN or UID.",
+              parameters: { type: "OBJECT", properties: { query: { type: "STRING" } }, required: ["query"] }
+            },
+            {
+              name: "read_system_logs",
+              description: "SYSTEM OPERATOR: Read recent PM2 system logs to diagnose crashes or errors.",
+              parameters: { type: "OBJECT", properties: { type: { type: "STRING", enum: ["error", "out"] }, lines: { type: "INTEGER" } }, required: ["type"] }
+            },
+            {
+              name: "write_system_log",
+              description: "SYSTEM OPERATOR: Write a persistent log or note to the AI operator log file.",
+              parameters: { type: "OBJECT", properties: { message: { type: "STRING" } }, required: ["message"] }
+            },
+            {
+              name: "read_codebase_file",
+              description: "SYSTEM OPERATOR: Read the contents of a codebase file (e.g., bot/utils/aiService.js) to diagnose code issues.",
+              parameters: { type: "OBJECT", properties: { file_path: { type: "STRING" } }, required: ["file_path"] }
+            },
+            {
+              name: "restart_system",
+              description: "SYSTEM OPERATOR: Execute a hard reboot of the PM2 system process."
             }
           ]
         }

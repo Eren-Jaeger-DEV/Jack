@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const child_process = require("child_process");
+const OWNER_IDS = ["771611262022844427", "888337321869582367"];
 const Player = require("../database/models/Player");
 const MemberDiary = require("../database/models/MemberDiary");
 const UserMemory = require("../database/models/UserMemory");
@@ -281,6 +283,159 @@ module.exports = {
       return { success: true, message: "Payment successfully verified and logged." };
     } catch (e) {
       return { success: false, message: "Validation error: " + e.message };
+    }
+  },
+
+  /**
+   * SYSTEM OPERATOR: Fetch the clan leaderboard based on specific criteria.
+   */
+  async get_clan_leaderboard(args, invoker, guild) {
+    const { sort_by = "seasonSynergy", limit = 10, order = "desc" } = args;
+    try {
+      const sortConfig = {};
+      sortConfig[sort_by] = order === "asc" ? 1 : -1;
+      
+      const players = await Player.find({ isClanMember: true })
+        .sort(sortConfig)
+        .limit(Math.min(limit, 50));
+        
+      const leaderboard = players.map(p => ({
+        ign: p.ign,
+        uid: p.uid,
+        [sort_by]: p[sort_by]
+      }));
+      
+      return {
+        success: true,
+        message: `Fetched top ${leaderboard.length} clan members sorted by ${sort_by}.`,
+        data: leaderboard
+      };
+    } catch (e) {
+      return { success: false, message: `Leaderboard fetch failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * SYSTEM OPERATOR: Search the database for specific players or stats.
+   */
+  async search_database(args, invoker, guild) {
+    const { query } = args;
+    try {
+      // Allow searching by exact UID or partial IGN
+      const isNumeric = /^\\d+$/.test(query);
+      const searchCriteria = isNumeric 
+        ? { uid: query }
+        : { ign: { $regex: new RegExp(query, "i") } };
+        
+      const players = await Player.find(searchCriteria).limit(5);
+      
+      return {
+        success: true,
+        message: `Database search complete for: ${query}`,
+        data: players.map(p => ({ ign: p.ign, uid: p.uid, role: p.role, level: p.accountLevel, synergy: p.seasonSynergy }))
+      };
+    } catch (e) {
+      return { success: false, message: `Database search failed: ${e.message}` };
+    }
+  },
+
+  /**
+   * SYSTEM OPERATOR: Read recent system logs to diagnose crashes.
+   */
+  async read_system_logs(args, invoker, guild) {
+    const { type = "error", lines = 50 } = args;
+    // Check permission to ensure normal users can't read logs
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.Administrator])) && !OWNER_IDS.includes(invoker.id)) {
+        return { success: false, message: "Unauthorized. Insufficient permissions to access system logs." };
+    }
+    
+    try {
+      const cmd = `pm2 logs jack --${type === 'error' ? 'err' : 'out'} --nostream --lines ${Math.min(lines, 200)}`;
+      const output = child_process.execSync(cmd, { encoding: 'utf-8', timeout: 5000 });
+      return {
+        success: true,
+        message: `Retrieved last ${lines} lines of ${type} logs.`,
+        data: output
+      };
+    } catch (e) {
+      // Fallback if pm2 logs command fails
+      return { success: false, message: `Failed to fetch PM2 logs. Check if PM2 is running and named 'jack'. Error: ${e.message}` };
+    }
+  },
+
+  /**
+   * SYSTEM OPERATOR: Write persistent logs.
+   */
+  async write_system_log(args, invoker, guild) {
+    const { message } = args;
+    try {
+      const logPath = path.join(__dirname, "../../../data/ai_operator_logs.txt");
+      const timestamp = new Date().toISOString();
+      const logEntry = `[${timestamp}] ${message}\\n`;
+      
+      // Ensure directory exists
+      const dir = path.dirname(logPath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      
+      fs.appendFileSync(logPath, logEntry);
+      return { success: true, message: "Log saved to persistent storage." };
+    } catch (e) {
+      return { success: false, message: `Failed to write log: ${e.message}` };
+    }
+  },
+
+  /**
+   * SYSTEM OPERATOR: Read codebase file for self-diagnosis.
+   */
+  async read_codebase_file(args, invoker, guild) {
+    const { file_path } = args;
+    
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.Administrator])) && !OWNER_IDS.includes(invoker.id)) {
+        return { success: false, message: "Unauthorized. Insufficient permissions to access the codebase." };
+    }
+
+    try {
+      // Prevent directory traversal attacks
+      const resolvedPath = path.resolve(path.join(__dirname, "../../../", file_path));
+      const rootDir = path.resolve(path.join(__dirname, "../../../"));
+      
+      if (!resolvedPath.startsWith(rootDir)) {
+        return { success: false, message: "Security violation: Attempted path traversal out of workspace." };
+      }
+      
+      if (!fs.existsSync(resolvedPath)) {
+        return { success: false, message: `File not found at path: ${file_path}` };
+      }
+      
+      const fileContent = fs.readFileSync(resolvedPath, 'utf8');
+      return {
+        success: true,
+        message: `File loaded: ${file_path}`,
+        data: fileContent.substring(0, 15000) // Truncate to prevent token overflow
+      };
+    } catch (e) {
+      return { success: false, message: `Failed to read file: ${e.message}` };
+    }
+  },
+
+  /**
+   * SYSTEM OPERATOR: Restart system via PM2.
+   */
+  async restart_system(args, invoker, guild) {
+    // ONLY the absolute owner can trigger a reboot via Discord to be perfectly safe.
+    if (!OWNER_IDS.includes(invoker.id)) {
+        return { success: false, message: "CRITICAL: Reboot denied. Only the Supreme Manager (Owner) can execute this command." };
+    }
+    
+    try {
+      // Fire and forget, as it will kill the node process
+      setTimeout(() => {
+        child_process.exec("pm2 restart jack");
+      }, 2000);
+      
+      return { success: true, message: "Reboot sequence initiated. The system will go offline and return momentarily." };
+    } catch (e) {
+      return { success: false, message: `Reboot sequence failed: ${e.message}` };
     }
   }
 };
