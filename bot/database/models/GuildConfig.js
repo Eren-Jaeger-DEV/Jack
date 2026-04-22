@@ -86,6 +86,7 @@ const guildConfigSchema = new mongoose.Schema({
     linksChannelId: { type: String },
     botCommandsChannelId: { type: String },
     aiChannelId: { type: String },
+    trustChannelId: { type: String },
     xpIgnoreChannels: { type: [String], default: [] },
 
     // Feature Roles
@@ -108,10 +109,20 @@ const guildConfigSchema = new mongoose.Schema({
     clanBattleWinnerRoleId: { type: String },
     teamupRoleId: { type: String },
     registrationChannelId: { type: String },
+    trustedRoleId: { type: String },
     
     // HYBRID AI CONTROLLER
     aiEnabled: { type: Boolean, default: true },
     aiChannelId: { type: String },
+
+    // PERSONALITY ENGINE V2
+    personality: {
+      tone: { type: String, default: "calm" },
+      humor: { type: Number, default: 10 },
+      strictness: { type: Number, default: 60 },
+      verbosity: { type: Number, default: 40 },
+      respect_bias: { type: Number, default: 60 }
+    },
 
     // Maps
     levelRoles: { type: Map, of: String, default: {

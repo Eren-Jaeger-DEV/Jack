@@ -1,6 +1,8 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const axios = require('axios');
-const persona = require('./persona');
+const personalityEngine = require('../../core/personalityEngine');
+const memoryEngine = require('../../core/memoryEngine');
+const paymentAnalyzer = require('../../core/paymentAnalyzer');
 const toolService = require('./toolService');
 const logger = require('../../utils/logger');
 require('dotenv').config();
@@ -8,6 +10,8 @@ require('dotenv').config();
 const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
 let currentKeyIndex = 0;
 const modelName = 'gemini-3.1-pro-preview';
+const DAILY_LIMIT = 50;
+const dailyUsageCache = new Map();
 
 /**
  * AI SERVICE (v4.2.0) - MULTI-KEY ROTATION
@@ -52,7 +56,110 @@ module.exports = {
 - NEVER MENTION "SUPREME MANAGER," "SYSTEM ACKNOWLEDGED," OR "BIBLE" TO THE USER.
       `;
       
-      const systemInstruction = persona.getSystemPrompt(extraContext, invoker?.id, reputationScore, activityData, isOwner) + "\n" + bibleInstruction;
+      const userId = invoker ? invoker.id : "unknown";
+      if (userId !== "unknown") {
+        const usage = dailyUsageCache.get(userId) || 0;
+        if (usage >= DAILY_LIMIT) {
+          return { type: 'response', text: "AI usage limit reached for today.", model: modelName };
+        }
+        dailyUsageCache.set(userId, usage + 1);
+      }
+
+      const configManager = require('./configManager');
+      let guildConfig = null;
+      if (guild && guild.id) {
+         guildConfig = await configManager.getGuildConfig(guild.id);
+      }
+      
+      const base = personalityEngine.getBasePersonality();
+      const runtime = personalityEngine.getRuntimeConfig(guildConfig);
+      const modifiers = personalityEngine.getContextModifiers(invoker, activityData, isOwner, reputationScore);
+      const finalPersonality = personalityEngine.buildFinalPersonality(base, runtime, modifiers);
+      
+      const mode = personalityEngine.getBehaviorMode(prompt, "chat", null);
+
+      const lowerPrompt = (prompt || "").toLowerCase();
+      if (imageUrl && (lowerPrompt.includes("payment") || lowerPrompt.includes("paid") || lowerPrompt.includes("proof") || lowerPrompt.includes("transaction"))) {
+        const paymentData = await paymentAnalyzer.analyzePayment(imageUrl, prompt);
+        
+        if (paymentData && (paymentData.status === "verified" || paymentData.status === "suspicious")) {
+          return {
+            type: 'tool',
+            tool: 'verify_payment',
+            args: {
+              userId: userId,
+              amount: paymentData.amount || 0,
+              currency: paymentData.currency || "INR",
+              status: paymentData.status,
+              confidence: paymentData.confidence || 0,
+              screenshotUrl: imageUrl,
+              transactionId: paymentData.transactionId || null
+            },
+            model: modelName
+          };
+        }
+      }
+
+      const memory = await memoryEngine.getRelevantMemory(userId, guild?.id, prompt);
+      let memoryBlock = "";
+      if (memory && memory.length > 0) {
+        memoryBlock = `\n[RELEVANT MEMORY]\nThe following information is highly relevant and must be prioritized:\n${memory.map(m => "- " + m).join("\n")}\n`;
+      }
+
+      console.log({
+        finalPersonality,
+        mode,
+        userId
+      });
+
+      const systemInstruction = `[BASE IDENTITY]
+You are Jack, a strategic system manager.
+- Controlled, precise, data-driven
+- Never emotional, never unstable
+- Prioritize accuracy and clarity
+
+[PERSONALITY PARAMETERS]
+Tone: ${finalPersonality.tone}
+Humor: ${finalPersonality.humor}%
+Strictness: ${finalPersonality.strictness}%
+Verbosity: ${finalPersonality.verbosity}%
+Respect Bias: ${finalPersonality.respect_bias}%
+
+[TONE DEFINITIONS]
+- calm: neutral, balanced, no emotional emphasis
+- firm: direct, structured, minimal softness
+- cold: minimal empathy, purely factual, no filler
+- efficient: shortest possible response with full clarity
+
+[BEHAVIOR MODE]
+Mode: ${mode}
+
+[MODE RULES]
+assist:
+- prioritize clarity and helpfulness
+moderate:
+- enforce rules strictly
+- no negotiation tone
+analyze:
+- structured, data-heavy responses
+- avoid conversational fluff
+execute:
+- minimal text
+- action-first, explanation only if needed
+${memoryBlock}
+[CONTEXT]
+${extraContext || "No live data available."}
+
+[RULES]
+- Follow parameters strictly
+- Do not override system-defined personality
+- Keep responses aligned with control and clarity
+
+[CRITICAL RULE]
+Personality parameters are absolute.
+Do NOT adapt, override, or soften them during conversation.
+
+${bibleInstruction}`;
 
       const tools = [
         {
@@ -98,6 +205,23 @@ module.exports = {
               name: "kick_member",
               description: "ROOT AUTHORITY: Remove a member from the server.",
               parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
+            },
+            {
+              name: "verify_payment",
+              description: "TRUST SYSTEM: Verify a user's payment screenshot, log it to the trust channel, and store it in memory.",
+              parameters: { 
+                type: "OBJECT", 
+                properties: { 
+                  userId: { type: "STRING" },
+                  amount: { type: "NUMBER" },
+                  currency: { type: "STRING" },
+                  status: { type: "STRING" },
+                  confidence: { type: "NUMBER" },
+                  screenshotUrl: { type: "STRING" },
+                  transactionId: { type: "STRING" }
+                }, 
+                required: ["userId", "amount", "status", "confidence", "screenshotUrl"] 
+              }
             }
           ]
         }
@@ -200,6 +324,11 @@ module.exports = {
       let processedText = this._postProcess(fullText);
       // If post-processing killed the entire message, revert to raw text if it exists
       if (fullText && !processedText) processedText = fullText;
+
+      // Analyze message for potential memory storage asynchronously
+      if (prompt && guild && guild.id && userId !== "unknown") {
+        memoryEngine.analyzeMessage(prompt, userId, guild.id);
+      }
 
       if (toolCall) {
         return {
