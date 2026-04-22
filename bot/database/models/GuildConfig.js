@@ -41,6 +41,7 @@ const guildConfigSchema = new mongoose.Schema({
     channelManagement: { type: Boolean, default: true },
     "foster-program": { type: Boolean, default: true },
     "member-classification": { type: Boolean, default: true },
+    infrastructure: { type: Boolean, default: true },
     utility: { type: Boolean, default: true },
     "card-exchange": { type: Boolean, default: true },
     admin: { type: Boolean, default: true },
@@ -60,6 +61,7 @@ const guildConfigSchema = new mongoose.Schema({
   
   settings: {
     logChannelId: { type: String },
+    voiceLogChannelId: { type: String },
     autoRoleId: { type: String },
     modLogChannelId: { type: String },
     inviteLogChannelId: { type: String },

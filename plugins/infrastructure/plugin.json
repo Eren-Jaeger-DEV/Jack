@@ -1,0 +1,9 @@
+{
+  "id": "infrastructure",
+  "name": "Infrastructure & Neural Setup",
+  "version": "1.0.0",
+  "description": "Visual dashboard for mapping server channels and roles into Jack's core brain.",
+  "author": "Antigravity",
+  "enabledByDefault": true,
+  "main": "index.js"
+}

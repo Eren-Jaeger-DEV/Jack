@@ -1,0 +1,20 @@
+const { PermissionFlagsBits } = require('discord.js');
+const { buildSetupEmbed, buildSetupRows } = require('../services/setupService');
+
+module.exports = {
+  name: 'setup-jack',
+  category: 'admin',
+  description: 'Open the Neural Bridge dashboard to configure channels and roles.',
+  permissions: [PermissionFlagsBits.Administrator],
+
+  async run(ctx) {
+    const embed = await buildSetupEmbed(ctx.guild);
+    const rows = buildSetupRows();
+
+    await ctx.reply({ 
+      embeds: [embed], 
+      components: rows,
+      ephemeral: true 
+    });
+  }
+};
