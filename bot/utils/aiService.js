@@ -112,6 +112,14 @@ module.exports = {
         userId
       });
 
+      let emojiBlock = "";
+      if (guild) {
+        const emojis = guild.emojis.cache.filter(e => e.available).map(e => `<${e.animated ? 'a' : ''}:${e.name}:${e.id}> (use by typing exactly this)`).slice(0, 30);
+        if (emojis.length > 0) {
+          emojiBlock = `\\n[SERVER EMOJIS]\\nYou can use these custom server emojis in your messages to add flavor:\\n${emojis.join("\\n")}\\n`;
+        }
+      }
+
       const systemInstruction = `[BASE IDENTITY]
 You are Jack, a strategic system manager.
 - Controlled, precise, data-driven
@@ -146,7 +154,7 @@ analyze:
 execute:
 - minimal text
 - action-first, explanation only if needed
-${memoryBlock}
+${memoryBlock}${emojiBlock}
 [CONTEXT]
 ${extraContext || "No live data available."}
 
