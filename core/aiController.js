@@ -1,5 +1,4 @@
 const perms = require("../bot/utils/permissionUtils");
-const { OWNER_IDS } = require("../bot/utils/persona");
 const { getClanContext } = require("../bot/utils/clanContext");
 const ConversationHistory = require("../bot/database/models/ConversationHistory");
 const UserActivity = require("../bot/database/models/UserActivity");

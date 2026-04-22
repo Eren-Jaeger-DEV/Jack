@@ -4,7 +4,7 @@
  */
 
 const { PermissionFlagsBits } = require('discord.js');
-const { OWNER_IDS } = require('./persona');
+const OWNER_IDS = ["771611262022844427", "888337321869582367"];
 
 const ROLES = {
     SUPREME: ['Manager', 'PapaPlayer'],

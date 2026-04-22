@@ -173,6 +173,7 @@ async function handleInteraction(interaction) {
     const unmatchedEntry = session.unmatched[index];
     if (!unmatchedEntry) return interaction.reply({ content: '❌ Entry not found.', flags: [MessageFlags.Ephemeral] });
 
+    const targetUserId = interaction.values[0];
     const { name, today, total } = unmatchedEntry;
     const player = await Player.findById(targetUserId);
     if (!player) return interaction.reply({ content: '❌ Player not found.', flags: [MessageFlags.Ephemeral] });
