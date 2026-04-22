@@ -224,9 +224,20 @@ module.exports = {
       return { success: false, message: "Unauthorized. Insufficient permissions to moderate members." };
     }
     try {
-      const member = await guild.members.fetch(this._sanitizeId(discord_id));
-      await member.timeout(minutes * 60 * 1000, `[JACK AI] ${reason}`);
-      return { success: true, message: `Successfully placed ${member.user.tag} in timeout for ${minutes} minutes.` };
+      const targetId = this._sanitizeId(discord_id);
+      const targetMember = await guild.members.fetch(targetId);
+      const botMember = await guild.members.fetch(guild.client.user.id);
+
+      // DIAGNOSTIC LOGGING
+      console.log(`[TIMEOUT_DEBUG] Bot Role Pos: ${botMember.roles.highest.position} | Target Role Pos: ${targetMember.roles.highest.position}`);
+      console.log(`[TIMEOUT_DEBUG] Is Moderateable: ${targetMember.moderateable} | Is Owner: ${targetId === guild.ownerId}`);
+
+      if (!targetMember.moderateable) {
+        return { success: false, message: `Timeout failed: Discord says this member is not moderateable by me. (Check if my role is truly above theirs or if they have Admin powers).` };
+      }
+
+      await targetMember.timeout(minutes * 60 * 1000, `[JACK AI] ${reason}`);
+      return { success: true, message: `Successfully placed ${targetMember.user.tag} in timeout for ${minutes} minutes.` };
     } catch (e) {
       return { success: false, message: `Timeout failed: ${e.message}` };
     }
