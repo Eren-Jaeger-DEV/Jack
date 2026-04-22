@@ -34,18 +34,9 @@ async function classifyAsClanMember(guild, userId) {
     }
   }
 
-  // Assign Newbie role
-  if (newbieRoleId) {
-    const newbieRole = guild.roles.cache.get(newbieRoleId);
-    if (newbieRole && !member.roles.cache.has(newbieRoleId)) {
-      await member.roles.add(newbieRole).catch(err => {
-        logger.error("MemberClassification", `Failed to add newbie role to ${member.user.tag}: ${err.message}`);
-      });
-    }
-  }
+  // Store persistent timer (Removed as per user request)
+  // await scheduleNewbieRemoval(guild.id, userId);
 
-  // Store persistent timer (14 days)
-  await scheduleNewbieRemoval(guild.id, userId);
   
   // Cleanup awaiting list
   await removeAwaitingClassification(guild.id, userId);
