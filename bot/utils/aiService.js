@@ -113,7 +113,7 @@ module.exports = {
       });
 
       const isGuildOwner = guild ? (invoker.id === guild.ownerId) : false;
-      const userRoles = member ? member.roles.cache.map(r => r.name).join(", ") : "None";
+      const userRoles = invoker && invoker.roles ? invoker.roles.cache.map(r => r.name).join(", ") : "None";
 
       let emojiBlock = "";
       if (guild) {
