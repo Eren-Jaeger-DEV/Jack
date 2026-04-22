@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
-const messageCreate = require('./bot/events/messageCreate');
+const messageCreate = require('../bot/events/messageCreate');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
