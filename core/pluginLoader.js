@@ -74,10 +74,8 @@ module.exports = async (client) => {
 
     for (const pluginId of loadOrder) {
         if (enabledPlugins[pluginId] === true || manifests.find(m => m.id === pluginId)?.enabledByDefault) {
-            console.log(`[PluginLoader] Loading plugin: ${pluginId}`);
             await loadPlugin(client, pluginId);
-        } else {
-            console.log(`[PluginLoader] Skipping plugin (not enabled): ${pluginId}`);
+            logger.startupStats.plugins.names.push(pluginId);
         }
     }
 

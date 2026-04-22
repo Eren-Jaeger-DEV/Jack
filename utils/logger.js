@@ -28,7 +28,7 @@ const startupStats = {
     startTime: Date.now(),
     commands: { loaded: 0, failed: 0 },
     events: { loaded: 0, failed: 0 },
-    plugins: { loaded: 0, failed: 0 },
+    plugins: { loaded: 0, failed: 0, names: [] },
     core: [], // { system: string, status: string }
     reportShown: false
 };
@@ -76,6 +76,9 @@ function showBootReport(client) {
     resources.forEach(res => {
         const failStr = res.stats.failed > 0 ? ` \x1b[31m(${res.stats.failed} failed)\x1b[0m` : "";
         console.log(`  ${res.symbol} \x1b[1m${res.name.padEnd(16, " ")}\x1b[0m \x1b[90m→\x1b[0m \x1b[36m${res.stats.loaded}\x1b[0m loaded${failStr}`);
+        if (res.name === "Plugins" && res.stats.names) {
+            console.log(`    \x1b[90m(${res.stats.names.join(", ")})\x1b[0m`);
+        }
     });
 
     console.log(`\n  ${SYMBOLS.Latency} \x1b[1mBoot Latency    \x1b[0m \x1b[90m→\x1b[0m \x1b[33m${duration}ms\x1b[0m\n`);
