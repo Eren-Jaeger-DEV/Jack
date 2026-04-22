@@ -11,6 +11,9 @@ module.exports = {
 
     if (!message) return;
     if (message.author?.bot) return;
+    
+    console.log(`[MessageCreate] [${message.guild?.name || 'DM'}] ${message.author.tag}: ${message.content}`);
+
     if (!message.guild) return;
 
     // PASSIVE OBSERVATION (Non-blocking)
