@@ -24,6 +24,7 @@ module.exports = (client, pluginPath) => {
           if (command.name) {
             client.commands.set(command.name, command);
             loadedCommands.push(command.name);
+            logger.startupStats.commands.loaded++;
           } else {
             logger.error("CommandLoader", `Command missing 'name' at ${path.basename(fullPath)}`);
           }
