@@ -189,6 +189,33 @@ module.exports = {
   },
 
   /**
+   * ROOT AUTHORITY: Purge Messages.
+   */
+  async purge_messages(args, invoker, guild) {
+    const { channel_id, amount } = args;
+    if (!(await this._checkPower(invoker, guild, [PermissionFlagsBits.ManageMessages]))) {
+      return { success: false, message: "Unauthorized. Insufficient permissions to manage messages." };
+    }
+    
+    try {
+      const rawChannelId = this._sanitizeId(channel_id);
+      const channel = guild.channels.cache.get(rawChannelId);
+      
+      if (!channel) {
+        return { success: false, message: `Channel not found: ${channel_id}` };
+      }
+      
+      const numToDelete = Math.min(100, Math.max(1, parseInt(amount) || 0));
+      if (numToDelete <= 0) return { success: false, message: "Invalid amount specified." };
+      
+      await channel.bulkDelete(numToDelete, true);
+      return { success: true, message: `Successfully deleted ${numToDelete} messages from ${channel.name}.` };
+    } catch (e) {
+      return { success: false, message: `Purge failed: ${e.message}` };
+    }
+  },
+
+  /**
    * SERVER VISION: Fetch the current server roles of a user.
    */
   async get_user_roles(args, invoker, guild) {

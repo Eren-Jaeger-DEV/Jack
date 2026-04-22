@@ -207,6 +207,11 @@ ${bibleInstruction}`;
               parameters: { type: "OBJECT", properties: { discord_id: { type: "STRING" }, reason: { type: "STRING" } }, required: ["discord_id", "reason"] }
             },
             {
+              name: "purge_messages",
+              description: "ROOT AUTHORITY: Bulk delete messages from a specific channel.",
+              parameters: { type: "OBJECT", properties: { channel_id: { type: "STRING" }, amount: { type: "INTEGER" } }, required: ["channel_id", "amount"] }
+            },
+            {
               name: "verify_payment",
               description: "TRUST SYSTEM: Verify a user's payment screenshot, log it to the trust channel, and store it in memory.",
               parameters: { 
