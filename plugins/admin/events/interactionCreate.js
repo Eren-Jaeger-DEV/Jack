@@ -7,6 +7,7 @@ const {
   TextInputStyle 
 } = require("discord.js");
 const GuildConfig = require("../../../bot/database/models/GuildConfig");
+const configManager = require("../../../bot/utils/configManager");
 
 module.exports = {
   name: 'interactionCreate',
@@ -32,8 +33,11 @@ module.exports = {
       };
 
       if (presets[presetName]) {
-        config.settings.personality = presets[presetName];
-        await config.save();
+        await configManager.updateGuildConfig(interaction.guildId, {
+          "settings.personality": presets[presetName]
+        });
+        // fetch latest from DB directly to get fully updated object for embed
+        config = await GuildConfig.findOne({ guildId: interaction.guildId });
       }
       
       const p = config.settings.personality;
@@ -102,12 +106,18 @@ module.exports = {
       const v = parseInt(interaction.fields.getTextInputValue("verbosity")) || 0;
       const r = parseInt(interaction.fields.getTextInputValue("respect")) || 0;
 
-      if (!config.settings.personality) config.settings.personality = {};
-      config.settings.personality.humor = Math.min(100, Math.max(0, h));
-      config.settings.personality.strictness = Math.min(100, Math.max(0, s));
-      config.settings.personality.verbosity = Math.min(100, Math.max(0, v));
-      config.settings.personality.respect_bias = Math.min(100, Math.max(0, r));
-      await config.save();
+      const newPersonality = {
+        ...(config.settings.personality || {}),
+        humor: Math.min(100, Math.max(0, h)),
+        strictness: Math.min(100, Math.max(0, s)),
+        verbosity: Math.min(100, Math.max(0, v)),
+        respect_bias: Math.min(100, Math.max(0, r))
+      };
+
+      await configManager.updateGuildConfig(interaction.guildId, {
+        "settings.personality": newPersonality
+      });
+      config = await GuildConfig.findOne({ guildId: interaction.guildId });
 
       const p = config.settings.personality;
       const embed = EmbedBuilder.from(interaction.message.embeds[0])
@@ -126,9 +136,16 @@ module.exports = {
     if (interaction.isModalSubmit() && interaction.customId === 'modal_persona_tone') {
       let config = await GuildConfig.findOne({ guildId: interaction.guildId });
       
-      if (!config.settings.personality) config.settings.personality = {};
-      config.settings.personality.tone = interaction.fields.getTextInputValue("tone").toLowerCase();
-      await config.save();
+      const newTone = interaction.fields.getTextInputValue("tone").toLowerCase();
+      const newPersonality = {
+        ...(config.settings.personality || {}),
+        tone: newTone
+      };
+
+      await configManager.updateGuildConfig(interaction.guildId, {
+        "settings.personality": newPersonality
+      });
+      config = await GuildConfig.findOne({ guildId: interaction.guildId });
 
       const p = config.settings.personality;
       const embed = EmbedBuilder.from(interaction.message.embeds[0])
