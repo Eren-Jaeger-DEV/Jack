@@ -28,7 +28,7 @@ module.exports = {
           new ChannelSelectMenuBuilder()
             .setCustomId(`setup_finalize_channel|${target}`)
             .setPlaceholder(`🔗 Select Channel for: ${target}`)
-            .setChannelTypes([ChannelType.GuildText, ChannelType.GuildAnnouncement])
+            .setChannelTypes([ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.GuildVoice, ChannelType.GuildCategory])
         );
       }
 

@@ -35,6 +35,11 @@ async function buildSetupEmbed(guild) {
         inline: true 
       },
       { 
+        name: '🎙️ Voice Systems', 
+        value: `**Join to Create:** ${getStatus(settings.tempvcCreateChannelId)}\n**VC Category:** ${getStatus(settings.tempvcCategoryId)}\n**VC Panel:** ${getStatus(settings.tempvcPanelChannelId)}`, 
+        inline: true 
+      },
+      { 
         name: '📊 Specialized Logging', 
         value: `**Invite:** ${getStatus(settings.inviteLogChannelId)}\n**Member:** ${getStatus(settings.memberLogChannelId)}\n**Join-Leave:** ${getStatus(settings.joinLeaveLogChannelId)}\n**Tickets:** ${getStatus(settings.ticketsLogChannelId)}\n**Pop-Log:** ${getStatus(settings.popLogChannelId)}`, 
         inline: false 
@@ -69,7 +74,10 @@ function buildSetupRows() {
         { label: 'Member Log Channel', value: 'memberLogChannelId', emoji: '👤' },
         { label: 'Join-Leave Log Channel', value: 'joinLeaveLogChannelId', emoji: '🔄' },
         { label: 'Tickets Log Channel', value: 'ticketsLogChannelId', emoji: '🎫' },
-        { label: 'Pop Log Channel', value: 'popLogChannelId', emoji: '💥' }
+        { label: 'Pop Log Channel', value: 'popLogChannelId', emoji: '💥' },
+        { label: 'Join to Create VC', value: 'tempvcCreateChannelId', emoji: '🎙️' },
+        { label: 'VC Category', value: 'tempvcCategoryId', emoji: '📂' },
+        { label: 'VC Control Panel', value: 'tempvcPanelChannelId', emoji: '🎛️' }
       ])
   );
 
