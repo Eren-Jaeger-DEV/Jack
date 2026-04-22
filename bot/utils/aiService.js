@@ -112,6 +112,9 @@ module.exports = {
         userId
       });
 
+      const isGuildOwner = guild ? (invoker.id === guild.ownerId) : false;
+      const userRoles = member ? member.roles.cache.map(r => r.name).join(", ") : "None";
+
       let emojiBlock = "";
       if (guild) {
         const emojis = guild.emojis.cache.filter(e => e.available).map(e => `<${e.animated ? 'a' : ''}:${e.name}:${e.id}> (use by typing exactly this)`).slice(0, 30);
@@ -156,6 +159,11 @@ execute:
 - action-first, explanation only if needed
 ${memoryBlock}${emojiBlock}
 [CONTEXT]
+User: ${invoker?.tag || "Unknown"}
+User Roles: ${userRoles}
+Is Bot Owner: ${isOwner}
+Is Server Owner: ${isGuildOwner}
+Reputation Score: ${reputationScore}
 ${extraContext || "No live data available."}
 
 [RULES]
