@@ -310,6 +310,21 @@ ${bibleInstruction}`;
               parameters: { type: "OBJECT", properties: { file_path: { type: "STRING" } }, required: ["file_path"] }
             },
             {
+              name: "adjust_self_personality",
+              description: "SELF-EVOLUTION: Allows Jack to recalibrate his own personality dials (humor, strictness, etc.) based on user feedback or server atmosphere.",
+              parameters: { 
+                type: "OBJECT", 
+                properties: { 
+                  humor: { type: "INTEGER", description: "0-100 scale" },
+                  strictness: { type: "INTEGER", description: "0-100 scale" },
+                  verbosity: { type: "INTEGER", description: "0-100 scale" },
+                  respect_bias: { type: "INTEGER", description: "0-100 scale" },
+                  tone: { type: "STRING", description: "e.g., 'calm', 'funny', 'aggressive', 'professional'" },
+                  rationale: { type: "STRING", description: "Why are you making this adjustment?" }
+                }
+              }
+            },
+            {
               name: "restart_system",
               description: "SYSTEM OPERATOR: Execute a hard reboot of the PM2 system process."
             }

@@ -275,6 +275,32 @@ module.exports = {
   },
 
   /**
+   * SELF-EVOLUTION: Adjust Jack's own personality parameters.
+   */
+  async adjust_self_personality(args, invoker, guild) {
+    const { humor, strictness, verbosity, respect_bias, tone, rationale } = args;
+    if (!guild) return { success: false, message: "Guild context missing." };
+
+    try {
+      const updates = { settings: { personality: {} } };
+      if (humor !== undefined) updates.settings.personality.humor = Math.max(0, Math.min(100, humor));
+      if (strictness !== undefined) updates.settings.personality.strictness = Math.max(0, Math.min(100, strictness));
+      if (verbosity !== undefined) updates.settings.personality.verbosity = Math.max(0, Math.min(100, verbosity));
+      if (respect_bias !== undefined) updates.settings.personality.respect_bias = Math.max(0, Math.min(100, respect_bias));
+      if (tone) updates.settings.personality.tone = tone;
+
+      await configManager.updateGuildConfig(guild.id, updates);
+      
+      return { 
+        success: true, 
+        message: `Personality recalibrated. Rationale: ${rationale || "Optimization"}. New State: Humor=${humor || 'NA'}, Strictness=${strictness || 'NA'}, Tone=${tone || 'NA'}` 
+      };
+    } catch (e) {
+      return { success: false, message: `Calibration failed: ${e.message}` };
+    }
+  },
+
+  /**
    * DISCIPLINE: Warn a member.
    */
   async warn_member(args, invoker, guild) {
