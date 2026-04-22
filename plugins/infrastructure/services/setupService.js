@@ -41,7 +41,7 @@ function buildSetupRows() {
         { label: 'Welcome Channel', value: 'welcomeChannelId', description: 'Where greeting messages are sent.' },
         { label: 'Goodbye Channel', value: 'goodbyeChannelId', description: 'Where leave messages are sent.' },
         { label: 'Global Log Channel', value: 'logChannelId', description: 'Primary audit logs.' },
-        { name: 'Voice Log Channel', value: 'voiceLogChannelId', description: 'Logs for voice activity.' },
+        { label: 'Voice Log Channel', value: 'voiceLogChannelId', description: 'Logs for voice activity.' },
         { label: 'Manager Role', value: 'managerRoleId', description: 'Staff who can classify members.' },
         { label: 'Owner Role', value: 'ownerRoleId', description: 'Primary server owner role.' }
       ])
