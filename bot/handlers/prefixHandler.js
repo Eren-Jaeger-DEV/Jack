@@ -21,6 +21,8 @@ module.exports = async (message, client) => {
 
     if (!usedPrefix) return;
 
+    console.log(`[PrefixHandler] Message: "${message.content}" | Used Prefix: "${usedPrefix}"`);
+
     const args = message.content
       .slice(usedPrefix.length)
       .trim()
