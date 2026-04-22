@@ -20,9 +20,8 @@ module.exports = {
     observer.recordActivity(message).catch(() => {});
 
     try {
-
-      await afkHandler(message);
-      await screenshotHandler(message);
+      await afkHandler(message).catch(err => console.error("AFK Handler Error:", err));
+      await screenshotHandler(message).catch(err => console.error("Screenshot Handler Error:", err));
 
       // HYBRID AI CONTROLLER LAYER
       const isAIChannel = await aiController.shouldProcess(message, client);
