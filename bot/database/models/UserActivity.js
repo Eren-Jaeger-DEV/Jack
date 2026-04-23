@@ -20,7 +20,11 @@ const UserActivitySchema = new mongoose.Schema({
   // AI PERFORMANCE FEEDBACK
   successfulActions: { type: Number, default: 0 },
   failedActions: { type: Number, default: 0 },
-  lastActionType: { type: String }
+  lastActionType: { type: String },
+
+  // AI DAILY USAGE LIMIT (persistent — survives restarts)
+  aiCallsToday: { type: Number, default: 0 },
+  aiCallsDate: { type: String, default: null } // stored as 'YYYY-MM-DD'
   
 }, { timestamps: true });
 

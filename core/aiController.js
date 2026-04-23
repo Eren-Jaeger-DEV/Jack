@@ -9,16 +9,19 @@ const observer = require("./observer");
 const { addLog } = require("../utils/logger");
 
 const channelLocks = new Map();
+// NOTE: 3-second in-memory cooldown is intentional — persisting to DB would add
+// a round-trip latency to every message check, which defeats the purpose of rate limiting.
 const userCooldowns = new Map();
 const lastMessages = new Map();
 
 const GENERIC_WORDS = ["hi", "ok", "hello", "jack", "hey", "yo", "yes", "no"];
-const MIN_WORDS = 2; // Reduced slightly for better balance
+const MIN_WORDS = 2;
 const COOLDOWN_MS = 3000;
 
 /**
- * AI CONTROLLER (v2.1.0) - Adaptive Decision Edition
+ * AI CONTROLLER (v2.2.0) - Adaptive Decision Edition + DM Support
  * Implements intent classification, validation, and feedback loop.
+ * Owner-only DM channel supported via processDM().
  */
 module.exports = {
   
@@ -78,6 +81,90 @@ module.exports = {
     return true;
   },
 
+  /**
+   * DM PIPELINE — Owner-Only Private Channel
+   * Runs full AI with memory + history. Tools that need guild return a graceful message.
+   * No summoning keyword required — every DM from the owner is processed.
+   */
+  async processDM(message, client) {
+    const userId = message.author.id;
+    const dmChannel = message.channel;
+    const content = message.content.trim();
+
+    if (!content) return;
+
+    // Lock per-user to prevent parallel DM responses
+    if (channelLocks.has(userId)) return;
+    channelLocks.set(userId, true);
+
+    try {
+      await dmChannel.sendTyping().catch(() => {});
+
+      addLog("AIController", `[DM] Owner message received: "${content.substring(0, 60)}..."`);
+
+      // Build a synthetic context object — DMs have no guild/member
+      // guild = null signals downstream that we're in DM mode
+      const syntheticMember = {
+        id: userId,
+        user: message.author,
+        roles: { cache: new Map() }, // empty roles — isOwner handled by ID check
+        permissions: { has: () => false }
+      };
+
+      const { context: extraContext, reputationScore } = await getClanContext(null, syntheticMember);
+      const history = await this._getHistory(userId);
+      const activityData = await UserActivity.findOne({ discordId: userId }) || {};
+
+      const decision = await aiService.generateResponse(
+        content,
+        history,
+        null,
+        `[DM MODE: You are speaking privately with your Supreme Manager via Direct Message. No server context available. Respond naturally and directly. Tools requiring guild context will not be available.]\n` + extraContext,
+        null,       // guild = null
+        syntheticMember,
+        null,       // no image in DMs (yet)
+        reputationScore,
+        activityData,
+        true        // isOwner = always true in this pipeline
+      );
+
+      addLog("AIController", `[DM] Decision: ${decision.type} | ${decision.tool || 'text'}`);
+
+      let responseText;
+
+      if (decision.type === 'tool') {
+        // Tools that need guild will fail gracefully — we show that failure
+        try {
+          const result = await toolService[decision.tool]?.(decision.args, syntheticMember, null);
+          if (result?.success) {
+            // Interpretation pass
+            const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result.data || result.message)}`;
+            const interpretation = await aiService.generateResponse(
+              feedbackPrompt, history, null, extraContext,
+              null, syntheticMember, null, reputationScore, activityData, true
+            );
+            responseText = this._extractFinalText(interpretation.text);
+          } else {
+            responseText = `⚠️ Tool \`${decision.tool}\` requires server context and can't run in DMs.`;
+          }
+        } catch (toolErr) {
+          responseText = `⚠️ Tool \`${decision.tool}\` is unavailable in DM mode.`;
+        }
+      } else {
+        responseText = this._extractFinalText(decision.text);
+      }
+
+      await dmChannel.send(responseText).catch(() => {});
+      await this._updateHistory(userId, content, responseText);
+
+    } catch (err) {
+      addLog("AIController", `[DM] Pipeline Failure: ${err.message}`);
+      await dmChannel.send("Something went wrong. Try again.").catch(() => {});
+    } finally {
+      channelLocks.delete(userId);
+    }
+  },
+
   async process(context, client, overrideContent = null) {
     const isInteraction = !!context.isCommand;
     const channelId = context.channelId || context.channel.id;
@@ -96,7 +183,9 @@ module.exports = {
       const isOwner = perms.isOwner(member);
 
       const { context: extraContext, reputationScore } = await getClanContext(guild, member);
-      let history = await this._getHistory(channelId);
+      // History is keyed by userId (not channelId) so each user gets their own
+      // conversation thread — prevents mixing messages from different users.
+      let history = await this._getHistory(userId);
 
       // 2. AI Execution
       addLog("AIController", `Adaptive Engine: Analyzing ${context.user?.tag || context.author?.tag} (Owner: ${isOwner})`);
@@ -154,7 +243,7 @@ module.exports = {
              await observer.recordActionSuccess(member.id, decision.tool);
              
              // UPDATE HISTORY with the call so the Interpretation Pass has context
-             await this._updateHistory(channelId, content, `[AI_CALL: ${decision.tool}]`);
+             await this._updateHistory(userId, content, `[AI_CALL: ${decision.tool}]`);
 
              // PHASE: Interpretation Pass (Self-Awareness)
              const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result.data || result.message)}`;
@@ -180,7 +269,7 @@ module.exports = {
              else if (streamingMessage.isOwnerStub) await context.reply(responseText).catch(() => {});
              else await streamingMessage.edit(responseText).catch(() => {});
              
-             await this._updateHistory(channelId, content, responseText);
+             await this._updateHistory(userId, content, responseText);
           } else {
              await observer.recordActionFailure(member.id, decision.tool);
              const errorText = `❌ **Action Failed**: ${result.message}`;
@@ -188,7 +277,7 @@ module.exports = {
              else if (streamingMessage.isOwnerStub) await context.reply(errorText).catch(() => {});
              else await streamingMessage.edit(errorText).catch(() => {});
              
-             await this._updateHistory(channelId, content, `[ACTION_FAILURE: ${decision.tool}] ${result.message}`);
+             await this._updateHistory(userId, content, `[ACTION_FAILURE: ${decision.tool}] ${result.message}`);
           }
         } else {
           addLog("AIController", `Security Denied: ${validation.reason}`);
@@ -208,7 +297,7 @@ module.exports = {
         if (isInteraction) await context.editReply(responseText).catch(() => {});
         else if (streamingMessage.isOwnerStub) await context.reply(responseText).catch(() => {});
         else await streamingMessage.edit(responseText).catch(() => {});
-        await this._updateHistory(channelId, content, responseText);
+        await this._updateHistory(userId, content, responseText);
       }
 
       return true;
@@ -295,28 +384,9 @@ module.exports = {
     return finalClean || clean || DEFAULT_FALLBACK;
   },
 
-  /**
-   * Safe JSON Parser for AI Output
-   */
-  _parseDecision(rawText) {
+  async _getHistory(userId) {
     try {
-      // Find JSON block if AI included any text around it
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : rawText;
-      return JSON.parse(jsonStr);
-    } catch (e) {
-      addLog("AIController", `Parse Failed. Raw: ${rawText.substring(0, 50)}...`);
-      return { 
-        intent: "chat", 
-        type: "response", 
-        text: rawText.replace(/[\{\}]/g, '').substring(0, 2000) 
-      };
-    }
-  },
-
-  async _getHistory(channelId) {
-    try {
-      const historyDoc = await ConversationHistory.findOne({ channelId });
+      const historyDoc = await ConversationHistory.findOne({ channelId: userId });
       if (!historyDoc) return [];
       return historyDoc.messages.map(m => ({ 
         role: m.role === 'model' ? 'assistant' : 'user', 
@@ -325,10 +395,10 @@ module.exports = {
     } catch (e) { return []; }
   },
 
-  async _updateHistory(channelId, userPrompt, aiResponse) {
+  async _updateHistory(userId, userPrompt, aiResponse) {
     try {
-      let history = await ConversationHistory.findOne({ channelId });
-      if (!history) history = new ConversationHistory({ channelId, messages: [] });
+      let history = await ConversationHistory.findOne({ channelId: userId });
+      if (!history) history = new ConversationHistory({ channelId: userId, messages: [] });
       history.messages.push({ role: 'user', content: userPrompt }, { role: 'model', content: aiResponse });
       if (history.messages.length > 20) history.messages.splice(0, 2);
       await history.save();

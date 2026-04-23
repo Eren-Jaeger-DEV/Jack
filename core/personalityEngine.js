@@ -83,13 +83,13 @@ function buildFinalPersonality(base, runtime, modifiers) {
 }
 
 function getBehaviorMode(input, intent, toolCall) {
-  if (toolCall || intent === "action") {
-    return "execute";
-  }
-  
-  // Moderation tools check
+  // Moderation tools check FIRST — before the generic toolCall gate
   if (toolCall && (toolCall.tool === "ban_member" || toolCall.tool === "kick_member") || intent === "moderate") {
     return "moderate";
+  }
+
+  if (toolCall || intent === "action") {
+    return "execute";
   }
   
   if (input.toLowerCase().includes("stats") || input.toLowerCase().includes("data") || intent === "query") {

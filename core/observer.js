@@ -32,8 +32,9 @@ module.exports = {
 
     if (shouldFlush) {
       this._flushToDB(userId, data.count);
-      data.count = 0;
-      data.lastSave = now;
+      // Remove from buffer entirely — re-created on next message.
+      // Prevents unbounded Map growth for inactive users over long uptimes.
+      activityBuffer.delete(userId);
     }
   },
 

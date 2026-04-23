@@ -94,6 +94,8 @@ const guildConfigSchema = new mongoose.Schema({
     linksChannelId: { type: String },
     botCommandsChannelId: { type: String },
     aiChannelId: { type: String },
+    // DEPRECATED: trustChannelId was used by the Payment Verification system (decommissioned).
+    // Kept in schema to avoid data loss on existing documents. No longer read by any system.
     trustChannelId: { type: String },
     xpIgnoreChannels: { type: [String], default: [] },
 
@@ -117,6 +119,8 @@ const guildConfigSchema = new mongoose.Schema({
     clanBattleWinnerRoleId: { type: String },
     teamupRoleId: { type: String },
     registrationChannelId: { type: String },
+    // DEPRECATED: trustedRoleId was used by the Payment Verification system (decommissioned).
+    // Kept in schema to avoid data loss on existing documents. No longer read by any system.
     trustedRoleId: { type: String },
     
     // HYBRID AI CONTROLLER

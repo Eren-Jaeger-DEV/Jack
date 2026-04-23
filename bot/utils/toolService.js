@@ -4,7 +4,7 @@ const child_process = require("child_process");
 const OWNER_IDS = ["771611262022844427", "888337321869582367"];
 const Player = require("../database/models/Player");
 const MemberDiary = require("../database/models/MemberDiary");
-const UserMemory = require("../database/models/UserMemory");
+
 const configManager = require("./configManager");
 const memoryEngine = require("../../core/memoryEngine");
 const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
@@ -312,13 +312,15 @@ module.exports = {
     try {
       let diary = await MemberDiary.findOne({ discordId: rawId });
       if (!diary) diary = new MemberDiary({ discordId: rawId });
-      diary.notes += `\\n[${new Date().toLocaleDateString()}] [WARNING] ${reason}`;
+      diary.notes += `
+[${new Date().toLocaleDateString()}] [WARNING] ${reason}`;
       diary.reputationScore -= 10;
       await diary.save();
 
       try {
         const member = await guild.members.fetch(rawId);
-        await member.send(`⚠️ **Official Warning from Clan Management:**\\nReason: ${reason}`);
+        await member.send(`⚠️ **Official Warning from Clan Management:**
+Reason: ${reason}`);
       } catch (err) {} // Ignore if DMs are closed
       
       return { success: true, message: `Warning issued and logged for user ID ${rawId}.` };
@@ -457,80 +459,6 @@ module.exports = {
     } catch (e) { return { success: false, message: "Failed to fetch user roles." }; }
   },
 
-  /**
-   * TRUST & PAYMENT: Automates payment verification, logging, and semantic memory storage.
-   */
-  async verify_payment(args, invoker, guild) {
-    const { userId, amount, currency, status, confidence, screenshotUrl, transactionId } = args;
-    
-    if (confidence < 0.75 || status !== "verified") {
-      return { success: false, message: "unable to verify, manual review required" };
-    }
-
-    try {
-      const rawId = this._sanitizeId(userId || invoker.id);
-      
-      // 1. Duplicate Detection
-      let duplicateQuery = { guildId: guild.id, tags: "payment" };
-      let memories = await UserMemory.find(duplicateQuery).sort({ createdAt: -1 }).limit(20);
-      
-      const isDuplicate = memories.some(mem => {
-        return (transactionId && mem.content.includes(transactionId)) || 
-               (mem.content.includes(amount) && mem.createdAt > Date.now() - 24 * 60 * 60 * 1000); // Same amount within 24h as a heuristic
-      });
-
-      if (isDuplicate && transactionId) {
-        return { success: false, message: "duplicate payment detected" };
-      }
-
-      // 2. Memory Integration
-      const memoryContent = `User completed payment of ₹${amount}${transactionId ? ' (TxID: ' + transactionId + ')' : ''}`;
-      await memoryEngine.storeMemory({
-        userId: rawId,
-        guildId: guild.id,
-        type: "event",
-        content: memoryContent,
-        tags: ["payment", "verified"],
-        importance: 0.95
-      });
-
-      // 3. Trust Logging & Role
-      const guildConfig = await configManager.getGuildConfig(guild.id);
-      if (guildConfig && guildConfig.settings) {
-        // Logging
-        if (guildConfig.settings.trustChannelId) {
-          const trustChannel = guild.channels.cache.get(guildConfig.settings.trustChannelId);
-          if (trustChannel) {
-            const embed = new EmbedBuilder()
-              .setTitle("💰 Payment Verification")
-              .setColor("#00FF00")
-              .setDescription(`**User:** <@${rawId}>\n**Amount:** ₹${amount} ${currency || "INR"}\n**Status:** VERIFIED\n**Confidence:** ${confidence}`)
-              .addFields({ name: "Transaction ID", value: transactionId || "N/A" })
-              .setImage(screenshotUrl)
-              .setFooter({ text: "Verified by Jack AI" });
-              
-            await trustChannel.send({ embeds: [embed] });
-          }
-        }
-        
-        // Optional Role
-        if (guildConfig.settings.trustedRoleId) {
-          try {
-            const member = await guild.members.fetch(rawId);
-            if (member && !member.roles.cache.has(guildConfig.settings.trustedRoleId)) {
-              await member.roles.add(guildConfig.settings.trustedRoleId);
-            }
-          } catch (roleErr) {
-            // ignore fetch/role errors
-          }
-        }
-      }
-
-      return { success: true, message: "Payment successfully verified and logged." };
-    } catch (e) {
-      return { success: false, message: "Validation error: " + e.message };
-    }
-  },
 
   /**
    * SYSTEM OPERATOR: Fetch the clan leaderboard based on specific criteria.
@@ -568,7 +496,7 @@ module.exports = {
     const { query } = args;
     try {
       // Allow searching by exact UID or partial IGN
-      const isNumeric = /^\\d+$/.test(query);
+      const isNumeric = /^\d+$/.test(query);
       const searchCriteria = isNumeric 
         ? { uid: query }
         : { ign: { $regex: new RegExp(query, "i") } };

@@ -26,6 +26,14 @@ module.exports = {
 
     const ROOT_TOOLS = ['ban_member', 'kick_member', 'record_personality_trait'];
     const VISION_TOOLS = ['get_server_map', 'get_system_map', 'get_user_roles'];
+    // Tools that require Administrator (announce, register, etc.)
+    const BROADCAST_TOOLS = ['announce_message', 'register_player', 'update_stats', 'adjust_self_personality'];
+    // Tools that are owner-only — no staff bypass
+    const SYSTEM_TOOLS = ['restart_system', 'read_system_logs', 'read_codebase_file', 'write_system_log'];
+
+    if (SYSTEM_TOOLS.includes(toolName)) {
+      return { valid: false, reason: "Unauthorized: This operation is restricted to the Supreme Manager (Owner) only." };
+    }
 
     if (ROOT_TOOLS.includes(toolName)) {
       const allowed = await toolService._checkPower(invoker, guild, [
@@ -42,6 +50,11 @@ module.exports = {
         PermissionFlagsBits.Administrator
       ]);
       if (!allowed) return { valid: false, reason: "Unauthorized: Access restricted to Strategic Command (Manage Guild)." };
+    }
+
+    if (BROADCAST_TOOLS.includes(toolName)) {
+      const allowed = await toolService._checkPower(invoker, guild, [PermissionFlagsBits.Administrator]);
+      if (!allowed) return { valid: false, reason: "Unauthorized: Access restricted to Administrators." };
     }
 
     // 3. Inner Permission Check (Safety Layer)

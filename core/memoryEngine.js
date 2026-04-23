@@ -55,7 +55,9 @@ Rules:
     try {
       const genAI = _getGenAI();
       const model = genAI.getGenerativeModel({
-        model: 'gemini-3.1-pro-preview',
+        // Flash model is ideal here: classification is a simple yes/no task,
+        // no need for the flagship model — saves quota for real conversations.
+        model: 'gemini-2.0-flash',
         generationConfig: {
           temperature: 0.2,
           responseMimeType: "application/json"
@@ -131,8 +133,10 @@ async function storeMemory(memoryObject) {
 
     const count = await UserMemory.countDocuments({ userId: memoryObject.userId, guildId: memoryObject.guildId });
     if (count >= 100) {
-      const oldest = await UserMemory.findOne({ userId: memoryObject.userId, guildId: memoryObject.guildId }).sort({ createdAt: 1 });
-      if (oldest) await UserMemory.findByIdAndDelete(oldest._id);
+      // Evict by LOWEST importance, not oldest — preserves high-value ancient memories
+      // (e.g. a ban or payment from 3 months ago is more valuable than a low-score recent note)
+      const leastImportant = await UserMemory.findOne({ userId: memoryObject.userId, guildId: memoryObject.guildId }).sort({ importance: 1, createdAt: 1 });
+      if (leastImportant) await UserMemory.findByIdAndDelete(leastImportant._id);
     }
 
     let embedding = [];
@@ -165,7 +169,7 @@ function extractContextTags(message) {
   const tags = new Set();
   const lowerMsg = message.toLowerCase();
   
-  if (lowerMsg.includes('payment') || lowerMsg.includes('reward')) tags.add('payment');
+  if (lowerMsg.includes('reward')) tags.add('reward');
   if (lowerMsg.includes('clan') || lowerMsg.includes('synergy')) tags.add('clan');
   if (lowerMsg.includes('rule') || lowerMsg.includes('ban')) tags.add('moderation');
   

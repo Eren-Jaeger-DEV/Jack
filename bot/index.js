@@ -16,7 +16,9 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildInvites,
-    GatewayIntentBits.GuildPresences
+    GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.DirectMessages,          // Required to receive DMs
+    GatewayIntentBits.DirectMessageReactions   // Optional but good to have
   ]
 });
 

@@ -2,7 +2,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const axios = require('axios');
 const personalityEngine = require('../../core/personalityEngine');
 const memoryEngine = require('../../core/memoryEngine');
-const paymentAnalyzer = require('../../core/paymentAnalyzer');
+
 const toolService = require('./toolService');
 const logger = require('../../utils/logger');
 require('dotenv').config();
@@ -11,11 +11,12 @@ const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim(
 let currentKeyIndex = 0;
 const modelName = 'gemini-3.1-pro-preview';
 const DAILY_LIMIT = 50;
-const dailyUsageCache = new Map();
+const UserActivity = require('../database/models/UserActivity');
 
 /**
- * AI SERVICE (v4.2.0) - MULTI-KEY ROTATION
+ * AI SERVICE (v4.3.0) - MULTI-KEY ROTATION + PERSISTENT LIMITS
  * Implements automatic failover between multiple API keys on 429 errors.
+ * Daily usage limit is DB-backed and survives restarts.
  */
 module.exports = {
   _getGenAI() {
@@ -57,12 +58,23 @@ module.exports = {
       `;
       
       const userId = invoker ? invoker.id : "unknown";
-      if (userId !== "unknown") {
-        const usage = dailyUsageCache.get(userId) || 0;
-        if (usage >= DAILY_LIMIT) {
-          return { type: 'response', text: "AI usage limit reached for today.", model: modelName };
+      if (userId !== "unknown" && !isOwner) {
+        const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+        let activity = await UserActivity.findOne({ discordId: userId });
+        if (!activity) activity = new UserActivity({ discordId: userId });
+
+        // Reset count if it's a new day
+        if (activity.aiCallsDate !== today) {
+          activity.aiCallsToday = 0;
+          activity.aiCallsDate = today;
         }
-        dailyUsageCache.set(userId, usage + 1);
+
+        if (activity.aiCallsToday >= DAILY_LIMIT) {
+          return { type: 'response', text: "You've reached your 50 AI interactions for today. Resets at midnight.", model: modelName };
+        }
+
+        activity.aiCallsToday += 1;
+        await activity.save();
       }
 
       const configManager = require('./configManager');
@@ -78,27 +90,6 @@ module.exports = {
       
       const mode = personalityEngine.getBehaviorMode(prompt, "chat", null);
 
-      const lowerPrompt = (prompt || "").toLowerCase();
-      if (imageUrl && (lowerPrompt.includes("payment") || lowerPrompt.includes("paid") || lowerPrompt.includes("proof") || lowerPrompt.includes("transaction"))) {
-        const paymentData = await paymentAnalyzer.analyzePayment(imageUrl, prompt);
-        
-        if (paymentData && (paymentData.status === "verified" || paymentData.status === "suspicious")) {
-          return {
-            type: 'tool',
-            tool: 'verify_payment',
-            args: {
-              userId: userId,
-              amount: paymentData.amount || 0,
-              currency: paymentData.currency || "INR",
-              status: paymentData.status,
-              confidence: paymentData.confidence || 0,
-              screenshotUrl: imageUrl,
-              transactionId: paymentData.transactionId || null
-            },
-            model: modelName
-          };
-        }
-      }
 
       const memory = await memoryEngine.getRelevantMemory(userId, guild?.id, prompt);
       let memoryBlock = "";
@@ -106,11 +97,7 @@ module.exports = {
         memoryBlock = `\n[RELEVANT MEMORY]\nThe following information is highly relevant and must be prioritized:\n${memory.map(m => "- " + m).join("\n")}\n`;
       }
 
-      console.log({
-        finalPersonality,
-        mode,
-        userId
-      });
+      logger.info("JackAI", `Personality active — Tone: ${finalPersonality.tone} | Strictness: ${finalPersonality.strictness}% | Mode: ${mode} | User: ${userId}`);
 
       const isGuildOwner = guild ? (invoker.id === guild.ownerId) : false;
       const userRoles = invoker && invoker.roles ? invoker.roles.cache.map(r => r.name).join(", ") : "None";
@@ -119,7 +106,7 @@ module.exports = {
       if (guild) {
         const emojis = guild.emojis.cache.filter(e => e.available).map(e => `<${e.animated ? 'a' : ''}:${e.name}:${e.id}> (use by typing exactly this)`).slice(0, 30);
         if (emojis.length > 0) {
-          emojiBlock = `\\n[SERVER EMOJIS]\\nYou can use these custom server emojis in your messages to add flavor:\\n${emojis.join("\\n")}\\n`;
+          emojiBlock = `\n[SERVER EMOJIS]\nYou can use these custom server emojis in your messages to add flavor:\n${emojis.join("\n")}\n`;
         }
       }
 
@@ -266,23 +253,6 @@ ${bibleInstruction}`;
               name: "update_stats",
               description: "CLAN DATABASE: Update a player's seasonSynergy or accountLevel in the database using their UID.",
               parameters: { type: "OBJECT", properties: { uid: { type: "STRING" }, synergy: { type: "INTEGER" }, level: { type: "INTEGER" } }, required: ["uid"] }
-            },
-            {
-              name: "verify_payment",
-              description: "TRUST SYSTEM: Verify a user's payment screenshot, log it to the trust channel, and store it in memory.",
-              parameters: { 
-                type: "OBJECT", 
-                properties: { 
-                  userId: { type: "STRING" },
-                  amount: { type: "NUMBER" },
-                  currency: { type: "STRING" },
-                  status: { type: "STRING" },
-                  confidence: { type: "NUMBER" },
-                  screenshotUrl: { type: "STRING" },
-                  transactionId: { type: "STRING" }
-                }, 
-                required: ["userId", "amount", "status", "confidence", "screenshotUrl"] 
-              }
             },
             {
               name: "get_clan_leaderboard",
@@ -472,7 +442,7 @@ ${bibleInstruction}`;
       const executeExtraction = async (retryCount = 0) => {
         try {
           const genAI = this._getGenAI();
-          const model = genAI.getGenerativeModel({ model: modelName });
+          const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-image-preview' }) // Flash vision: optimized for image tasks, saves pro quota;
           return await model.generateContent([
             { text: prompt },
             { inline_data: { mime_type: imageData.mimeType, data: imageData.data } }
@@ -541,7 +511,7 @@ CRITICAL: Return ONLY the JSON array. Do not include markdown code blocks or any
       const executeExtraction = async (retryCount = 0) => {
         try {
           const genAI = this._getGenAI();
-          const model = genAI.getGenerativeModel({ model: modelName });
+          const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-image-preview' }) // Flash vision: optimized for image tasks, saves pro quota;
           const parts = [
             { text: prompt },
             ...validImages.map(img => ({ inline_data: { mime_type: img.mimeType, data: img.data } }))
@@ -608,7 +578,7 @@ CRITICAL: Return ONLY the JSON array. Do not include markdown code blocks or any
       const executeExtraction = async (retryCount = 0) => {
         try {
           const genAI = this._getGenAI();
-          const model = genAI.getGenerativeModel({ model: modelName });
+          const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-image-preview' }) // Flash vision: optimized for image tasks, saves pro quota;
           const parts = [
             { text: prompt },
             ...validImages.map(img => ({ inline_data: { mime_type: img.mimeType, data: img.data } }))

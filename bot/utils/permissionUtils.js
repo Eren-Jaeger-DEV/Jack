@@ -75,8 +75,16 @@ function hasExtraPerks(member) {
     return hasFullBypass(member) || isBooster(member);
 }
 
+/**
+ * Raw ID check — used for DMs where there is no GuildMember object.
+ */
+function isOwnerId(userId) {
+    return OWNER_IDS.includes(userId);
+}
+
 module.exports = {
     isOwner,
+    isOwnerId,
     isManagement,
     isHighStaff,
     isBooster,

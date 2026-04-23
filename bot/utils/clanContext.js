@@ -12,13 +12,13 @@ async function getClanContext(guild, member = null) {
     let context = "";
     let reputationScore = 0;
 
-    // 1. SYSTEM BIBLE (Hierarchical Mapping)
+    // 1. SYSTEM BIBLE — Compact summary (saves ~60% tokens vs full dump)
+    context += `\n[SYSTEM CAPABILITIES SUMMARY]\n`;
     Object.entries(BIBLE).forEach(([category, plugins]) => {
-      context += `\n[${category.replace(/_/g, " ")}]:\n`;
-      Object.entries(plugins).forEach(([name, desc]) => {
-        context += ` - ${name}: ${desc}\n`;
-      });
+      const names = Object.keys(plugins).join(", ");
+      context += `- ${category.replace(/_/g, " ")}: ${names}\n`;
     });
+    context += `(Use get_system_map tool for full plugin details when needed)\n`;
 
     context += "\n### LIVE CLAN STATUS ###\n";
 
@@ -43,7 +43,7 @@ async function getClanContext(guild, member = null) {
     }
 
     context += `\n- CURRENT TIME: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\n`;
-    context += `- Members in Server: ${guild.memberCount}\n`;
+    if (guild) context += `- Members in Server: ${guild.memberCount}\n`;
 
     return { context, reputationScore };
   } catch (err) {
