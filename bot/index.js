@@ -76,6 +76,20 @@ client.once("clientReady", async () => {
   // Load all standalone plugins
   await require("../core/pluginLoader")(client);
   
+  // Pre-open DM channels for owners so discord.js caches them with the correct
+  // ChannelType.DM — without this, the first DM from an owner creates a typeless
+  // partial that fails isTextBased() and the messageCreate event is silently dropped.
+  const OWNER_IDS = ["771611262022844427", "888337321869582367"];
+  for (const ownerId of OWNER_IDS) {
+    try {
+      const ownerUser = await client.users.fetch(ownerId);
+      await ownerUser.createDM();
+      logger.addLog("DM", `Owner DM channel pre-loaded for ${ownerUser.tag}`);
+    } catch (e) {
+      logger.addLog("DM", `Could not pre-load DM for ${ownerId}: ${e.message}`);
+    }
+  }
+
   // High-End Boot Report (shorter buffer for final async consistency)
   setTimeout(() => {
     logger.showBootReport(client);
