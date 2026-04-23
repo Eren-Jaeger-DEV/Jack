@@ -13,14 +13,26 @@ module.exports = {
     if (!message) return;
     if (message.author?.bot) return;
 
+    console.log(`[MSG] guild=${!!message.guild} | author=${message.author?.id} | content="${message.content?.substring(0,30)}"`);
+
     // ── DM HANDLING (Owner-Only) ──────────────────────────────────────────────
     if (!message.guild) {
-      if (isOwnerId(message.author.id)) {
+      console.log(`[DM_GATE] DM received from: ${message.author?.id}`);
+
+      // With Partials enabled, author may be partial — fetch to ensure full User object
+      if (message.author?.partial) {
+        try { await message.author.fetch(); } catch (e) {}
+      }
+
+      const authorId = message.author?.id;
+      console.log(`[DM_GATE] authorId=${authorId} | isOwner=${isOwnerId(authorId)}`);
+
+      if (authorId && isOwnerId(authorId)) {
+        console.log(`[DM_GATE] Routing to processDM...`);
         await aiController.processDM(message, client).catch(err =>
           console.error("[DM Pipeline Error]", err)
         );
       }
-      // All non-owner DMs are silently dropped
       return;
     }
 
