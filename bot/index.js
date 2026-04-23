@@ -101,6 +101,11 @@ process.on('SIGTERM', shutdown);
 
 /* Login */
 
+// DIAGNOSTIC: Raw listener — bypasses all middleware. Remove after DM debugging.
+client.on('messageCreate', (msg) => {
+  process.stdout.write(`[RAW_MSG] guild=${!!msg.guild} author=${msg.author?.id} content="${(msg.content||"").substring(0,20)}"\n`);
+});
+
 client.login(process.env.BOT_TOKEN);
 
 module.exports = client;
