@@ -1,6 +1,6 @@
 require("dotenv").config({ quiet: true });
 
-const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, Partials } = require("discord.js");
 const mongoose = require("mongoose");
 const logger = require('../utils/logger');
 const configManager = require("./utils/configManager");
@@ -19,6 +19,10 @@ const client = new Client({
     GatewayIntentBits.GuildPresences,
     GatewayIntentBits.DirectMessages,          // Required to receive DMs
     GatewayIntentBits.DirectMessageReactions   // Optional but good to have
+  ],
+  partials: [
+    Partials.Channel,  // CRITICAL: DM channels are partial by default — without this, DM events are dropped
+    Partials.Message   // Required to read DM message content
   ]
 });
 
