@@ -22,7 +22,8 @@ const client = new Client({
   ],
   partials: [
     Partials.Channel,  // CRITICAL: DM channels are partial by default — without this, DM events are dropped
-    Partials.Message   // Required to read DM message content
+    Partials.Message,  // Required to read DM message content
+    Partials.User      // Required: DM senders may not be cached — without this, discord.js silently drops the event
   ]
 });
 
