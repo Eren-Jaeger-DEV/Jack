@@ -1,3 +1,4 @@
+const { Collection } = require("discord.js");
 const perms = require("../bot/utils/permissionUtils");
 const { getClanContext } = require("../bot/utils/clanContext");
 const ConversationHistory = require("../bot/database/models/ConversationHistory");
@@ -107,7 +108,7 @@ module.exports = {
       const syntheticMember = {
         id: userId,
         user: message.author,
-        roles: { cache: new Map() }, // empty roles — isOwner handled by ID check
+        roles: { cache: new Collection() }, // Collection has .map()/.filter() unlike plain Map
         permissions: { has: () => false }
       };
 
