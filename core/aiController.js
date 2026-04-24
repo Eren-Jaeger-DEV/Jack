@@ -141,6 +141,15 @@ module.exports = {
               await dmChannel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
             }
 
+            // --- HARD STOP FOR IMAGES ---
+            // Image generation is a terminal action. We skip interpretation to prevent
+            // context bloat crashes and infinite loops.
+            if (decision.tool === 'generate_image' && result.success) {
+              addLog("AIController", "[DM] Image generated successfully. Ending cycle to prevent loop.");
+              await this._updateHistory(userId, content, `[SYSTEM] Image generated successfully for prompt: ${JSON.stringify(enrichedArgs.prompt)}`);
+              return;
+            }
+
             // SCRUBBER: Omit massive binary data from AI interpretation
             const scrubbedResult = { ...result };
             if (scrubbedResult.bytesBase64Encoded) scrubbedResult.bytesBase64Encoded = "[IMAGE_DATA_OMITTED]";
@@ -259,11 +268,18 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
           
           if (result.success) {
              await observer.recordActionSuccess(member.id, decision.tool);
-             
-             // UPDATE HISTORY with the call so the Interpretation Pass has context
-             await this._updateHistory(userId, content, `[AI_CALL: ${decision.tool}]`);
+                          // UPDATE HISTORY with the call so the Interpretation Pass has context
+              await this._updateHistory(userId, content, `[AI_CALL: ${decision.tool}]`);
 
-             // PHASE: Interpretation Pass (Self-Awareness)
+              // --- HARD STOP FOR IMAGES ---
+              if (decision.tool === 'generate_image' && result.success) {
+                addLog("AIController", "Image generated successfully. Ending cycle to prevent loop.");
+                await this._updateHistory(userId, content, `[SYSTEM] Image generated successfully for prompt: ${JSON.stringify(enrichedArgs.prompt)}`);
+                await notifyFn("🎨 I've generated that image for you.");
+                return;
+              }
+
+              // PHASE: Interpretation Pass (Self-Awareness)
              const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}`;
              
              const interpretation = await aiService.generateResponse(
