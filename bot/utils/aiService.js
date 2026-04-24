@@ -291,9 +291,6 @@ ${bibleInstruction}`;
       const cleanExtraContext = scrubPayload(extraContext || "");
       const cleanSystemInstruction = scrubPayload(systemInstruction || "");
 
-      // --- TOKEN AUDIT (Diagnostic Logs) ---
-      logger.info("JackAI", `Payload Audit: Prompt=${cleanPrompt.length || 0} | History=${JSON.stringify(cleanHistory).length} | Context=${JSON.stringify(cleanExtraContext).length} | SystemPrompt=${cleanSystemInstruction.length}`);
-
       const executeRequest = async (retryCount = 0) => {
         try {
           const genAI = this._getGenAI();
