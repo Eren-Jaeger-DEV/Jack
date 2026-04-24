@@ -132,20 +132,24 @@ module.exports = {
 
       if (decision.type === 'tool') {
         try {
-          // Inject client so tools like send_proactive_ping can reach Discord
           const enrichedArgs = { ...decision.args, _client: client };
           const result = await toolService[decision.tool]?.(enrichedArgs, syntheticMember, null);
           
           if (result) {
-            const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}`;
+            // Handle Rich Media (Embeds/Files) from tools in DMs
+            if (result.embeds || result.files) {
+              await dmChannel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
+            }
+
+            const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}
+${(result && (result.error || result.status === 'error' || (typeof result === 'string' && result.includes("not found")))) ? "\n[STRICT_WARNING] This tool call FAILED. Do not attempt the exact same call again. Check your paths and try a different strategy." : ""}`;
+            
             const interpretation = await aiService.generateResponse(
               feedbackPrompt, history, null, dmContext,
               null, syntheticMember, null, reputationScore, activityData, true
             );
             responseText = this._extractFinalText(interpretation.text);
-
-            // --- CONTINUATION LOOP (DM) ---
-            // After completing a tool, let Jack decide if he wants to keep going
+            
             await this._runContinuationLoop({
               history, extraContext: dmContext, guild: null,
               member: syntheticMember, reputationScore, activityData,
@@ -161,8 +165,10 @@ module.exports = {
         responseText = this._extractFinalText(decision.text);
       }
 
-      await dmChannel.send(responseText).catch(() => {});
-      await this._updateHistory(userId, content, responseText);
+      if (responseText) {
+        await dmChannel.send(responseText).catch(() => {});
+        await this._updateHistory(userId, content, responseText);
+      }
 
     } catch (err) {
       addLog("AIController", `[DM] Pipeline Failure: ${err.message}`);
@@ -260,13 +266,26 @@ module.exports = {
                 guild, member, null, reputationScore, activityData, isOwner
              );
 
-             addLog("AIController", `Interpretation Pass Raw: ${interpretation.text.substring(0, 50)}...`);
+             // Handle Rich Media (Embeds/Files) from tools
+             if (result.embeds || result.files) {
+               if (isInteraction) await context.editReply({ embeds: result.embeds, files: result.files }).catch(() => {});
+               else if (streamingMessage.isOwnerStub) await context.channel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
+               else await streamingMessage.edit({ content: "✅ **Action completed.**", embeds: result.embeds, files: result.files }).catch(() => {});
+             }
+
              const responseText = this._extractFinalText(interpretation.text);
              addLog("AIController", `Interpretation Pass Processed: ${responseText.substring(0, 50)}...`);
              
-             if (isInteraction) await context.editReply(responseText).catch(() => {});
-             else if (streamingMessage.isOwnerStub) await context.reply(responseText).catch(() => {});
-             else await streamingMessage.edit(responseText).catch(() => {});
+             if (isInteraction) {
+                // If we already sent an embed, we should send the text as a follow-up or separate message
+                if (result.embeds || result.files) await context.followUp(responseText).catch(() => {});
+                else await context.editReply(responseText).catch(() => {});
+             } else if (streamingMessage.isOwnerStub) {
+                await context.reply(responseText).catch(() => {});
+             } else {
+                if (result.embeds || result.files) await context.channel.send(responseText).catch(() => {});
+                else await streamingMessage.edit(responseText).catch(() => {});
+             }
              
              await this._updateHistory(userId, content, responseText);
 
