@@ -46,9 +46,9 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     const mainContainer = new ContainerBuilder();
 
     // -- Header --
-    mainContainer.addComponents(
+    mainContainer.addSectionComponents(
       new SectionBuilder()
-        .addComponents(
+        .addTextDisplayComponents(
           new TextDisplayBuilder()
             .setContent(`🏦 **Global ${type} Vault**`)
         )
@@ -66,7 +66,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     });
 
     if (gallery.items.length > 0) {
-      mainContainer.addComponents(gallery);
+      mainContainer.addMediaGalleryComponents(gallery);
     }
 
     // -- Info Section --
@@ -78,10 +78,10 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     });
     infoText += `\n*Page ${currentPage + 1} of ${maxPages} | Total: ${activeDocs.length}*`;
     
-    infoSection.addComponents(
+    infoSection.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(infoText)
     );
-    mainContainer.addComponents(infoSection);
+    mainContainer.addSectionComponents(infoSection);
 
     // -- Action Rows (Standard ActionRow for Buttons/Menus) --
     const rows = [mainContainer];
