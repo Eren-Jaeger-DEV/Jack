@@ -239,6 +239,11 @@ After completing a tool call, you will receive a [CONTINUATION_CHECK] prompt.
 - Pass the URL of the user's attachment to the 'image_url' parameter.
 - The 'prompt' should describe the FINAL result you want (e.g. "A blue cat matching the reference image").
 
+[PRECISION_CROP_PROTOCOL]
+- If a user asks to "crop out," "cut out," or "extract" a specific part of an image without changing the pixels (e.g. "crop out the girl"), use the 'crop_image' tool.
+- First, detect the bounding box coordinates [ymin, xmin, ymax, xmax] of the object in normalized format (0-1000).
+- Then, call 'crop_image' with those coordinates and the 'image_url'.
+
 ${bibleInstruction}`;
 
       const tools = [
