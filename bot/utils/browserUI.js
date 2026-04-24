@@ -46,12 +46,9 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     const mainContainer = new ContainerBuilder();
 
     // -- Header --
-    mainContainer.addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(
-          new TextDisplayBuilder()
-            .setContent(`🏦 **Global ${type} Vault**`)
-        )
+    mainContainer.addTextDisplayComponents(
+      new TextDisplayBuilder()
+        .setContent(`🏦 **Global ${type} Vault**`)
     );
 
     // -- Media Gallery (Grid) --
