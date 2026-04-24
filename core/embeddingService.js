@@ -1,6 +1,9 @@
 /**
  * EMBEDDING SERVICE
- * Semantic memory embedding generator using Gemini text-embedding-004.
+ * Semantic memory embedding generator using Gemini gemini-embedding-001.
+ * NOTE: text-embedding-004 was retired on Jan 14 2026 — replaced with gemini-embedding-001.
+ *       Output dimensions changed from 768 → 3072, but DB schema uses [Number] so no migration needed.
+ *       Existing stale vectors will simply score low and be ignored by cosine similarity.
  */
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -26,7 +29,7 @@ async function getEmbedding(text, retryCount = 0) {
 
   try {
     const genAI = _getGenAI();
-    const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
     const result = await model.embedContent(text);
     return result.embedding.values;
   } catch (error) {
