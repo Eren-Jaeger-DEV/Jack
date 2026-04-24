@@ -244,7 +244,6 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
       const activityData = await UserActivity.findOne({ discordId: userId }) || {};
 
       const history = await this._getHistory(userId);
-      const activityData = await UserActivity.findOne({ discordId: userId }) || {};
 
       // --- VISION: Gather Attachments ---
       const attachments = message.attachments.map(a => a.url);
