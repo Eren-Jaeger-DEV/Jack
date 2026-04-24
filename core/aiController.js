@@ -7,6 +7,7 @@ const aiValidator = require("./aiValidator");
 const toolService = require("../bot/utils/toolService");
 const aiService = require("../bot/utils/aiService");
 const observer = require("./observer");
+const tempEmojiManager = require("../bot/utils/tempEmojiManager");
 const { addLog } = require("../utils/logger");
 
 // Max number of autonomous continuation passes Jack can do before we force-stop.
@@ -318,7 +319,8 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
                else await streamingMessage.edit({ content: "✅ **Action completed.**", embeds: result.embeds, files: result.files }).catch(() => {});
              }
 
-             const responseText = this._extractFinalText(interpretation.text);
+             let responseText = this._extractFinalText(interpretation.text);
+             responseText = await this._processVaultEmojis(responseText, guild, client.user.id);
              addLog("AIController", `Interpretation Pass Processed: ${responseText.substring(0, 50)}...`);
              
              if (isInteraction) {
@@ -368,7 +370,8 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
       } else {
         // Normal Text Response with SMART FALLBACK
         addLog("AIController", `Text Response Raw: ${decision.text.substring(0, 50)}...`);
-        const responseText = this._extractFinalText(decision.text);
+        let responseText = this._extractFinalText(decision.text);
+        responseText = await this._processVaultEmojis(responseText, guild, client.user.id);
         addLog("AIController", `Text Response Processed: ${responseText.substring(0, 50)}...`);
 
         if (isInteraction) await context.editReply(responseText).catch(() => {});
@@ -596,6 +599,32 @@ ${isFailure ? "\n[STRICT_WARNING] This tool call FAILED. Do not attempt the exac
       .trim();
 
     return finalClean || clean || DEFAULT_FALLBACK;
+  },
+
+  async _processVaultEmojis(text, guild, userId) {
+    if (!text || !guild) return text;
+    
+    const vaultRegex = /\[vault:([a-zA-Z0-9_-]+)\]/g;
+    let match;
+    let finalText = text;
+    
+    // We need to match all occurrences, spawn them, and replace them.
+    // Using a simple loop since regex.exec is stateful with 'g'
+    const matches = [...text.matchAll(vaultRegex)];
+    for (const m of matches) {
+      const fullTag = m[0];
+      const emojiName = m[1];
+      
+      const spawnResult = await tempEmojiManager.spawnTempEmoji(guild, emojiName, 600000, userId);
+      if (spawnResult.success && spawnResult.emoji) {
+        finalText = finalText.replace(fullTag, spawnResult.emoji.toString());
+      } else {
+        // If failed to spawn (e.g., no slots), just hide the ugly syntax
+        finalText = finalText.replace(fullTag, "");
+      }
+    }
+    
+    return finalText;
   },
 
   async _getHistory(userId) {

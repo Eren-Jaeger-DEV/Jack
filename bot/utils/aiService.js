@@ -13,6 +13,7 @@ const modelName = 'gemini-3.1-pro-preview';
 const DAILY_LIMIT = 50;
 const mongoose = require('mongoose');
 const UserActivity = mongoose.model('UserActivity');
+const EmojiBank = require('../database/models/EmojiBank');
 
 /**
  * AI SERVICE (v4.3.0) - MULTI-KEY ROTATION + PERSISTENT LIMITS
@@ -110,6 +111,19 @@ module.exports = {
         if (emojis.length > 0) {
           emojiBlock = `\n[SERVER EMOJIS]\nYou can use these custom server emojis in your messages to add flavor:\n${emojis.join("\n")}\n`;
         }
+      }
+
+      // --- GLOBAL VAULT EMOJI PALETTE ---
+      try {
+        const vaultCount = await EmojiBank.countDocuments();
+        if (vaultCount > 0) {
+          const sampleSize = Math.min(15, vaultCount);
+          const randomEmojis = await EmojiBank.aggregate([{ $sample: { size: sampleSize } }]);
+          const vaultNames = randomEmojis.map(e => `[vault:${e.name}]`);
+          emojiBlock += `\n[GLOBAL VAULT EMOJIS]\nYou have a private vault of premium emojis. To use them, you MUST type the exact syntax shown below:\nAvailable Palette: ${vaultNames.join(", ")}\n(Example usage: "That is funny! [vault:pepe_laugh]")\n`;
+        }
+      } catch (e) {
+        logger.error("JackAI", `Failed to fetch vault emojis: ${e.message}`);
       }
 
       const systemInstruction = `[BASE IDENTITY]
