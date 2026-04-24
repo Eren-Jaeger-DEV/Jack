@@ -1,13 +1,13 @@
-const { VertexAI } = require('@google-cloud/vertexai');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const axios = require('axios');
 const logger = require('../../utils/logger');
 require('dotenv').config();
 
-// We use the second key for Vertex AI tasks as it has the credits and permissions
+// We use the second key for Vertex AI tasks
 const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
 const VERTEX_KEY = API_KEYS[1] || API_KEYS[0]; 
-const PROJECT_ID = process.env.GOOGLE_PROJECT_ID || 'jack-420'; // Fallback if not in env
-const LOCATION = 'us-central1'; // Imagen 3 is most stable here
+const PROJECT_ID = process.env.GOOGLE_PROJECT_ID || 'jack-489112';
+const LOCATION = 'us-central1'; 
 
 module.exports = {
   schema: {
@@ -36,36 +36,33 @@ module.exports = {
     try {
       logger.info("IMAGEN", `Generating image for prompt: ${prompt}`);
 
-      // Initialize Vertex AI with the specific key and project
-      // Note: In a real Vertex setup, we usually use Service Accounts, 
-      // but if the user provided a Vertex-enabled API Key, we'll try the direct route.
-      const vertexAI = new VertexAI({ project: PROJECT_ID, location: LOCATION, key: VERTEX_KEY });
-      const generativeModel = vertexAI.getGenerativeModel({
-        model: 'imagen-3.0-generate-001',
-      });
+      // Vertex AI Imagen 3 REST Endpoint
+      const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/imagen-3.0-generate-001:predict?key=${VERTEX_KEY}`;
 
-      // Request generation
-      const request = {
-        prompt: prompt,
+      const requestBody = {
+        instances: [
+          { prompt: prompt }
+        ],
         parameters: {
           sampleCount: 1,
           aspectRatio: aspect_ratio,
+          addWatermark: false,
           includeSafetyAttributes: true
         }
       };
 
-      const response = await generativeModel.generateContent(request);
-      
-      // Handle the response (Imagen returns base64 images)
-      const prediction = response.response.candidates[0];
-      if (!prediction || !prediction.image) {
-        return { success: false, message: "Imagen failed to generate an image. It might have been blocked by safety filters." };
+      const response = await axios.post(url, requestBody, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const prediction = response.data?.predictions?.[0];
+      if (!prediction || !prediction.bytesBase64Encoded) {
+        return { success: false, message: "Imagen failed to generate an image. Check your Google Cloud quota and safety filters." };
       }
 
-      const imageBuffer = Buffer.from(prediction.image.bytesBase64, 'base64');
+      const imageBuffer = Buffer.from(prediction.bytesBase64Encoded, 'base64');
       const attachment = new AttachmentBuilder(imageBuffer, { name: 'jack-gen.png' });
 
-      // Create a beautiful embed to showcase the art
       const embed = new EmbedBuilder()
         .setTitle("🎨 Jack's Artistic Vision")
         .setDescription(`**Prompt:** ${prompt}`)
@@ -82,12 +79,11 @@ module.exports = {
       };
 
     } catch (error) {
-      logger.error("IMAGEN", `Generation Error: ${error.message}`);
-      
-      // Fallback: If Vertex AI fails due to auth/config, tell the user how to fix it
+      const errorMsg = error.response?.data?.error?.message || error.message;
+      logger.error("IMAGEN", `REST Error: ${errorMsg}`);
       return { 
         success: false, 
-        message: `Image generation failed: ${error.message}. Make sure the GOOGLE_PROJECT_ID is correct in your .env and Imagen 3 is enabled in your Google Cloud console.` 
+        message: `Image generation failed: ${errorMsg}` 
       };
     }
   }
