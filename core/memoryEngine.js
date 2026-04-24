@@ -35,6 +35,12 @@ async function analyzeMessage(message, userId, guildId) {
   if (!message || message.trim().length < 5) return;
   if (isLowValueMessage(message)) return;
 
+  // PROTECTION: Never try to analyze or memorize massive blocks of data (e.g. Base64 strings)
+  if (message.length > 2000) {
+    logger.info("MEMORY", "Skipping analysis for oversized message.");
+    return;
+  }
+
   const prompt = `Classify if this message should be stored as memory.
 Return JSON:
 {
