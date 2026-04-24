@@ -277,6 +277,9 @@ ${bibleInstruction}`;
       const cleanPrompt = scrubPayload(prompt);
       const cleanExtraContext = scrubPayload(extraContext);
 
+      // --- TOKEN AUDIT (Debugging the 429/400 errors) ---
+      logger.info("JackAI", `Payload Audit: Prompt=${cleanPrompt.length} | History=${cleanHistory.length} | Context=${(cleanExtraContext || "").length} | SystemPrompt=${(systemPrompt || "").length}`);
+
       const executeRequest = async (retryCount = 0) => {
         try {
           const genAI = this._getGenAI();
