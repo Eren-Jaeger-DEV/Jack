@@ -296,11 +296,17 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
                           // UPDATE HISTORY with the call so the Interpretation Pass has context
               await this._updateHistory(userId, content, `[AI_CALL: ${decision.tool}]`);
 
+             // Handle Rich Media (Embeds/Files) from tools FIRST
+             if (result.embeds || result.files) {
+               if (isInteraction) await context.editReply({ content: "", embeds: result.embeds, files: result.files }).catch(() => {});
+               else if (streamingMessage.isOwnerStub) await context.channel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
+               else await streamingMessage.edit({ content: "✅ **Action completed.**", embeds: result.embeds, files: result.files }).catch(() => {});
+             }
+
               // --- HARD STOP FOR IMAGES ---
               if (decision.tool === 'generate_image' && result.success) {
                 addLog("AIController", "Image generated successfully. Ending cycle to prevent loop.");
                 await this._updateHistory(userId, content, `[SYSTEM] Image generated successfully for prompt: ${JSON.stringify(enrichedArgs.prompt)}`);
-                await notifyFn("🎨 I've generated that image for you.");
                 return;
               }
 
@@ -311,13 +317,6 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
                 feedbackPrompt, history, null, extraContext,
                 guild, member, null, reputationScore, activityData, isOwner
              );
-
-             // Handle Rich Media (Embeds/Files) from tools
-             if (result.embeds || result.files) {
-               if (isInteraction) await context.editReply({ embeds: result.embeds, files: result.files }).catch(() => {});
-               else if (streamingMessage.isOwnerStub) await context.channel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
-               else await streamingMessage.edit({ content: "✅ **Action completed.**", embeds: result.embeds, files: result.files }).catch(() => {});
-             }
 
              let responseText = this._extractFinalText(interpretation.text);
              responseText = await this._processVaultEmojis(responseText, guild, client.user.id);
