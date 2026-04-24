@@ -141,7 +141,10 @@ function log(level, tag, message, metadata) {
             metaStr = "\n[Metadata Unserializable]";
         }
     }
-    console.log(`${ts} ${level.padEnd(14, " ")} \x1b[1m[${tag}]\x1b[0m ${message}${metaStr}`);
+    
+    // Safety: Handle tags that are accidentally passed as objects
+    const tagStr = (typeof tag === 'string') ? tag : JSON.stringify(tag);
+    console.log(`${ts} ${level.padEnd(14, " ")} \x1b[1m[${tagStr}]\x1b[0m ${message}${metaStr}`);
 }
 
 module.exports = {

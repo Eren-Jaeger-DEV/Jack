@@ -422,7 +422,11 @@ Do NOT repeat what you already said. Only proceed if there is genuine new value 
         await this._updateHistory(userId, CONTINUATION_PROMPT, `[AI_CALL: ${toolName}] Result: ${JSON.stringify(toolResult)}`);
 
         // Interpretation pass for this continuation tool call
-        const feedbackPrompt = `[TOOL_RESULT: ${toolName}] ${JSON.stringify(toolResult)}`;
+        const isFailure = toolResult && (toolResult.error || toolResult.status === 'error' || (typeof toolResult === 'string' && toolResult.includes("not found")));
+        
+        const feedbackPrompt = `[TOOL_RESULT: ${toolName}] ${JSON.stringify(toolResult)}
+${isFailure ? "\n[STRICT_WARNING] This tool call FAILED. Do not attempt the exact same call again. Check your paths and try a different strategy." : ""}`;
+        
         let interp;
         try {
           interp = await aiService.generateResponse(
