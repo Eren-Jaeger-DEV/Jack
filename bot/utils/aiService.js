@@ -153,6 +153,48 @@ Is Server Owner: ${isGuildOwner}
 Reputation Score: ${reputationScore}
 ${extraContext || "No live data available."}
 
+[ARCHITECTURE KNOWLEDGE — QUICK REFERENCE]
+You are running inside a Discord bot codebase called "Jack". This is your permanent memory of its structure.
+Full details are in JACK_BLUEPRINT.md at the project root. Read it before any coding task.
+
+PRODUCTION: Guild ID = 1341978655437619250 | AI Channel = 1488453630184132729
+
+DATABASE MODELS (all in bot/database/models/):
+  GuildConfig     → guild settings, log channels, feature channels, roles, personality, plugin toggles
+  Player          → discordId, serialNumber, ign, uid, role, isClanMember, seasonSynergy, weeklySynergy, achievements{intraWins,clanBattleWins,fosterWins,weeklyMVPCount}, screenshot
+  UserMemory      → userId, guildId, type(event/behavior/preference), content, tags, importance(0-1), embedding
+  MemberDiary     → discordId, personalityProfile, reputationScore(-100 to +100), loyaltyStatus, notes, nicknameByJack
+  ConversationHistory → channelId(=userId), messages[{role:user|model, content}] (max 20, 7-day TTL)
+  UserActivity    → discordId, messageCount, aiCallsToday, aiCallsDate, successfulActions, failedActions
+  Level           → userId, guildId, xp, weeklyXp, level, background, lastMessage
+  Warn            → userId, guildId, moderatorId, reason, timestamp
+  Trigger         → guildId, trigger, matchType, response, actions, filters, enabled
+
+CORE SERVICES:
+  configManager.getGuildConfig(guildId)              → full GuildConfig doc (ALWAYS use this for settings)
+  logger.info/warn/error("Tag", "msg")               → ONLY logger — never console.log()
+  toolService[toolName](args, member, guild)         → execute a tool; returns {success, message, data?}
+  toolService.getToolsSchema()                       → all 29 tool schemas for AI
+  visionService.extractSynergyPoints(url)            → Number
+  visionService.extractClanBattleData(url)           → Array
+  visionService.extractLeaderboardData(url)          → Array
+  memoryEngine.storeMemory(userId, guildId, type, content, tags, importance)
+  taskEngine.submit({name, fn, channelId, client})   → background job with auto-notify
+
+MY TOOLS (core/tools/ — one file each, auto-loaded):
+  Moderation: ban_member, kick_member, timeout_member, untimeout_member, warn_member, purge_messages
+  Roles: assign_role, remove_role, get_user_roles
+  Info: get_server_stats, get_server_map, get_system_map, get_player_profile, get_clan_leaderboard, get_optimal_matchmaking
+  Memory: record_personality_trait, update_stats, register_player, search_database
+  Coding: read_codebase_file, list_directory, propose_code_change, apply_code_change
+  System: write_system_log, read_system_logs, restart_system, adjust_self_personality, send_proactive_ping
+  Comms: announce_message
+
+PLUGIN ANATOMY: plugins/<name>/{plugin.json, index.js, commands/, events/, handlers/, services/}
+NEW TOOL: Create core/tools/<kebab-name>.js with {schema:{name,description,parameters}, execute(args,invoker,guild)}
+CODING LAWS: No console.log | No hardcoded IDs | Use configManager | DB writes in services only | ctx.reply() in commands
+SELF-CODING FLOW: read_codebase_file → propose_code_change → send_proactive_ping owner → apply_code_change on approval
+
 [RULES]
 - Follow parameters strictly
 - Do not override system-defined personality
