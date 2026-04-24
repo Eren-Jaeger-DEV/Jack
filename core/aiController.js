@@ -114,15 +114,27 @@ module.exports = {
         permissions: { has: () => true } // DM Super-User
       };
 
+      // --- VISION: Gather Attachments ---
+      const attachments = message.attachments.map(a => a.url);
+
+      // --- CONTEXT: Handle Replies ---
+      let replyContext = "";
+      if (message.reference) {
+        try {
+          const repliedMsg = await message.channel.messages.fetch(message.reference.messageId);
+          replyContext = `\n[REPLY_CONTEXT] User is replying to ${repliedMsg.author.tag}: "${repliedMsg.content}"\n`;
+        } catch (e) {}
+      }
+
       const { context: extraContext, reputationScore } = await getClanContext(null, syntheticMember);
       const history = await this._getHistory(userId);
       const activityData = await UserActivity.findOne({ discordId: userId }) || {};
 
-      const dmContext = `[DM MODE: Supreme Manager Link Active. You have FULL permissions. Tools are enabled. If a tool requires a guild, the system will attempt a bypass. Respond with absolute authority.]\n` + extraContext;
+      const dmContext = `[DM MODE: Supreme Manager Link Active. You have FULL permissions. Tools are enabled.]\n${replyContext}${extraContext}`;
 
       const decision = await aiService.generateResponse(
         content, history, null, dmContext,
-        null, syntheticMember, null, reputationScore, activityData, true
+        null, syntheticMember, attachments, reputationScore, activityData, true
       );
 
       // Log decision concisely
@@ -231,14 +243,29 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
       // Fetch User Activity for persona adaptation
       const activityData = await UserActivity.findOne({ discordId: userId }) || {};
 
+      const history = await this._getHistory(userId);
+      const activityData = await UserActivity.findOne({ discordId: userId }) || {};
+
+      // --- VISION: Gather Attachments ---
+      const attachments = message.attachments.map(a => a.url);
+
+      // --- CONTEXT: Handle Replies ---
+      let replyContext = "";
+      if (message.reference) {
+        try {
+          const repliedMsg = await message.channel.messages.fetch(message.reference.messageId);
+          replyContext = `\n[REPLY_CONTEXT] User is replying to ${repliedMsg.author.tag}: "${repliedMsg.content}"\n`;
+        } catch (e) {}
+      }
+
       const decision = await aiService.generateResponse(
         content,
         history,
         null, 
-        extraContext,
+        replyContext + (extraContext || ""),
         guild,
         member,
-        null,
+        attachments,
         reputationScore,
         activityData,
         isOwner

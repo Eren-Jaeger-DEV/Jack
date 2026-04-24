@@ -48,7 +48,7 @@ module.exports = {
     return text.replace(/\[[A-Z0-9_\s:]+\]/gi, '').trim();
   },
 
-  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, imageUrl = null, reputationScore = 0, activityData = {}, isOwner = false) {
+  async generateResponse(prompt, history = [], onToken = null, extraContext = "", guild = null, invoker = null, attachments = [], reputationScore = 0, activityData = {}, isOwner = false) {
     try {
       const bibleInstruction = `
 [INFORMATION REFERENCE: ACTIVE]
@@ -307,6 +307,7 @@ ${bibleInstruction}`;
             generationConfig
           });
 
+          // Build context-aware chat history
           const chat = model.startChat({
             history: cleanHistory.map(h => ({
               role: h.role === 'assistant' ? 'model' : 'user',
@@ -314,10 +315,20 @@ ${bibleInstruction}`;
             }))
           });
 
-          const imageData = imageUrl ? await this._fetchImageData(imageUrl) : null;
+          // Fetch all attachment data
+          const mediaParts = [];
+          if (attachments && attachments.length > 0) {
+            for (const url of attachments) {
+              const data = await this._fetchImageData(url);
+              if (data) {
+                mediaParts.push({ inline_data: { mime_type: data.mimeType, data: data.data } });
+              }
+            }
+          }
+
           const messageParts = [
-            { text: prompt },
-            ...(imageData ? [{ inline_data: { mime_type: imageData.mimeType, data: imageData.data } }] : [])
+            { text: cleanPrompt },
+            ...mediaParts
           ];
 
           return await chat.sendMessageStream(messageParts);
