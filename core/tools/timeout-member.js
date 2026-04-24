@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const child_process = require("child_process");
 const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
+const logger = require("../../utils/logger");
 
 
 module.exports = {

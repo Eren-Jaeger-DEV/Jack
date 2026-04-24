@@ -4,6 +4,7 @@ const prefixHandler = require("../handlers/prefixHandler");
 const aiController = require("../../core/aiController");
 const observer = require("../../core/observer");
 const { isOwnerId } = require("../utils/permissionUtils");
+const logger = require("../../utils/logger");
 
 module.exports = {
   name: "messageCreate",
