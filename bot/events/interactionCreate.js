@@ -79,7 +79,12 @@ module.exports = {
       }
 
       /* Emoji Vault Buttons */
-      if (interaction.customId.startsWith("browser_add_")) {
+      if (
+        interaction.customId.startsWith("browser_add_") ||
+        interaction.customId.startsWith("browser_rename_") ||
+        interaction.customId.startsWith("browser_delete_") ||
+        interaction.customId.startsWith("browser_pack_")
+      ) {
         return emojiBrowserButtons(interaction);
       }
 
@@ -98,10 +103,6 @@ module.exports = {
 
         if (interaction.customId.startsWith("cc_")) {
           return await controlCenterHandler(interaction, client);
-        }
-
-        if (interaction.customId === "admin_select_action") {
-          return await emojiBrowserButtons(interaction);
         }
       } catch (err) {
         if (err?.code === 10062) {
