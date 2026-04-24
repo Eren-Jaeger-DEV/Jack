@@ -21,7 +21,8 @@ module.exports = async (message, client) => {
 
     if (!usedPrefix) return;
 
-    console.log(`[PrefixHandler] Message: "${message.content}" | Used Prefix: "${usedPrefix}"`);
+    // Prefix logging removed to reduce console pollution.
+    // logger.info("PrefixHandler", `Message: "${message.content}" | Used Prefix: "${usedPrefix}"`);
 
     const args = message.content
       .slice(usedPrefix.length)

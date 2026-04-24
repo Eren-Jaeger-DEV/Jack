@@ -105,8 +105,6 @@ module.exports = {
     try {
       await dmChannel.sendTyping().catch(() => {});
 
-      addLog("AIController", `[DM] Owner message received: "${content.substring(0, 60)}..."`);
-
       // Build a synthetic context object — DMs have no guild/member
       const syntheticMember = {
         id: userId,
@@ -126,7 +124,8 @@ module.exports = {
         null, syntheticMember, null, reputationScore, activityData, true
       );
 
-      addLog("AIController", `[DM] Decision: ${decision.type} | ${decision.tool || 'text'}`);
+      // Log decision concisely
+      addLog("AIController", `[DM] ${decision.type}${decision.tool ? ' (' + decision.tool + ')' : ''}`);
 
       let responseText;
 
@@ -199,10 +198,8 @@ module.exports = {
       // 2. AI Execution
       addLog("AIController", `Adaptive Engine: Analyzing ${context.user?.tag || context.author?.tag} (Owner: ${isOwner})`);
       
-      let streamingMessage;
       if (isInteraction) {
         if (!context.deferred && !context.replied) await context.deferReply().catch(() => {});
-        // Speed Optimization: Skip "analyzing" for owner
         if (!isOwner) streamingMessage = await context.editReply("⚡ **Jack is analyzing intent...**").catch(() => null);
         else streamingMessage = { edit: async () => {}, isOwnerStub: true }; 
       } else {

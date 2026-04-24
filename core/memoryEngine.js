@@ -6,6 +6,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const UserMemory = require('../bot/database/models/UserMemory');
 const embeddingService = require('./embeddingService');
+const logger = require('../utils/logger');
 require('dotenv').config();
 
 const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
@@ -19,7 +20,7 @@ function _getGenAI() {
 function _rotateKey() {
   if (API_KEYS.length <= 1) return false;
   currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-  console.log(`[MEMORY ENGINE] Rotating API Key to index ${currentKeyIndex}`);
+  logger.info(`[MEMORY ENGINE] Rotating API Key to index ${currentKeyIndex}`);
   return true;
 }
 
@@ -89,14 +90,14 @@ Rules:
         importance: typeof analysis.importance === 'number' ? analysis.importance : 0.5
       });
     } else {
-      console.log("[MEMORY]", {
+      logger.info("[MEMORY]", {
         stored: false,
         type: null,
         importance: 0
       });
     }
   } catch (err) {
-    console.error("[MEMORY] Analysis Failed:", err.message);
+    logger.error("MEMORY", `Analysis Failed: ${err.message}`);
   }
 }
 
@@ -127,7 +128,7 @@ async function storeMemory(memoryObject) {
     });
 
     if (isDuplicate) {
-      console.log("[MEMORY] Duplicate detected, skipping store.");
+      logger.info("[MEMORY] Duplicate detected, skipping store.");
       return;
     }
 
@@ -155,13 +156,13 @@ async function storeMemory(memoryObject) {
     });
 
     await newMemory.save();
-    console.log("[MEMORY]", {
+    logger.info("[MEMORY]", {
       stored: true,
       type: newMemory.type,
       importance: newMemory.importance
     });
   } catch (err) {
-    console.error("[MEMORY] Store Error:", err.message);
+    logger.error("MEMORY", `Store Error: ${err.message}`);
   }
 }
 
@@ -285,7 +286,7 @@ async function getRelevantMemory(userId, guildId, userMessage) {
 
     const filtered = arbitrateMemory(combined, contextTags);
 
-    console.log("[MEMORY ARBITRATION]", {
+    logger.info("[MEMORY ARBITRATION]", {
       before: combined.length,
       after: filtered.length
     });

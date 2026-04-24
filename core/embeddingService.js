@@ -7,6 +7,7 @@
  */
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const logger = require('../utils/logger');
 require('dotenv').config();
 
 const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
@@ -20,7 +21,7 @@ function _getGenAI() {
 function _rotateKey() {
   if (API_KEYS.length <= 1) return false;
   currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-  console.log(`[EMBEDDING] Rotating API Key to index ${currentKeyIndex}`);
+  logger.info(`[EMBEDDING] Rotating API Key to index ${currentKeyIndex}`);
   return true;
 }
 

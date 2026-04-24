@@ -50,7 +50,7 @@ module.exports = {
         targetId !== guild.ownerId
       );
 
-      console.log(`[TIMEOUT_DEBUG] Final Is Moderateable: ${isModerateable}`);
+      logger.info(`[TIMEOUT_DEBUG] Final Is Moderateable: ${isModerateable}`);
 
       if (!isModerateable) {
         return { success: false, message: `Timeout failed: Discord says this member is not moderateable by me. This usually means their role is higher than mine, or they have Administrator powers.` };
