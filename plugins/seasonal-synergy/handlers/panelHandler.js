@@ -17,7 +17,7 @@ const {
 const configManager = require('../../../bot/utils/configManager');
 const synergyService = require('../services/synergyService');
 const sessionService = require('../services/sessionService');
-const aiService = require('../../../bot/utils/aiService');
+const visionService = require('../../../bot/utils/visionService');
 const Player = require('../../../bot/database/models/Player');
 const logger = require('../../../utils/logger');
 
@@ -104,7 +104,7 @@ async function handleInteraction(interaction) {
     await interaction.editReply('⏳ **Jack is analyzing screenshots...** (This may take a moment)');
 
     try {
-      const extractedData = await aiService.extractLeaderboardData(session.imageUrls);
+      const extractedData = await visionService.extractLeaderboardData(session.imageUrls);
       if (extractedData.length === 0) {
         return interaction.editReply('❌ Failed to extract any data. Please make sure the screenshots are clear.');
       }

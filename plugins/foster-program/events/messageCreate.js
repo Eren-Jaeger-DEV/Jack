@@ -13,7 +13,7 @@
 
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const fosterService = require('../services/fosterService');
-const aiService     = require('../../../bot/utils/aiService');
+const visionService = require('../../../bot/utils/visionService');
 const configManager = require('../../../bot/utils/configManager');
 const logger        = require('../../../utils/logger');
 
@@ -138,7 +138,7 @@ async function handleSubmission(client, message, program) {
   await message.channel.sendTyping().catch(() => {});
 
   /* ── 5. AI Screenshot Verification (Gemini Vision) ── */
-  const aiResult = await aiService.extractSynergyPoints(attachment.url);
+  const aiResult = await visionService.extractSynergyPoints(attachment.url);
   await message.reactions.removeAll().catch(() => {});
 
   if (!aiResult || aiResult.points === 0) {

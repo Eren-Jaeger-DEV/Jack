@@ -16,7 +16,7 @@ const {
 } = require('discord.js');
 const battleService = require('../services/battleService');
 const sessionService = require('../services/sessionService');
-const aiService = require('../../../bot/utils/aiService');
+const visionService = require('../../../bot/utils/visionService');
 const Player = require('../../../bot/database/models/Player');
 const logger = require('../../../utils/logger');
 
@@ -103,7 +103,7 @@ async function handleInteraction(interaction) {
     await interaction.editReply('⏳ **Jack is analyzing battle rankings...**');
 
     try {
-      const extractedData = await aiService.extractClanBattleData(session.imageUrls);
+      const extractedData = await visionService.extractClanBattleData(session.imageUrls);
       if (extractedData.length === 0) {
         return interaction.editReply('❌ Failed to extract any data. Check screenshot quality.');
       }
