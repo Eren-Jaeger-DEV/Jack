@@ -236,7 +236,7 @@ ${bibleInstruction}`;
 
       const tools = [
         {
-          function_declarations: toolService.getToolsSchema()
+          functionDeclarations: toolService.getToolsSchema()
         }
       ];
 
@@ -301,7 +301,12 @@ ${bibleInstruction}`;
       if (onToken) onToken(null, "", { type: 'thinking' });
 
       try {
-        for await (const chunk of result.stream) {
+        const iterableStream = result.stream || (typeof result[Symbol.asyncIterator] === 'function' ? result : null);
+        if (!iterableStream) {
+          throw new Error("Response is not an async iterable stream.");
+        }
+
+        for await (const chunk of iterableStream) {
           // 1. Capture Thought Blocks (Gemini 2.0+)
           if (chunk.thought) {
             thoughtText += chunk.thought;
