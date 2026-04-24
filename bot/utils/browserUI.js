@@ -139,51 +139,41 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
   const collector = msg.createMessageComponentCollector({ time: 600000 }); // 10 minutes
 
   collector.on('collect', async (i) => {
-    const authorId = interactionOrCtx.user ? interactionOrCtx.user.id : interactionOrCtx.author.id;
-    if (i.user.id !== authorId && !i.customId.startsWith('browser_add_')) {
-       // Only owner can paginate/admin. Anyone can try to Add.
-       return i.reply({ content: "You cannot control this menu.", flags: 64 });
-    }
-    
-    // Handled purely UI-side here:
-    if (i.customId === 'browser_prev') {
-      currentPage--;
-      await render(i);
-    } else if (i.customId === 'browser_next') {
-      currentPage++;
-      await render(i);
-    } else if (i.customId === 'browser_reset') {
-      // Revert search
-      activeDocs = [...documents];
-      currentPage = 0;
-      await render(i);
-    }
-    // Search handled natively here:
-    else if (i.customId === 'browser_search') {
-      // For quick search, we can pop a modal here safely since it's transient UI state
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder: ModalRowBuilder } = require('discord.js');
-      const modal = new ModalBuilder()
-        .setCustomId('browser_search_modal')
-        .setTitle('Search Vault');
+    try {
+      const authorId = interactionOrCtx.user ? interactionOrCtx.user.id : interactionOrCtx.author.id;
+      if (i.user.id !== authorId && !i.customId.startsWith('browser_add_')) {
+         return i.reply({ content: "You cannot control this menu.", flags: 64 });
+      }
       
-      const queryInput = new TextInputBuilder()
-        .setCustomId('search_query')
-        .setLabel("Enter Emoji/Sticker name")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true);
-      
-      modal.addComponents(new ModalRowBuilder().addComponents(queryInput));
-      await i.showModal(modal);
+      if (i.customId === 'browser_prev') {
+        currentPage--;
+        await render(i);
+      } else if (i.customId === 'browser_next') {
+        currentPage++;
+        await render(i);
+      } else if (i.customId === 'browser_reset') {
+        activeDocs = [...documents];
+        currentPage = 0;
+        await render(i);
+      } else if (i.customId === 'browser_search') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder: ModalRowBuilder } = require('discord.js');
+        const modal = new ModalBuilder().setCustomId('browser_search_modal').setTitle('Search Vault');
+        const queryInput = new TextInputBuilder().setCustomId('search_query').setLabel("Enter Emoji/Sticker name").setStyle(TextInputStyle.Short).setRequired(true);
+        modal.addComponents(new ModalRowBuilder().addComponents(queryInput));
+        await i.showModal(modal);
 
-      // Wait for submission
-      try {
-         const submitted = await i.awaitModalSubmit({ time: 60000, filter: m => m.user.id === authorId });
-         const query = submitted.fields.getTextInputValue('search_query').toLowerCase();
-         activeDocs = documents.filter(d => d.name.includes(query) || (d.pack && d.pack.includes(query)));
-         currentPage = 0;
-         await submitted.update({ embeds: generateEmbeds(), components: generateComponents() });
-      } catch (err) {
-         // Modal timeout, ignore
+        try {
+           const submitted = await i.awaitModalSubmit({ time: 60000, filter: m => m.user.id === authorId });
+           const query = submitted.fields.getTextInputValue('search_query').toLowerCase();
+           activeDocs = documents.filter(d => d.name.includes(query) || (d.pack && d.pack.includes(query)));
+           currentPage = 0;
+           await submitted.update({ embeds: generateEmbeds(), components: generateComponents() });
+        } catch (err) {}
+      }
+    } catch (err) {
+      console.error("BROWSER_UI_COLLECTOR_ERROR:", err);
+      if (!i.replied && !i.deferred) {
+        await i.reply({ content: "UI Error: " + err.message, flags: 64 }).catch(()=>{});
       }
     }
   });
