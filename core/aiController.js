@@ -34,10 +34,7 @@ module.exports = {
   async shouldProcess(message, client) {
     if (message.author.bot || !message.guild) return false;
 
-    // 1. Strict Channel ID Lock (Zero Leakage)
-    if (message.channel.id !== "1488453630184132729") return false;
-
-    // 2. Summoning Checks
+    // 1. Summoning Checks
     const content = message.content.trim();
     const lowerContent = content.toLowerCase();
     
@@ -57,9 +54,19 @@ module.exports = {
     const isSummoned = startsWithJack || isMentioned || isReplyToBot;
     if (!isSummoned) return false;
 
+    // 2. Strict Channel ID Lock (Zero Leakage)
+    const AI_CHANNEL_ID = "1488453630184132729";
+    const isAIChannel = message.channel.id === AI_CHANNEL_ID;
+    const bypass = perms.hasFullBypass(message.member);
+
+    if (!isAIChannel && !bypass) {
+        // If someone else tries to interact with Jack outside the AI channel
+        await message.reply(`❌ To interact with me, please head over to the AI channel: <#${AI_CHANNEL_ID}>`).catch(() => {});
+        return false;
+    }
+
     // 3. Rate Limiting & Quality Filter
     const userId = message.author.id;
-    const bypass = perms.hasFullBypass(message.member);
 
     // Cooldown Check
     if (!bypass && userCooldowns.has(userId)) {
