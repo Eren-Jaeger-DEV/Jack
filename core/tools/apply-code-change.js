@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const child_process = require("child_process");
+const OWNER_IDS = (process.env.OWNER_IDS || "").split(",").map(id => id.trim()).filter(Boolean);
 const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
 
 
