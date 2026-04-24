@@ -359,6 +359,16 @@ You just completed a task or action. Review what you have done so far.
 - If you are fully done and have nothing more to add, respond with ONLY the text: TASK_COMPLETE
 Do NOT repeat what you already said. Only proceed if there is genuine new value to add.`;
 
+    // Known generic AI fallback strings — never send these proactively, they are noise.
+    const GENERIC_FALLBACKS = new Set([
+      "strategic inquiry inconclusive. awaiting further data.",
+      "strategic protocol initiated. synchronizing assets.",
+      "synchronizing strategic link...",
+      "strategic inquiry incomplete. data stream unstable.",
+      "couldn't complete that. try again.",
+    ]);
+    const _isFallback = (text) => GENERIC_FALLBACKS.has(text.toLowerCase().trim());
+
     for (let pass = 0; pass < MAX_CONTINUATION_PASSES; pass++) {
       addLog("AIController", `[ContinuationLoop] Pass ${pass + 1}/${MAX_CONTINUATION_PASSES} for user ${userId}`);
 
@@ -380,12 +390,14 @@ Do NOT repeat what you already said. Only proceed if there is genuine new value 
           addLog("AIController", `[ContinuationLoop] Jack declared TASK_COMPLETE on pass ${pass + 1}.`);
           break;
         }
-        // He has something to say but no tool call — send it proactively and stop
+        // He has something to say — only send if it's not a known generic fallback
         const finalText = this._extractFinalText(text);
-        if (finalText && finalText.length > 10) {
+        if (finalText && finalText.length > 10 && !_isFallback(finalText)) {
           addLog("AIController", `[ContinuationLoop] Jack sending proactive text on pass ${pass + 1}.`);
           await notifyFn(finalText);
           await this._updateHistory(userId, CONTINUATION_PROMPT, finalText);
+        } else {
+          addLog("AIController", `[ContinuationLoop] Suppressed fallback/empty text on pass ${pass + 1}. Stopping.`);
         }
         break;
       }
@@ -423,9 +435,13 @@ Do NOT repeat what you already said. Only proceed if there is genuine new value 
         } catch (e) { break; }
 
         const interpText = this._extractFinalText(interp.text);
-        if (interpText && interpText.length > 10 && !interpText.toUpperCase().includes("TASK_COMPLETE")) {
+        if (interpText && interpText.length > 10
+            && !interpText.toUpperCase().includes("TASK_COMPLETE")
+            && !_isFallback(interpText)) {
           await notifyFn(interpText);
           await this._updateHistory(userId, feedbackPrompt, interpText);
+        } else {
+          addLog("AIController", `[ContinuationLoop] Suppressed fallback text after tool '${toolName}' on pass ${pass + 1}.`);
         }
 
         // If Jack called send_proactive_ping, the message is already sent by the tool — stop here.
