@@ -162,6 +162,29 @@ ${extraContext || "No live data available."}
 Personality parameters are absolute.
 Do NOT adapt, override, or soften them during conversation.
 
+[PROACTIVE BEHAVIOR PROTOCOL]
+You have the ability to send messages WITHOUT the user prompting you, using the 'send_proactive_ping' tool.
+
+USE proactive ping when:
+- You finished a multi-step task (e.g., read file → analyzed → ready to report) — ping with a summary.
+- You detect something unexpected, an error, or a critical finding during task execution.
+- You are about to start a long task and want to set expectations with an ETA.
+- You complete a background operation and need to deliver results.
+
+DO NOT use proactive ping when:
+- You just gave a normal text response — no need to double-up.
+- The answer is trivial or you already said it in the first reply.
+- The task has not actually started yet.
+
+URGENCY GUIDE:
+- urgency: "low"    → Channel only. Use for completed tasks and normal updates.
+- urgency: "medium" → Channel only. Use for warnings or unexpected findings.
+- urgency: "high"   → Channel + DM. Use for failures, crashes, or critical alerts only.
+
+After completing a tool call, you will receive a [CONTINUATION_CHECK] prompt.
+- If you have genuine new value to add (another step, a result to deliver), proceed.
+- If you are done, respond with ONLY: TASK_COMPLETE
+
 ${bibleInstruction}`;
 
       const tools = [

@@ -9,6 +9,10 @@ const aiService = require("../bot/utils/aiService");
 const observer = require("./observer");
 const { addLog } = require("../utils/logger");
 
+// Max number of autonomous continuation passes Jack can do before we force-stop.
+// Prevents infinite loops and channel spam.
+const MAX_CONTINUATION_PASSES = 5;
+
 const channelLocks = new Map();
 // NOTE: 3-second in-memory cooldown is intentional — persisting to DB would add
 // a round-trip latency to every message check, which defeats the purpose of rate limiting.
@@ -104,11 +108,10 @@ module.exports = {
       addLog("AIController", `[DM] Owner message received: "${content.substring(0, 60)}..."`);
 
       // Build a synthetic context object — DMs have no guild/member
-      // guild = null signals downstream that we're in DM mode
       const syntheticMember = {
         id: userId,
         user: message.author,
-        roles: { cache: new Collection() }, // Collection has .map()/.filter() unlike plain Map
+        roles: { cache: new Collection() },
         permissions: { has: () => false }
       };
 
@@ -116,17 +119,11 @@ module.exports = {
       const history = await this._getHistory(userId);
       const activityData = await UserActivity.findOne({ discordId: userId }) || {};
 
+      const dmContext = `[DM MODE: You are speaking privately with your Supreme Manager via Direct Message. No server context available. Respond naturally and directly. Tools requiring guild context will not be available.]\n` + extraContext;
+
       const decision = await aiService.generateResponse(
-        content,
-        history,
-        null,
-        `[DM MODE: You are speaking privately with your Supreme Manager via Direct Message. No server context available. Respond naturally and directly. Tools requiring guild context will not be available.]\n` + extraContext,
-        null,       // guild = null
-        syntheticMember,
-        null,       // no image in DMs (yet)
-        reputationScore,
-        activityData,
-        true        // isOwner = always true in this pipeline
+        content, history, null, dmContext,
+        null, syntheticMember, null, reputationScore, activityData, true
       );
 
       addLog("AIController", `[DM] Decision: ${decision.type} | ${decision.tool || 'text'}`);
@@ -134,17 +131,28 @@ module.exports = {
       let responseText;
 
       if (decision.type === 'tool') {
-        // Tools that need guild will fail gracefully — we show that failure
         try {
-          const result = await toolService[decision.tool]?.(decision.args, syntheticMember, null);
+          // Inject client so tools like send_proactive_ping can reach Discord
+          const enrichedArgs = { ...decision.args, _client: client };
+          const result = await toolService[decision.tool]?.(enrichedArgs, syntheticMember, null);
           if (result?.success) {
-            // Interpretation pass
             const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}`;
             const interpretation = await aiService.generateResponse(
-              feedbackPrompt, history, null, extraContext,
+              feedbackPrompt, history, null, dmContext,
               null, syntheticMember, null, reputationScore, activityData, true
             );
             responseText = this._extractFinalText(interpretation.text);
+
+            // --- CONTINUATION LOOP (DM) ---
+            // After completing a tool, let Jack decide if he wants to keep going
+            await this._runContinuationLoop({
+              history, extraContext: dmContext, guild: null,
+              member: syntheticMember, reputationScore, activityData,
+              isOwner: true, client,
+              notifyFn: async (text) => await dmChannel.send(text).catch(() => {}),
+              userId
+            });
+
           } else {
             responseText = `⚠️ Tool \`${decision.tool}\` requires server context and can't run in DMs.`;
           }
@@ -238,7 +246,9 @@ module.exports = {
             else await streamingMessage.edit(execMsg).catch(() => {});
           }
 
-          const result = await toolService[decision.tool](decision.args, member, guild);
+          // Inject client so tools like send_proactive_ping can reach Discord
+          const enrichedArgs = { ...decision.args, _client: client };
+          const result = await toolService[decision.tool](enrichedArgs, member, guild);
           
           if (result.success) {
              await observer.recordActionSuccess(member.id, decision.tool);
@@ -250,16 +260,8 @@ module.exports = {
              const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}`;
              
              const interpretation = await aiService.generateResponse(
-                feedbackPrompt,
-                history,
-                null,
-                extraContext,
-                guild,
-                member,
-                null,
-                reputationScore,
-                activityData,
-                isOwner
+                feedbackPrompt, history, null, extraContext,
+                guild, member, null, reputationScore, activityData, isOwner
              );
 
              addLog("AIController", `Interpretation Pass Raw: ${interpretation.text.substring(0, 50)}...`);
@@ -271,6 +273,20 @@ module.exports = {
              else await streamingMessage.edit(responseText).catch(() => {});
              
              await this._updateHistory(userId, content, responseText);
+
+             // --- CONTINUATION LOOP ---
+             // After the interpretation pass, let Jack decide if he has more to do.
+             // This is what allows him to proactively send follow-up messages.
+             const replyChannel = context.channel || null;
+             await this._runContinuationLoop({
+               history, extraContext, guild, member,
+               reputationScore, activityData, isOwner, client,
+               notifyFn: async (text) => {
+                 if (replyChannel) await replyChannel.send(text).catch(() => {});
+               },
+               userId
+             });
+
           } else {
              await observer.recordActionFailure(member.id, decision.tool);
              const errorText = `❌ **Action Failed**: ${result.message}`;
@@ -312,6 +328,118 @@ module.exports = {
       return false; 
     } finally {
       channelLocks.delete(channelId);
+    }
+  },
+
+  /**
+   * CONTINUATION LOOP — Autonomous Multi-Step Processing
+   *
+   * After completing a tool, this checks if Jack wants to keep working autonomously.
+   * It prompts him once per pass. If he calls a tool, we execute it and continue.
+   * If he calls send_proactive_ping or returns TASK_COMPLETE, we stop.
+   * Hard cap: MAX_CONTINUATION_PASSES iterations to prevent infinite loops.
+   *
+   * @param {object} opts
+   * @param {Array}    opts.history
+   * @param {string}   opts.extraContext
+   * @param {object}   opts.guild
+   * @param {object}   opts.member
+   * @param {number}   opts.reputationScore
+   * @param {object}   opts.activityData
+   * @param {boolean}  opts.isOwner
+   * @param {object}   opts.client         — Discord.js Client
+   * @param {Function} opts.notifyFn       — async (text) => sends message to the right place
+   * @param {string}   opts.userId
+   */
+  async _runContinuationLoop({ history, extraContext, guild, member, reputationScore, activityData, isOwner, client, notifyFn, userId }) {
+    const CONTINUATION_PROMPT = `[CONTINUATION_CHECK]
+You just completed a task or action. Review what you have done so far.
+- If you have more steps to execute (e.g., another tool to call, results to report), proceed with the next action now.
+- If you want to send a proactive update or notify the Supreme Manager, call the 'send_proactive_ping' tool.
+- If you are fully done and have nothing more to add, respond with ONLY the text: TASK_COMPLETE
+Do NOT repeat what you already said. Only proceed if there is genuine new value to add.`;
+
+    for (let pass = 0; pass < MAX_CONTINUATION_PASSES; pass++) {
+      addLog("AIController", `[ContinuationLoop] Pass ${pass + 1}/${MAX_CONTINUATION_PASSES} for user ${userId}`);
+
+      let continuationDecision;
+      try {
+        continuationDecision = await aiService.generateResponse(
+          CONTINUATION_PROMPT, history, null, extraContext,
+          guild, member, null, reputationScore, activityData, isOwner
+        );
+      } catch (e) {
+        addLog("AIController", `[ContinuationLoop] AI call failed on pass ${pass + 1}: ${e.message}`);
+        break;
+      }
+
+      // --- STOP CONDITION: Jack says he's done ---
+      if (continuationDecision.type === 'response') {
+        const text = continuationDecision.text?.trim() || "";
+        if (text === "TASK_COMPLETE" || text.toUpperCase().includes("TASK_COMPLETE")) {
+          addLog("AIController", `[ContinuationLoop] Jack declared TASK_COMPLETE on pass ${pass + 1}.`);
+          break;
+        }
+        // He has something to say but no tool call — send it proactively and stop
+        const finalText = this._extractFinalText(text);
+        if (finalText && finalText.length > 10) {
+          addLog("AIController", `[ContinuationLoop] Jack sending proactive text on pass ${pass + 1}.`);
+          await notifyFn(finalText);
+          await this._updateHistory(userId, CONTINUATION_PROMPT, finalText);
+        }
+        break;
+      }
+
+      // --- TOOL CALL: Jack wants to do more work ---
+      if (continuationDecision.type === 'tool') {
+        const toolName = continuationDecision.tool;
+        addLog("AIController", `[ContinuationLoop] Jack calling tool '${toolName}' on pass ${pass + 1}.`);
+
+        if (!toolService[toolName]) {
+          addLog("AIController", `[ContinuationLoop] Unknown tool: ${toolName}. Stopping.`);
+          break;
+        }
+
+        let toolResult;
+        try {
+          const enrichedArgs = { ...continuationDecision.args, _client: client };
+          toolResult = await toolService[toolName](enrichedArgs, member, guild);
+        } catch (e) {
+          addLog("AIController", `[ContinuationLoop] Tool '${toolName}' threw: ${e.message}`);
+          break;
+        }
+
+        // Record this in history so Jack knows what happened
+        await this._updateHistory(userId, CONTINUATION_PROMPT, `[AI_CALL: ${toolName}] Result: ${JSON.stringify(toolResult)}`);
+
+        // Interpretation pass for this continuation tool call
+        const feedbackPrompt = `[TOOL_RESULT: ${toolName}] ${JSON.stringify(toolResult)}`;
+        let interp;
+        try {
+          interp = await aiService.generateResponse(
+            feedbackPrompt, history, null, extraContext,
+            guild, member, null, reputationScore, activityData, isOwner
+          );
+        } catch (e) { break; }
+
+        const interpText = this._extractFinalText(interp.text);
+        if (interpText && interpText.length > 10 && !interpText.toUpperCase().includes("TASK_COMPLETE")) {
+          await notifyFn(interpText);
+          await this._updateHistory(userId, feedbackPrompt, interpText);
+        }
+
+        // If Jack called send_proactive_ping, the message is already sent by the tool — stop here.
+        if (toolName === 'send_proactive_ping') {
+          addLog("AIController", `[ContinuationLoop] Proactive ping sent. Loop complete.`);
+          break;
+        }
+
+        // Continue to next pass
+        continue;
+      }
+
+      // Unknown decision type — stop
+      break;
     }
   },
 
