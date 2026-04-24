@@ -39,6 +39,7 @@ Jack/                               ← Project root
 │       ├── untimeout-member.js
 │       ├── warn-member.js
 │       ├── purge-messages.js
+│       ├── moderate-voice.js
 │       ├── assign-role.js
 │       ├── remove-role.js
 │       ├── announce-message.js
