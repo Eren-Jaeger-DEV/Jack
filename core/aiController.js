@@ -141,7 +141,12 @@ module.exports = {
               await dmChannel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
             }
 
-            const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}
+            // SCRUBBER: Omit massive binary data from AI interpretation
+            const scrubbedResult = { ...result };
+            if (scrubbedResult.bytesBase64Encoded) scrubbedResult.bytesBase64Encoded = "[IMAGE_DATA_OMITTED]";
+            if (scrubbedResult.image) scrubbedResult.image = "[IMAGE_DATA_OMITTED]";
+
+            const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(scrubbedResult)}
 ${(result && (result.error || result.status === 'error' || (typeof result === 'string' && result.includes("not found")))) ? "\n[STRICT_WARNING] This tool call FAILED. Do not attempt the exact same call again. Check your paths and try a different strategy." : ""}`;
             
             const interpretation = await aiService.generateResponse(
@@ -436,13 +441,18 @@ Do NOT repeat what you already said. Only proceed if there is genuine new value 
           break;
         }
 
+        // SCRUBBER: Prevent massive binary data from bloating context
+        const scrubbedResult = { ...toolResult };
+        if (scrubbedResult.bytesBase64Encoded) scrubbedResult.bytesBase64Encoded = "[IMAGE_DATA_OMITTED]";
+        if (scrubbedResult.image) scrubbedResult.image = "[IMAGE_DATA_OMITTED]";
+
         // Record this in history so Jack knows what happened
-        await this._updateHistory(userId, CONTINUATION_PROMPT, `[AI_CALL: ${toolName}] Result: ${JSON.stringify(toolResult)}`);
+        await this._updateHistory(userId, CONTINUATION_PROMPT, `[AI_CALL: ${toolName}] Result: ${JSON.stringify(scrubbedResult)}`);
 
         // Interpretation pass for this continuation tool call
         const isFailure = toolResult && (toolResult.error || toolResult.status === 'error' || (typeof toolResult === 'string' && toolResult.includes("not found")));
         
-        const feedbackPrompt = `[TOOL_RESULT: ${toolName}] ${JSON.stringify(toolResult)}
+        const feedbackPrompt = `[TOOL_RESULT: ${toolName}] ${JSON.stringify(scrubbedResult)}
 ${isFailure ? "\n[STRICT_WARNING] This tool call FAILED. Do not attempt the exact same call again. Check your paths and try a different strategy." : ""}`;
         
         let interp;
