@@ -22,14 +22,14 @@ module.exports = {
         mongoose.model('Battle').findOne({ active: true, "players.userId": userId })
       ]);
 
-      const member = guild.members.cache.get(userId);
+      const member = guild ? guild.members.cache.get(userId) : null;
       const battlePlayer = activeBattle ? activeBattle.players.find(p => p.userId === userId) : null;
 
       // 2. Build the structured Dossier
       return {
         basic: {
           id: userId,
-          username: member?.user.tag || "Unknown",
+          username: member?.user.tag || "Unknown User (DM)",
           roles: member?.roles.cache.map(r => r.name).filter(n => n !== "@everyone") || []
         },
         activity: {
