@@ -66,7 +66,9 @@ module.exports = {
           sampleCount: 1,
           aspectRatio: baseImageBase64 ? undefined : aspect_ratio,
           addWatermark: false,
-          includeSafetyAttributes: true
+          includeSafetyAttributes: true,
+          // Image Guidance Scale (1.0 - 5.0). Higher = stays closer to original image.
+          imageGuidanceScale: baseImageBase64 ? 2.0 : undefined 
         }
       };
 
