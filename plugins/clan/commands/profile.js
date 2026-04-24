@@ -58,42 +58,36 @@ module.exports = {
       const isClan = player.serialNumber?.startsWith('JCM');
       
       // 1. Header
-      container.addSectionComponents(
-        new SectionBuilder().addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(`🎮 **${displayName}'s BGMI Profile**`)
-        )
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`🎮 **${displayName}'s BGMI Profile**`)
       );
 
       container.addSeparatorComponents(new SeparatorBuilder());
 
       // 2. Core Stats
-      const coreStats = new SectionBuilder();
-      coreStats.addTextDisplayComponents(
+      container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
           `🆔 **Serial:** \`${player.serialNumber || "N/A"}\`\n` +
           `👤 **IGN:** \`${player.ign || "N/A"}\` | **UID:** \`${player.uid || "N/A"}\`\n` +
           `⭐ **Level:** \`${player.accountLevel || "N/A"}\` | **Modes:** \`${player.preferredModes?.join(", ") || "N/A"}\``
         )
       );
-      container.addSectionComponents(coreStats);
 
       container.addSeparatorComponents(new SeparatorBuilder());
 
       // 3. Synergy Stats
-      const synergySection = new SectionBuilder();
-      synergySection.addTextDisplayComponents(
+      container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
           `🔥 **Season Synergy:** \`${synergyData?.seasonSynergy || 0}\` (${rankDisplay(synergyData?.seasonRank)})\n` +
           `⚡ **Weekly Synergy:** \`${synergyData?.weeklySynergy || 0}\` (${rankDisplay(synergyData?.weeklyRank)})`
         )
       );
-      container.addSectionComponents(synergySection);
 
       // 4. Media Gallery (Screenshot)
       if (player.screenshot && player.screenshot.startsWith("http")) {
         container.addMediaGalleryComponents(
           new MediaGalleryBuilder().addItems(
-            new MediaGalleryItemBuilder().setMedia(player.screenshot)
+            new MediaGalleryItemBuilder().setURL(player.screenshot)
           )
         );
       }
@@ -106,16 +100,13 @@ module.exports = {
       const container = new ContainerBuilder();
       const a = player.achievements || {};
 
-      container.addSectionComponents(
-        new SectionBuilder().addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(`🏆 **${displayName}'s Achievements**`)
-        )
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`🏆 **${displayName}'s Achievements**`)
       );
 
       container.addSeparatorComponents(new SeparatorBuilder());
 
-      const stats = new SectionBuilder();
-      stats.addTextDisplayComponents(
+      container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
           `⚔️ **Intra Clan:** Wins: \`${a.intraWins ?? 0}\`\n` +
           `🏰 **Clan Battle:** Wins: \`${a.clanBattleWins ?? 0}\` (Best Rank: \`${a.bestClanBattleRank !== 'N/A' ? '#' + a.bestClanBattleRank : 'N/A'}\`)\n` +
@@ -123,7 +114,6 @@ module.exports = {
           `⚡ **Synergy:** MVP: \`${a.weeklyMVPCount ?? 0}\` | Best Rank: \`${a.highestSeasonRank !== 'N/A' ? '#' + a.highestSeasonRank : 'N/A'}\``
         )
       );
-      container.addSectionComponents(stats);
 
       return container;
     };

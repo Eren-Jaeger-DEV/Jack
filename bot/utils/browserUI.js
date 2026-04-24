@@ -60,7 +60,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
       if (doc.url && doc.url.startsWith("http") && doc.format !== "lottie") {
         gallery.addItems(
           new MediaGalleryItemBuilder()
-            .setMedia(doc.url)
+            .setURL(doc.url)
         );
       }
     });
@@ -69,8 +69,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
       mainContainer.addMediaGalleryComponents(gallery);
     }
 
-    // -- Info Section --
-    const infoSection = new SectionBuilder();
+    // -- Info --
     let infoText = "";
     pageItems.forEach((doc, idx) => {
       const idStr = doc.emojiID || doc.stickerID || "unknown";
@@ -78,10 +77,9 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     });
     infoText += `\n*Page ${currentPage + 1} of ${maxPages} | Total: ${activeDocs.length}*`;
     
-    infoSection.addTextDisplayComponents(
+    mainContainer.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(infoText)
     );
-    mainContainer.addSectionComponents(infoSection);
 
     // -- Action Rows (Standard ActionRow for Buttons/Menus) --
     const rows = [mainContainer];

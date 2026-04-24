@@ -31,16 +31,13 @@ module.exports = {
     const container = new ContainerBuilder();
 
     // 1. Header
-    container.addSectionComponents(
-      new SectionBuilder().addTextDisplayComponents(
-        new TextDisplayBuilder().setContent("🛡️ **Official Clan Roster**")
-      )
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("🛡️ **Official Clan Roster**")
     );
 
     container.addSeparatorComponents(new SeparatorBuilder());
 
     // 2. Roster List
-    const rosterSection = new SectionBuilder();
     let list = "` ID  | IGN             | UID        `\n";
     
     for (let i = 0; i < players.length; i++) {
@@ -54,23 +51,20 @@ module.exports = {
         
         // Split into multiple TextDisplay if it gets too long (Discord limit is ~1000 per TextDisplay)
         if (list.length > 800) {
-            rosterSection.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
             list = "";
         }
     }
     
     if (list) {
-        rosterSection.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
     }
-    container.addSectionComponents(rosterSection);
 
     container.addSeparatorComponents(new SeparatorBuilder());
 
     // 3. Footer
-    container.addSectionComponents(
-      new SectionBuilder().addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`*Total Members: ${players.length} / 60*`)
-      )
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`*Total Members: ${players.length} / 60*`)
     );
 
     await ctx.reply({ 

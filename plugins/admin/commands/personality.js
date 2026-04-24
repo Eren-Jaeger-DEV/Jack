@@ -42,37 +42,29 @@ module.exports = {
     const mainContainer = new ContainerBuilder();
 
     // 1. Header Section
-    mainContainer.addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(
-          new TextDisplayBuilder()
-            .setContent("🧠 **Jack AI: Personality Engine v2**")
-        )
+    mainContainer.addTextDisplayComponents(
+      new TextDisplayBuilder()
+        .setContent("🧠 **Jack AI: Personality Engine v2**")
     );
 
     mainContainer.addSeparatorComponents(new SeparatorBuilder());
 
     // 2. Traits Section
-    const traitsSection = new SectionBuilder();
     const traitsText = 
       `🎭 **Tone:** \`${p.tone.toUpperCase()}\`\n` +
       `😂 **Humor:** \`${p.humor}%\` | ⚡ **Strictness:** \`${p.strictness}%\`\n` +
       `🗣️ **Verbosity:** \`${p.verbosity}%\` | 🤝 **Respect Bias:** \`${p.respect_bias}%\``;
 
-    traitsSection.addTextDisplayComponents(
+    mainContainer.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(traitsText)
     );
-    mainContainer.addSectionComponents(traitsSection);
 
     mainContainer.addSeparatorComponents(new SeparatorBuilder());
 
     // 3. Status Section
-    mainContainer.addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(
-          new TextDisplayBuilder()
-            .setContent("⚙️ *Use the controls below to modify my core runtime traits.*")
-        )
+    mainContainer.addTextDisplayComponents(
+      new TextDisplayBuilder()
+        .setContent("⚙️ *Use the controls below to modify my core runtime traits.*")
     );
 
     // -- Action Rows --

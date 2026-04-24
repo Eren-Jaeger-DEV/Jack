@@ -30,17 +30,14 @@ function buildPanel() {
   const container = new ContainerBuilder();
 
   // 1. Header
-  container.addSectionComponents(
-    new SectionBuilder().addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('⚡ **SYNERGY AUTOMATION PANEL**')
-    )
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('⚡ **SYNERGY AUTOMATION PANEL**')
   );
 
   container.addSeparatorComponents(new SeparatorBuilder());
 
   // 2. Instructions
-  const instructions = new SectionBuilder();
-  instructions.addTextDisplayComponents(
+  container.addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
       '**Automate leaderboard entry using screenshots.**\n\n' +
       '1. Click **"Collect Screenshots"** to start.\n' +
@@ -49,9 +46,10 @@ function buildPanel() {
       '> *Note: Jack will update both Weekly and Season energy.*'
     )
   );
-  container.addSectionComponents(instructions);
 
   const startBtn = new ButtonBuilder()
+// ... (rest remains same)
+
     .setCustomId('synergy_start_upload')
     .setLabel('Collect Screenshots')
     .setStyle(ButtonStyle.Primary)
@@ -215,11 +213,9 @@ async function sendManualResolutionPrompt(channel, unmatchedEntry, index) {
   const { name, weekly, season } = unmatchedEntry;
   const container = new ContainerBuilder();
 
-  container.addSectionComponents(
-    new SectionBuilder().addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `🔍 **Manual Resolution Required**\nMatch fail for \`${name}\`.\n**Weekly:** ${weekly} | **Season:** ${season}`
-      )
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `🔍 **Manual Resolution Required**\nMatch fail for \`${name}\`.\n**Weekly:** ${weekly} | **Season:** ${season}`
     )
   );
   
