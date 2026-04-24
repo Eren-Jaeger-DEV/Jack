@@ -244,13 +244,13 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
       const activityData = await UserActivity.findOne({ discordId: userId }) || {};
 
       // --- VISION: Gather Attachments ---
-      const attachments = message.attachments.map(a => a.url);
+      const attachments = context.attachments ? Array.from(context.attachments.values()).map(a => a.url) : [];
 
       // --- CONTEXT: Handle Replies ---
       let replyContext = "";
-      if (message.reference) {
+      if (context.reference) {
         try {
-          const repliedMsg = await message.channel.messages.fetch(message.reference.messageId);
+          const repliedMsg = await context.channel.messages.fetch(context.reference.messageId);
           replyContext = `\n[REPLY_CONTEXT] User is replying to ${repliedMsg.author.tag}: "${repliedMsg.content}"\n`;
         } catch (e) {}
       }
