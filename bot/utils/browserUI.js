@@ -1,10 +1,22 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, PermissionFlagsBits } = require("discord.js");
+const { 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  PermissionFlagsBits, 
+  ContainerBuilder, 
+  MediaGalleryBuilder, 
+  MediaGalleryItemBuilder, 
+  SectionBuilder, 
+  TextDisplayBuilder, 
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  MessageFlags
+} = require("discord.js");
 
 /**
- * Spawns an interactive paginated embed for browsing arrays of DB documents.
- * Admin modes enable management buttons natively in the Paginator.
+ * Spawns an interactive paginated UI for browsing DB documents using Discord Components v2.
  * 
- * GALLERY VIEW: Displays exactly 1 item per page with a large image and direct action buttons.
+ * EVOLUTION: Uses MediaGallery, Sections, and Containers for a premium grid-based look.
  */
 async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
   if (!documents || documents.length === 0) {
@@ -12,7 +24,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     return replyFn({ content: `No ${type}s found in the vault!`, flags: 64 });
   }
 
-  const itemsPerPage = 1;
+  const itemsPerPage = 4; // 2x2 Grid
   let currentPage = 0;
   let activeDocs = [...documents];
   let maxPages = Math.ceil(activeDocs.length / itemsPerPage);
@@ -21,55 +33,81 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
                   interactionOrCtx.member.permissions.has(PermissionFlagsBits.ManageGuild);
 
   /**
-   * Generates a single embed for the current active item
+   * Generates the V2 Layout Components
    */
-  const generateEmbeds = () => {
-    if (activeDocs.length === 0) {
-       return [new EmbedBuilder().setTitle(`${type} Vault`).setDescription("No items found or isolated by search.")];
-    }
-
-    const doc = activeDocs[currentPage];
-    const idStr = doc.emojiID || doc.stickerID || "unknown";
-    const docName = doc.name || "unnamed";
-    
-    const embed = new EmbedBuilder()
-      .setTitle(`${currentPage + 1}. ${docName}`)
-      .setDescription(`**Pack:** ${doc.pack || "None"}\n**Format:** ${doc.format || "unknown"} | **Vault ID:** \`${idStr}\``)
-      .setColor("Gold")
-      .setFooter({ text: `Page ${currentPage + 1} of ${maxPages} | Total: ${activeDocs.length}` });
-      
-    if (doc.format === "lottie") {
-       embed.setDescription(embed.data.description + `\n*[Lottie Animation Preview Unsupported](${doc.url || 'none'})*`);
-    } else {
-       if (doc.url && doc.url.startsWith("http")) {
-         try {
-           embed.setImage(doc.url);
-         } catch (e) {
-           console.error("Invalid image URL:", doc.url);
-         }
-       }
-    }
-
-    return [embed];
-  };
-
-  /**
-   * Generates the component rows based on the Gallery state
-   */
-  const generateComponents = () => {
+  const generateV2Components = () => {
     if (activeDocs.length === 0) return [];
 
-    const doc = activeDocs[currentPage];
-    const idStr = doc.emojiID || doc.stickerID || "unknown";
+    const start = currentPage * itemsPerPage;
+    const pageItems = activeDocs.slice(start, start + itemsPerPage);
     const typeLower = type.toLowerCase();
-    const rows = [];
 
-    // Row 1: Navigation & Search
-    rows.push(new ActionRowBuilder().addComponents(
+    // 1. Main Container
+    const mainContainer = new ContainerBuilder();
+
+    // -- Header --
+    mainContainer.addComponents(
+      new SectionBuilder()
+        .addComponents(
+          new TextDisplayBuilder()
+            .setContent(`🏦 **Global ${type} Vault**`)
+        )
+    );
+
+    // -- Media Gallery (Grid) --
+    const gallery = new MediaGalleryBuilder();
+    pageItems.forEach(doc => {
+      if (doc.url && doc.url.startsWith("http") && doc.format !== "lottie") {
+        gallery.addItems(
+          new MediaGalleryItemBuilder()
+            .setMedia(doc.url)
+        );
+      }
+    });
+
+    if (gallery.items.length > 0) {
+      mainContainer.addComponents(gallery);
+    }
+
+    // -- Info Section --
+    const infoSection = new SectionBuilder();
+    let infoText = "";
+    pageItems.forEach((doc, idx) => {
+      const idStr = doc.emojiID || doc.stickerID || "unknown";
+      infoText += `**${idx + 1}.** ${doc.name} (\`${idStr}\`)\n`;
+    });
+    infoText += `\n*Page ${currentPage + 1} of ${maxPages} | Total: ${activeDocs.length}*`;
+    
+    infoSection.addComponents(
+      new TextDisplayBuilder().setContent(infoText)
+    );
+    mainContainer.addComponents(infoSection);
+
+    // -- Action Rows (Standard ActionRow for Buttons/Menus) --
+    const rows = [mainContainer];
+
+    // 2. Select Menu for Actions (since we have multiple items)
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId("browser_select_item")
+      .setPlaceholder("Select an item to Manage/Download");
+
+    pageItems.forEach((doc, idx) => {
+       const idStr = doc.emojiID || doc.stickerID || "unknown";
+       selectMenu.addOptions(
+         new StringSelectMenuOptionBuilder()
+           .setLabel(`${idx + 1}. ${doc.name}`)
+           .setDescription(`ID: ${idStr}`)
+           .setValue(`${typeLower}_${idStr}`)
+       );
+    });
+    rows.push(new ActionRowBuilder().addComponents(selectMenu));
+
+    // 3. Navigation Buttons
+    const navRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("browser_prev")
         .setLabel("◀ Prev")
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Secondary)
         .setDisabled(currentPage === 0),
       new ButtonBuilder()
         .setCustomId("browser_search")
@@ -82,36 +120,11 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
       new ButtonBuilder()
         .setCustomId("browser_next")
         .setLabel("Next ▶")
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Secondary)
         .setDisabled(currentPage >= maxPages - 1)
-    ));
-
-    // Row 2: Direct Actions
-    const actionRow = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`browser_add_${typeLower}_${idStr}`.substring(0, 100))
-        .setLabel(`➕ Add to Server`)
-        .setStyle(ButtonStyle.Success)
     );
+    rows.push(navRow);
 
-    if (isAdmin) {
-      actionRow.addComponents(
-        new ButtonBuilder()
-          .setCustomId(`browser_rename_${typeLower}_${idStr}`.substring(0, 100))
-          .setLabel("✏️ Rename")
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-          .setCustomId(`browser_pack_${typeLower}_${idStr}`.substring(0, 100))
-          .setLabel("📦 Move Pack")
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-          .setCustomId(`browser_delete_${typeLower}_${idStr}`.substring(0, 100))
-          .setLabel("🗑️ Delete")
-          .setStyle(ButtonStyle.Danger)
-      );
-    }
-    
-    rows.push(actionRow);
     return rows;
   };
 
@@ -122,7 +135,12 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     maxPages = Math.ceil(activeDocs.length / itemsPerPage);
     if (currentPage >= maxPages && maxPages > 0) currentPage = maxPages - 1;
     
-    const payload = { embeds: generateEmbeds(), components: generateComponents() };
+    const payload = { 
+      content: "", 
+      embeds: [], 
+      components: generateV2Components(),
+      flags: MessageFlags.IsComponentsV2 
+    };
 
     if (i) {
        await i.update(payload).catch(e => console.error("BROWSER_UI_ERROR:", e));
@@ -130,7 +148,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
        if (interactionOrCtx.deferred) {
           return await interactionOrCtx.editReply(payload);
        } else if (interactionOrCtx.reply) {
-          payload.fetchReply = true; // FORCE return of message object
+          payload.fetchReply = true;
           return await interactionOrCtx.reply(payload);
        } else {
           return await interactionOrCtx.channel.send(payload);
@@ -138,22 +156,53 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     }
   };
 
-  // Initial Send
   const msg = await render();
+  if (!msg) return;
 
-  if (!msg) {
-     console.error("BROWSER_UI: msg is null, collector will not be created!");
-     return;
-  }
-  const collector = msg.createMessageComponentCollector({ time: 600000 }); // 10 minutes
+  const collector = msg.createMessageComponentCollector({ time: 600000 });
+  const authorId = interactionOrCtx.user ? interactionOrCtx.user.id : interactionOrCtx.author.id;
 
   collector.on('collect', async (i) => {
     try {
-      const authorId = interactionOrCtx.user ? interactionOrCtx.user.id : interactionOrCtx.author.id;
-      if (i.user.id !== authorId && !i.customId.startsWith('browser_add_')) {
+      if (i.user.id !== authorId) {
          return i.reply({ content: "You cannot control this menu.", flags: 64 });
       }
       
+      // Handling Selection (Manage/Download)
+      if (i.customId === 'browser_select_item') {
+         const [typeVal, idVal] = i.values[0].split("_");
+         const typeLower = typeVal.toLowerCase();
+
+         const rows = [
+            new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId(`browser_add_${typeLower}_${idVal}`)
+                .setLabel("➕ Download to Server")
+                .setStyle(ButtonStyle.Success)
+            )
+         ];
+
+         if (isAdmin) {
+            rows[0].addComponents(
+              new ButtonBuilder()
+                .setCustomId(`browser_rename_${typeLower}_${idVal}`)
+                .setLabel("✏️ Rename")
+                .setStyle(ButtonStyle.Secondary),
+              new ButtonBuilder()
+                .setCustomId(`browser_delete_${typeLower}_${idVal}`)
+                .setLabel("🗑️ Delete")
+                .setStyle(ButtonStyle.Danger)
+            );
+         }
+
+         return i.reply({ 
+           content: `🛠️ **Managing ${typeVal} ID:** \`${idVal}\``, 
+           components: rows, 
+           flags: 64 
+         });
+      }
+
+      // Pagination
       if (i.customId === 'browser_prev') {
         currentPage--;
         await render(i);
@@ -167,16 +216,16 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
       } else if (i.customId === 'browser_search') {
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder: ModalRowBuilder } = require('discord.js');
         const modal = new ModalBuilder().setCustomId('browser_search_modal').setTitle('Search Vault');
-        const queryInput = new TextInputBuilder().setCustomId('search_query').setLabel("Enter Emoji/Sticker name").setStyle(TextInputStyle.Short).setRequired(true);
+        const queryInput = new TextInputBuilder().setCustomId('search_query').setLabel("Enter name/pack").setStyle(TextInputStyle.Short).setRequired(true);
         modal.addComponents(new ModalRowBuilder().addComponents(queryInput));
         await i.showModal(modal);
 
         try {
            const submitted = await i.awaitModalSubmit({ time: 60000, filter: m => m.user.id === authorId });
            const query = submitted.fields.getTextInputValue('search_query').toLowerCase();
-           activeDocs = documents.filter(d => d.name.includes(query) || (d.pack && d.pack.includes(query)));
+           activeDocs = documents.filter(d => d.name.toLowerCase().includes(query) || (d.pack && d.pack.toLowerCase().includes(query)));
            currentPage = 0;
-           await submitted.update({ embeds: generateEmbeds(), components: generateComponents() });
+           await submitted.update({ components: generateV2Components(), flags: MessageFlags.IsComponentsV2 });
         } catch (err) {}
       }
     } catch (err) {
