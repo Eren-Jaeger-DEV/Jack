@@ -106,18 +106,19 @@ module.exports = {
       await dmChannel.sendTyping().catch(() => {});
 
       // Build a synthetic context object — DMs have no guild/member
+      // For Owner DMs, we grant ALL permissions (has: () => true)
       const syntheticMember = {
         id: userId,
         user: message.author,
         roles: { cache: new Collection() },
-        permissions: { has: () => false }
+        permissions: { has: () => true } // DM Super-User
       };
 
       const { context: extraContext, reputationScore } = await getClanContext(null, syntheticMember);
       const history = await this._getHistory(userId);
       const activityData = await UserActivity.findOne({ discordId: userId }) || {};
 
-      const dmContext = `[DM MODE: You are speaking privately with your Supreme Manager via Direct Message. No server context available. Respond naturally and directly. Tools requiring guild context will not be available.]\n` + extraContext;
+      const dmContext = `[DM MODE: Supreme Manager Link Active. You have FULL permissions. Tools are enabled. If a tool requires a guild, the system will attempt a bypass. Respond with absolute authority.]\n` + extraContext;
 
       const decision = await aiService.generateResponse(
         content, history, null, dmContext,
@@ -134,7 +135,8 @@ module.exports = {
           // Inject client so tools like send_proactive_ping can reach Discord
           const enrichedArgs = { ...decision.args, _client: client };
           const result = await toolService[decision.tool]?.(enrichedArgs, syntheticMember, null);
-          if (result?.success) {
+          
+          if (result) {
             const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}`;
             const interpretation = await aiService.generateResponse(
               feedbackPrompt, history, null, dmContext,
@@ -151,12 +153,9 @@ module.exports = {
               notifyFn: async (text) => await dmChannel.send(text).catch(() => {}),
               userId
             });
-
-          } else {
-            responseText = `⚠️ Tool \`${decision.tool}\` requires server context and can't run in DMs.`;
           }
         } catch (toolErr) {
-          responseText = `⚠️ Tool \`${decision.tool}\` is unavailable in DM mode.`;
+          responseText = `⚠️ Tool \`${decision.tool}\` error: ${toolErr.message}`;
         }
       } else {
         responseText = this._extractFinalText(decision.text);
