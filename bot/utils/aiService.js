@@ -248,38 +248,51 @@ ${bibleInstruction}`;
         topP: 0.95,
       };
 
-      // --- GLOBAL TOKEN GUARD (System-Wide Scrubbing) ---
-      // This ensures no massive data (like base64 images) ever reaches the API from any source
-      const scrubPayload = (obj) => {
-        if (typeof obj === 'string') {
-          // If a string looks like base64 or is extremely long, scrub it
-          if (obj.length > 5000 && (obj.includes('base64') || /^[A-Za-z0-9+/=]{1000,}$/.test(obj.substring(0, 2000)))) {
-            return "[DATA_OVERFLOW_SCRUBBED]";
-          }
-          return obj;
-        }
-        if (Array.isArray(obj)) return obj.map(scrubPayload);
-        if (typeof obj === 'object' && obj !== null) {
-          const newObj = {};
-          for (let key in obj) {
-            if (key === 'bytesBase64Encoded' || key === 'image' || key === 'screenshot') {
-              newObj[key] = "[BINARY_DATA_OMITTED]";
-            } else {
-              newObj[key] = scrubPayload(obj[key]);
+      // --- THE IRON CURTAIN (Advanced System-Wide Scrubbing) ---
+      // This ensures no massive data (like base64 images) ever reaches the API
+      const scrubPayload = (input) => {
+        try {
+          // 1. Convert everything to a plain object/array first (breaks Mongoose links)
+          const obj = JSON.parse(JSON.stringify(input));
+          
+          const deepScrub = (val) => {
+            if (typeof val === 'string') {
+              // Hard Limit: No single string can exceed 50,000 chars (prevents bloat)
+              if (val.length > 50000) return "[EXCESSIVE_DATA_TRUNCATED]";
+              // Base64 Check: Scrub potential image data
+              if (val.length > 5000 && (val.includes('base64') || /^[A-Za-z0-9+/=]{1000,}$/.test(val.substring(0, 2000)))) {
+                return "[DATA_OVERFLOW_SCRUBBED]";
+              }
+              return val;
             }
-          }
-          return newObj;
+            if (Array.isArray(val)) return val.map(deepScrub);
+            if (typeof val === 'object' && val !== null) {
+              const newObj = {};
+              for (let key in val) {
+                // Known binary fields
+                if (['bytesBase64Encoded', 'image', 'screenshot', 'data'].includes(key)) {
+                  newObj[key] = "[BINARY_DATA_OMITTED]";
+                } else {
+                  newObj[key] = deepScrub(val[key]);
+                }
+              }
+              return newObj;
+            }
+            return val;
+          };
+          return deepScrub(obj);
+        } catch (e) {
+          return input; // Fallback if JSON conversion fails
         }
-        return obj;
       };
 
-      const cleanHistory = scrubPayload(history);
-      const cleanPrompt = scrubPayload(prompt);
-      const cleanExtraContext = scrubPayload(extraContext);
-      const cleanSystemInstruction = scrubPayload(systemInstruction);
+      const cleanHistory = scrubPayload(history || []);
+      const cleanPrompt = scrubPayload(prompt || "");
+      const cleanExtraContext = scrubPayload(extraContext || "");
+      const cleanSystemInstruction = scrubPayload(systemInstruction || "");
 
-      // --- TOKEN AUDIT (Debugging the 429/400 errors) ---
-      logger.info("JackAI", `Payload Audit: Prompt=${cleanPrompt.length} | History=${cleanHistory.length} | Context=${(cleanExtraContext || "").length} | SystemPrompt=${cleanSystemInstruction.length}`);
+      // --- TOKEN AUDIT (Diagnostic Logs) ---
+      logger.info("JackAI", `Payload Audit: Prompt=${cleanPrompt.length || 0} | History=${JSON.stringify(cleanHistory).length} | Context=${JSON.stringify(cleanExtraContext).length} | SystemPrompt=${cleanSystemInstruction.length}`);
 
       const executeRequest = async (retryCount = 0) => {
         try {
