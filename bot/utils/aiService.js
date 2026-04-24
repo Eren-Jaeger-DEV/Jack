@@ -234,6 +234,11 @@ After completing a tool call, you will receive a [CONTINUATION_CHECK] prompt.
 - If you are asked to build a tool, code, or plugin, execute the 'read_codebase_file' or 'propose_code_change' tool IMMEDIATELY.
 - Do not ask for "further data" if the blueprint contains the information you need.
 
+[IMAGE_EDITING_PROTOCOL]
+- If a user uploads an image/attachment and asks you to change it, edit it, or modify it (e.g. "make this cat blue"), use the 'generate_image' tool.
+- Pass the URL of the user's attachment to the 'image_url' parameter.
+- The 'prompt' should describe the FINAL result you want (e.g. "A blue cat matching the reference image").
+
 ${bibleInstruction}`;
 
       const tools = [

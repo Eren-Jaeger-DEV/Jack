@@ -24,6 +24,10 @@ module.exports = {
           "type": "STRING",
           "enum": ["1:1", "4:3", "3:4", "16:9", "9:16"],
           "description": "The aspect ratio of the generated image."
+        },
+        "image_url": {
+          "type": "STRING",
+          "description": "Optional: The URL of an image to use as a reference (Image-to-Image). Use this when editing an existing image."
         }
       },
       "required": ["prompt"]
@@ -31,21 +35,36 @@ module.exports = {
   },
 
   async execute(args, member, guild) {
-    const { prompt, aspect_ratio = "1:1" } = args;
+    const { prompt, aspect_ratio = "1:1", image_url = null } = args;
 
     try {
-      logger.info("IMAGEN", `Generating image for prompt: ${prompt}`);
+      logger.info("IMAGEN", `Generating image for prompt: ${prompt} ${image_url ? '(Image-to-Image)' : ''}`);
+
+      let baseImageBase64 = null;
+      if (image_url) {
+        try {
+          const imgResponse = await axios.get(image_url, { responseType: 'arraybuffer' });
+          baseImageBase64 = Buffer.from(imgResponse.data).toString('base64');
+        } catch (e) {
+          logger.error("IMAGEN", `Failed to fetch reference image: ${e.message}`);
+        }
+      }
 
       // Vertex AI Imagen 3 REST Endpoint
       const url = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/imagen-3.0-generate-001:predict?key=${VERTEX_KEY}`;
 
+      const instance = { prompt: prompt };
+      if (baseImageBase64) {
+        instance.image = {
+          bytesBase64Encoded: baseImageBase64
+        };
+      }
+
       const requestBody = {
-        instances: [
-          { prompt: prompt }
-        ],
+        instances: [instance],
         parameters: {
           sampleCount: 1,
-          aspectRatio: aspect_ratio,
+          aspectRatio: baseImageBase64 ? undefined : aspect_ratio,
           addWatermark: false,
           includeSafetyAttributes: true
         }
