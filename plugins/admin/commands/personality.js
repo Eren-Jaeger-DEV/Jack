@@ -4,7 +4,17 @@
  * Interactive Dashboard for Jack's Personality Engine.
  */
 
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+const { 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  StringSelectMenuBuilder,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MessageFlags
+} = require('discord.js');
 const GuildConfig = require('../../../bot/database/models/GuildConfig');
 
 module.exports = {
@@ -15,7 +25,7 @@ module.exports = {
   usage: 'j personality',
 
   async run(ctx) {
-    if (!ctx.member.permissions.has('Administrator') && !ctx.member.id === process.env.OWNER_ID) {
+    if (!ctx.member.permissions.has('Administrator') && ctx.member.id !== process.env.OWNER_ID) {
       return ctx.reply('❌ You do not have permission to configure my personality.');
     }
 
@@ -28,19 +38,44 @@ module.exports = {
 
     const p = config.settings.personality;
 
-    const embed = new EmbedBuilder()
-      .setTitle('🧠 Personality Engine v2 Dashboard')
-      .setColor('#2b2d31')
-      .setDescription('Use the buttons below to modify my core runtime traits. Values range from 0-100.')
-      .addFields(
-        { name: '🎭 Tone', value: `\`${p.tone}\``, inline: true },
-        { name: '😂 Humor', value: `\`${p.humor}%\``, inline: true },
-        { name: '⚡ Strictness', value: `\`${p.strictness}%\``, inline: true },
-        { name: '🗣️ Verbosity', value: `\`${p.verbosity}%\``, inline: true },
-        { name: '🤝 Respect Bias', value: `\`${p.respect_bias}%\``, inline: true }
-      )
-      .setFooter({ text: 'Changes are saved to the persistent database instantly.' });
+    // -- BUILD V2 UI --
+    const mainContainer = new ContainerBuilder();
 
+    // 1. Header Section
+    mainContainer.addSectionComponents(
+      new SectionBuilder()
+        .addTextDisplayComponents(
+          new TextDisplayBuilder()
+            .setContent("🧠 **Jack AI: Personality Engine v2**")
+        )
+    );
+
+    mainContainer.addSeparatorComponents(new SeparatorBuilder());
+
+    // 2. Traits Section
+    const traitsSection = new SectionBuilder();
+    const traitsText = 
+      `🎭 **Tone:** \`${p.tone.toUpperCase()}\`\n` +
+      `😂 **Humor:** \`${p.humor}%\` | ⚡ **Strictness:** \`${p.strictness}%\`\n` +
+      `🗣️ **Verbosity:** \`${p.verbosity}%\` | 🤝 **Respect Bias:** \`${p.respect_bias}%\``;
+
+    traitsSection.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(traitsText)
+    );
+    mainContainer.addSectionComponents(traitsSection);
+
+    mainContainer.addSeparatorComponents(new SeparatorBuilder());
+
+    // 3. Status Section
+    mainContainer.addSectionComponents(
+      new SectionBuilder()
+        .addTextDisplayComponents(
+          new TextDisplayBuilder()
+            .setContent("⚙️ *Use the controls below to modify my core runtime traits.*")
+        )
+    );
+
+    // -- Action Rows --
     const selectMenu = new StringSelectMenuBuilder()
       .setCustomId('persona_preset_select')
       .setPlaceholder('Select a Quick Preset')
@@ -50,19 +85,22 @@ module.exports = {
         { label: 'Assistive Mode', description: 'Calm tone, highly verbose, high respect.', value: 'assistive' }
       ]);
 
-    const btnTraits = new ButtonBuilder()
-      .setCustomId('persona_edit_traits')
-      .setLabel('⚙️ Edit Traits')
-      .setStyle(ButtonStyle.Primary);
+    const btnRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('persona_edit_traits')
+        .setLabel('⚙️ Edit Traits')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('persona_edit_tone')
+        .setLabel('🎭 Edit Tone')
+        .setStyle(ButtonStyle.Secondary)
+    );
 
-    const btnTone = new ButtonBuilder()
-      .setCustomId('persona_edit_tone')
-      .setLabel('🎭 Edit Tone')
-      .setStyle(ButtonStyle.Secondary);
-
-    const row1 = new ActionRowBuilder().addComponents(selectMenu);
-    const row2 = new ActionRowBuilder().addComponents(btnTraits, btnTone);
-
-    await ctx.reply({ embeds: [embed], components: [row1, row2] });
+    await ctx.reply({ 
+      content: "", 
+      embeds: [], 
+      components: [mainContainer, new ActionRowBuilder().addComponents(selectMenu), btnRow],
+      flags: MessageFlags.IsComponentsV2
+    });
   }
 };
