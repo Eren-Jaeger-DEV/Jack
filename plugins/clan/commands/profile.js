@@ -1,7 +1,20 @@
 const Player = require("../../../bot/database/models/Player");
 const profileService = require("../services/profileService");
 const synergyService = require("../../seasonal-synergy/services/synergyService");
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
+const { 
+  SlashCommandBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ComponentType,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  MessageFlags
+} = require("discord.js");
 const { resolveDisplayName } = require("../../../bot/utils/nameResolver");
 
 module.exports = {
@@ -18,33 +31,18 @@ module.exports = {
     .setDescription("Show BGMI player profile")
     .addUserOption(o =>
       o.setName("user")
-        .setDescription("Profile")
-        .setRequired(false)
+          .setDescription("Profile")
+          .setRequired(false)
     ),
 
   async run(ctx) {
-
-    /* GET TARGET USER */
-
-    let user =
-      ctx.options?.getUser?.("user") ||
-      ctx.message?.mentions?.users?.first() ||
-      ctx.user;
-
+    let user = ctx.options?.getUser?.("user") || ctx.message?.mentions?.users?.first() || ctx.user;
     const player = await Player.findOne({ discordId: user.id });
 
-    if (!player)
-      return ctx.reply("❌ Player not registered. Use `/register` first.");
-
-    /* RESOLVE DISPLAY NAME */
+    if (!player) return ctx.reply("❌ Player not registered. Use `/register` first.");
 
     const displayName = await resolveDisplayName(ctx.guild, player.discordId, player.ign);
-
-    /* GET SYNERGY DATA VIA SERVICE */
-
     const synergyData = await synergyService.getPlayerSynergy(user.id);
-
-    /* MEDAL SYSTEM */
 
     const rankDisplay = (rank) => {
       if (!rank || rank <= 0) return "Unranked";
@@ -54,98 +52,99 @@ module.exports = {
       return `#${rank}`;
     };
 
-    /* ── BUILD PROFILE EMBED ── */
-
-    /* ── BUILD PROFILE EMBED ── */
- 
-    const buildProfileEmbed = async () => {
+    /* ── BUILD PROFILE V2 CONTAINER ── */
+    const buildProfileContainer = async () => {
+      const container = new ContainerBuilder();
       const isClan = player.serialNumber?.startsWith('JCM');
-      const embedColor = isClan ? "#00FFCC" : "#FFD700";
-
-      const embed = new EmbedBuilder()
-        .setTitle(`🎮 ${displayName}'s BGMI Profile`)
-        .setColor(embedColor)
-        .addFields(
-          { name: "Serial ID", value: `**${player.serialNumber || "N/A"}**`, inline: true },
-          { name: "IGN", value: player.ign || "N/A", inline: true },
-          { name: "UID", value: player.uid || "N/A", inline: true },
-          
-          { name: "Account Level", value: `${player.accountLevel || "N/A"}`, inline: true },
-          { name: "Preferred Modes", value: player.preferredModes?.join(", ") || "N/A", inline: true },
-          { name: "\u200b", value: "\u200b", inline: true },
-
-          { name: "Season Synergy", value: `${synergyData?.seasonSynergy || 0}`, inline: true },
-          { name: "Season Rank", value: rankDisplay(synergyData?.seasonRank), inline: true },
-          { name: "\u200b", value: "\u200b", inline: true },
-
-          { name: "Weekly Synergy", value: `${synergyData?.weeklySynergy || 0}`, inline: true },
-          { name: "Weekly Rank", value: rankDisplay(synergyData?.weeklyRank), inline: true },
-          { name: "\u200b", value: "\u200b", inline: true }
+      
+      // 1. Header
+      container.addSectionComponents(
+        new SectionBuilder().addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(`🎮 **${displayName}'s BGMI Profile**`)
         )
-        .setFooter({ text: "Jack Clan System" });
+      );
 
-      if (player.screenshot) embed.setImage(player.screenshot);
-      return embed;
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      // 2. Core Stats
+      const coreStats = new SectionBuilder();
+      coreStats.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          `🆔 **Serial:** \`${player.serialNumber || "N/A"}\`\n` +
+          `👤 **IGN:** \`${player.ign || "N/A"}\` | **UID:** \`${player.uid || "N/A"}\`\n` +
+          `⭐ **Level:** \`${player.accountLevel || "N/A"}\` | **Modes:** \`${player.preferredModes?.join(", ") || "N/A"}\``
+        )
+      );
+      container.addSectionComponents(coreStats);
+
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      // 3. Synergy Stats
+      const synergySection = new SectionBuilder();
+      synergySection.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          `🔥 **Season Synergy:** \`${synergyData?.seasonSynergy || 0}\` (${rankDisplay(synergyData?.seasonRank)})\n` +
+          `⚡ **Weekly Synergy:** \`${synergyData?.weeklySynergy || 0}\` (${rankDisplay(synergyData?.weeklyRank)})`
+        )
+      );
+      container.addSectionComponents(synergySection);
+
+      // 4. Media Gallery (Screenshot)
+      if (player.screenshot && player.screenshot.startsWith("http")) {
+        container.addMediaGalleryComponents(
+          new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setMedia(player.screenshot)
+          )
+        );
+      }
+
+      return container;
     };
 
-    /* ── BUILD ACHIEVEMENTS EMBED ── */
-
-    const buildAchievementsEmbed = () => {
+    /* ── BUILD ACHIEVEMENTS V2 CONTAINER ── */
+    const buildAchievementsContainer = () => {
+      const container = new ContainerBuilder();
       const a = player.achievements || {};
 
-      const intraWins = a.intraWins ?? 0;
-      const clanBattleWins = a.clanBattleWins ?? 0;
-      const bestRank = a.bestClanBattleRank ?? 'N/A';
-      const fosterWins = a.fosterWins ?? 0;
-      const participation = a.fosterParticipation ?? 0;
-      const mvp = a.weeklyMVPCount ?? 0;
-      const highestRank = a.highestSeasonRank ?? 'N/A';
-
-      const embed = new EmbedBuilder()
-        .setTitle(`🏆 ${displayName}'s Achievements`)
-        .setColor("Gold")
-        .addFields(
-          { name: "⚔️ Intra Clan", value: `Wins: **${intraWins}**`, inline: true },
-          { name: "🏰 Clan Battle", value: `Wins: **${clanBattleWins}**\nBest Rank: **${bestRank !== 'N/A' ? '#' + bestRank : 'N/A'}**`, inline: true },
-          { name: '\u200b', value: '\u200b', inline: true },
-
-          { name: "🤝 Foster Program", value: `Participations: **${participation}**\nWins: **${fosterWins}**`, inline: true },
-          { name: "⚡ Synergy", value: `Weekly MVP: **${mvp}**\nBest Season Rank: **${highestRank !== 'N/A' ? '#' + highestRank : 'N/A'}**`, inline: true },
-          { name: '\u200b', value: '\u200b', inline: true }
+      container.addSectionComponents(
+        new SectionBuilder().addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(`🏆 **${displayName}'s Achievements**`)
         )
-        .setFooter({ text: "Jack Achievement Tracker" });
+      );
 
-      return embed;
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      const stats = new SectionBuilder();
+      stats.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          `⚔️ **Intra Clan:** Wins: \`${a.intraWins ?? 0}\`\n` +
+          `🏰 **Clan Battle:** Wins: \`${a.clanBattleWins ?? 0}\` (Best Rank: \`${a.bestClanBattleRank !== 'N/A' ? '#' + a.bestClanBattleRank : 'N/A'}\`)\n` +
+          `🤝 **Foster Program:** Part: \`${a.fosterParticipation ?? 0}\` | Wins: \`${a.fosterWins ?? 0}\`\n` +
+          `⚡ **Synergy:** MVP: \`${a.weeklyMVPCount ?? 0}\` | Best Rank: \`${a.highestSeasonRank !== 'N/A' ? '#' + a.highestSeasonRank : 'N/A'}\``
+        )
+      );
+      container.addSectionComponents(stats);
+
+      return container;
     };
 
-    /* ── BUTTONS ── */
-
     const profileRow = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`profile_achievements_${user.id}`)
-        .setLabel('View Achievements')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('🏆')
+      new ButtonBuilder().setCustomId(`profile_achievements_${user.id}`).setLabel('View Achievements').setStyle(ButtonStyle.Primary).setEmoji('🏆')
     );
 
     const achievementsRow = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`profile_back_${user.id}`)
-        .setLabel('Back to Profile')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('⬅️')
+      new ButtonBuilder().setCustomId(`profile_back_${user.id}`).setLabel('Back to Profile').setStyle(ButtonStyle.Secondary).setEmoji('⬅️')
     );
 
-    /* ── SEND & COLLECT ── */
-
     const message = await ctx.reply({
-      embeds: [await buildProfileEmbed()],
-      components: [profileRow],
+      content: "",
+      embeds: [],
+      components: [await buildProfileContainer(), profileRow],
+      flags: MessageFlags.IsComponentsV2,
       fetchReply: true
     });
 
     if (!message) return;
-
 
     const collector = message.createMessageComponentCollector({
       componentType: ComponentType.Button,
@@ -153,15 +152,14 @@ module.exports = {
     });
 
     collector.on('collect', async (i) => {
-      // PATCH 4: Only the command invoker can use these buttons
       if (i.user.id !== ctx.user.id) {
         return i.reply({ content: '❌ This interaction is not for you.', ephemeral: true });
       }
       try {
         if (i.customId === `profile_achievements_${user.id}`) {
-          await i.update({ embeds: [buildAchievementsEmbed()], components: [achievementsRow] });
+          await i.update({ components: [buildAchievementsContainer(), achievementsRow], flags: MessageFlags.IsComponentsV2 });
         } else if (i.customId === `profile_back_${user.id}`) {
-          await i.update({ embeds: [await buildProfileEmbed()], components: [profileRow] });
+          await i.update({ components: [await buildProfileContainer(), profileRow], flags: MessageFlags.IsComponentsV2 });
         }
       } catch (err) {
         if (err?.code !== 10062) console.error('[Profile] Button error:', err.message);
@@ -171,11 +169,7 @@ module.exports = {
     collector.on('end', async () => {
       try {
         const disabledRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('profile_expired')
-            .setLabel('Session Expired')
-            .setStyle(ButtonStyle.Secondary)
-            .setDisabled(true)
+          new ButtonBuilder().setCustomId('profile_expired').setLabel('Session Expired').setStyle(ButtonStyle.Secondary).setDisabled(true)
         );
         await message.edit({ components: [disabledRow] }).catch(() => {});
       } catch {}
