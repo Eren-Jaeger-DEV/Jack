@@ -130,9 +130,8 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
        if (interactionOrCtx.deferred) {
           return await interactionOrCtx.editReply(payload);
        } else if (interactionOrCtx.reply) {
-          // Robust reply-then-fetch to avoid fetchReply deprecation warning
-          await interactionOrCtx.reply(payload);
-          return (interactionOrCtx.fetchReply) ? await interactionOrCtx.fetchReply() : null;
+          payload.fetchReply = true; // FORCE return of message object
+          return await interactionOrCtx.reply(payload);
        } else {
           return await interactionOrCtx.channel.send(payload);
        }
@@ -142,7 +141,10 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
   // Initial Send
   const msg = await render();
 
-  if (!msg) return;
+  if (!msg) {
+     console.error("BROWSER_UI: msg is null, collector will not be created!");
+     return;
+  }
   const collector = msg.createMessageComponentCollector({ time: 600000 }); // 10 minutes
 
   collector.on('collect', async (i) => {
