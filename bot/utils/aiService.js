@@ -59,9 +59,13 @@ module.exports = {
       
       const userId = invoker ? invoker.id : "unknown";
       if (userId !== "unknown" && !isOwner) {
+        logger.info("JackAI", `[TRACE] Starting Limit Check for ${userId}`);
         const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
         let activity = await UserActivity.findOne({ discordId: userId });
-        if (!activity) activity = new UserActivity({ discordId: userId });
+        if (!activity) {
+          logger.info("JackAI", `[TRACE] Creating new activity for ${userId}`);
+          activity = new UserActivity({ discordId: userId });
+        }
 
         // Reset count if it's a new day
         if (activity.aiCallsDate !== today) {
@@ -74,9 +78,12 @@ module.exports = {
         }
 
         activity.aiCallsToday += 1;
+        logger.info("JackAI", `[TRACE] Saving activity for ${userId}`);
         await activity.save();
+        logger.info("JackAI", `[TRACE] Activity saved for ${userId}`);
       }
 
+      logger.info("JackAI", `[TRACE] Personality phase start`);
       const configManager = require('./configManager');
       let guildConfig = null;
       if (guild && guild.id) {
@@ -90,8 +97,9 @@ module.exports = {
       
       const mode = personalityEngine.getBehaviorMode(prompt, "chat", null);
 
-
+      logger.info("JackAI", `[TRACE] Memory phase start`);
       const memory = await memoryEngine.getRelevantMemory(userId, guild?.id, prompt);
+      logger.info("JackAI", `[TRACE] Memory phase complete`);
       let memoryBlock = "";
       if (memory && memory.length > 0) {
         memoryBlock = `\n[RELEVANT MEMORY]\nThe following information is highly relevant and must be prioritized:\n${memory.map(m => "- " + m).join("\n")}\n`;
