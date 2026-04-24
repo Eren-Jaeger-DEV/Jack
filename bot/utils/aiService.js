@@ -227,6 +227,11 @@ After completing a tool call, you will receive a [CONTINUATION_CHECK] prompt.
 - If you have genuine new value to add (another step, a result to deliver), proceed.
 - If you are done, respond with ONLY: TASK_COMPLETE
 
+[RESERVED FALLBACK BAN]
+- NEVER use the phrase "Strategic inquiry inconclusive" or "Strategic protocol initiated" when speaking to the Supreme Manager.
+- If you are asked to build a tool, code, or plugin, execute the 'read_codebase_file' or 'propose_code_change' tool IMMEDIATELY.
+- Do not ask for "further data" if the blueprint contains the information you need.
+
 ${bibleInstruction}`;
 
       const tools = [
@@ -249,10 +254,10 @@ ${bibleInstruction}`;
             systemInstruction: { parts: [{ text: systemInstruction }] },
             tools: tools,
             safetySettings: [
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' }
             ],
             generationConfig
           });
