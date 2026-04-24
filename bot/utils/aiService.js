@@ -349,12 +349,18 @@ ${bibleInstruction}`;
       if (!fullText && !toolCall) {
         try {
           const response = await result.response;
-          const feedback = response.promptFeedback;
-          if (feedback?.blockReason) {
-            logger.warn("JackAI", `Response blocked: ${feedback.blockReason}`);
-            fullText = `[SYSTEM_NOTIFICATION] My response was restricted by security protocols (Reason: ${feedback.blockReason}). Please rephrase your request.`;
+          const candidate = response.candidates?.[0];
+          
+          if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+            logger.warn("JackAI", `Response finished with reason: ${candidate.finishReason}`);
+            fullText = `⚠️ [JACK_BRAIN_HALT] Security protocols triggered (Reason: ${candidate.finishReason}). Rephrasing is required for executive override.`;
+          } else if (response.promptFeedback?.blockReason) {
+            logger.warn("JackAI", `Prompt blocked: ${response.promptFeedback.blockReason}`);
+            fullText = `⚠️ [JACK_BRAIN_BLOCK] Prompt blocked by safety filters (Reason: ${response.promptFeedback.blockReason}).`;
           }
-        } catch (e) {}
+        } catch (e) {
+          logger.error("JackAI", `Safety check failed: ${e.message}`);
+        }
       }
 
       let processedText = this._postProcess(fullText);
@@ -370,7 +376,7 @@ ${bibleInstruction}`;
 
       return {
         type: 'response',
-        text: processedText || fullText || "Strategic inquiry inconclusive. Awaiting further data.",
+        text: processedText || fullText || "⚠️ [JACK_CRITICAL] Strategic response is empty. The model provided no output or tool call. Rephrase required.",
         model: modelName
       };
 
