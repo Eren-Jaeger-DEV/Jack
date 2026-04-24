@@ -276,16 +276,17 @@ ${bibleInstruction}`;
       const cleanHistory = scrubPayload(history);
       const cleanPrompt = scrubPayload(prompt);
       const cleanExtraContext = scrubPayload(extraContext);
+      const cleanSystemInstruction = scrubPayload(systemInstruction);
 
       // --- TOKEN AUDIT (Debugging the 429/400 errors) ---
-      logger.info("JackAI", `Payload Audit: Prompt=${cleanPrompt.length} | History=${cleanHistory.length} | Context=${(cleanExtraContext || "").length} | SystemPrompt=${(systemPrompt || "").length}`);
+      logger.info("JackAI", `Payload Audit: Prompt=${cleanPrompt.length} | History=${cleanHistory.length} | Context=${(cleanExtraContext || "").length} | SystemPrompt=${cleanSystemInstruction.length}`);
 
       const executeRequest = async (retryCount = 0) => {
         try {
           const genAI = this._getGenAI();
           const model = genAI.getGenerativeModel({ 
             model: modelName,
-            systemInstruction: { parts: [{ text: systemInstruction }] },
+            systemInstruction: { parts: [{ text: cleanSystemInstruction }] },
             tools: tools,
             safetySettings: [
               { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
