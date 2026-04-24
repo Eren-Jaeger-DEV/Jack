@@ -29,18 +29,25 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     }
 
     const doc = activeDocs[currentPage];
-    const idStr = doc.emojiID || doc.stickerID;
+    const idStr = doc.emojiID || doc.stickerID || "unknown";
+    const docName = doc.name || "unnamed";
     
     const embed = new EmbedBuilder()
-      .setTitle(`${currentPage + 1}. ${doc.name}`)
-      .setDescription(`**Pack:** ${doc.pack || "None"}\n**Format:** ${doc.format} | **Vault ID:** \`${idStr}\``)
+      .setTitle(`${currentPage + 1}. ${docName}`)
+      .setDescription(`**Pack:** ${doc.pack || "None"}\n**Format:** ${doc.format || "unknown"} | **Vault ID:** \`${idStr}\``)
       .setColor("Gold")
       .setFooter({ text: `Page ${currentPage + 1} of ${maxPages} | Total: ${activeDocs.length}` });
       
     if (doc.format === "lottie") {
-       embed.setDescription(embed.data.description + `\n*[Lottie Animation Preview Unsupported](${doc.url})*`);
+       embed.setDescription(embed.data.description + `\n*[Lottie Animation Preview Unsupported](${doc.url || 'none'})*`);
     } else {
-       embed.setImage(doc.url); // Use setImage for a large Gallery view
+       if (doc.url && doc.url.startsWith("http")) {
+         try {
+           embed.setImage(doc.url);
+         } catch (e) {
+           console.error("Invalid image URL:", doc.url);
+         }
+       }
     }
 
     return [embed];
@@ -53,7 +60,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     if (activeDocs.length === 0) return [];
 
     const doc = activeDocs[currentPage];
-    const idStr = doc.emojiID || doc.stickerID;
+    const idStr = doc.emojiID || doc.stickerID || "unknown";
     const typeLower = type.toLowerCase();
     const rows = [];
 
@@ -82,7 +89,7 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     // Row 2: Direct Actions
     const actionRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId(`browser_add_${typeLower}_${idStr}`)
+        .setCustomId(`browser_add_${typeLower}_${idStr}`.substring(0, 100))
         .setLabel(`➕ Add to Server`)
         .setStyle(ButtonStyle.Success)
     );
@@ -90,15 +97,15 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     if (isAdmin) {
       actionRow.addComponents(
         new ButtonBuilder()
-          .setCustomId(`browser_rename_${typeLower}_${idStr}`)
+          .setCustomId(`browser_rename_${typeLower}_${idStr}`.substring(0, 100))
           .setLabel("✏️ Rename")
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-          .setCustomId(`browser_pack_${typeLower}_${idStr}`)
+          .setCustomId(`browser_pack_${typeLower}_${idStr}`.substring(0, 100))
           .setLabel("📦 Move Pack")
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
-          .setCustomId(`browser_delete_${typeLower}_${idStr}`)
+          .setCustomId(`browser_delete_${typeLower}_${idStr}`.substring(0, 100))
           .setLabel("🗑️ Delete")
           .setStyle(ButtonStyle.Danger)
       );
