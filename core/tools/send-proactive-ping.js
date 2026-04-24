@@ -1,6 +1,6 @@
 const { PermissionFlagsBits } = require("discord.js");
 
-const OWNER_IDS = (process.env.OWNER_IDS || "").split(',').map(id => id.trim()).filter(Boolean);
+const { OWNER_IDS } = require("../constants");
 // Channel IDs where Jack can send proactive pings
 const AI_SANDBOX_CHANNEL_ID = "1488453630184132729";
 

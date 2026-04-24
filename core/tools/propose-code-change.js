@@ -3,7 +3,7 @@ const path = require("path");
 const child_process = require("child_process");
 const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
 
-const OWNER_IDS = (process.env.OWNER_IDS || "").split(',').map(id => id.trim()).filter(Boolean);
+const { OWNER_IDS } = require("../constants");
 
 
 module.exports = {

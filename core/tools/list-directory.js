@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { PermissionFlagsBits } = require("discord.js");
 
-const OWNER_IDS = (process.env.OWNER_IDS || "").split(',').map(id => id.trim());
+const { OWNER_IDS } = require("../constants");
 
 module.exports = {
   schema: {
