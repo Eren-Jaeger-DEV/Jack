@@ -241,7 +241,7 @@ ${bibleInstruction}`;
       ];
 
       const generationConfig = {
-        maxOutputTokens: 2048,
+        maxOutputTokens: 8192,
         temperature: 0.7, 
         topP: 0.95,
       };
