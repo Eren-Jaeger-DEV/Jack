@@ -139,7 +139,7 @@ module.exports = {
           const result = await toolService[decision.tool]?.(decision.args, syntheticMember, null);
           if (result?.success) {
             // Interpretation pass
-            const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result.data || result.message)}`;
+            const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}`;
             const interpretation = await aiService.generateResponse(
               feedbackPrompt, history, null, extraContext,
               null, syntheticMember, null, reputationScore, activityData, true
@@ -247,7 +247,7 @@ module.exports = {
              await this._updateHistory(userId, content, `[AI_CALL: ${decision.tool}]`);
 
              // PHASE: Interpretation Pass (Self-Awareness)
-             const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result.data || result.message)}`;
+             const feedbackPrompt = `[TOOL_RESULT: ${decision.tool}] ${JSON.stringify(result)}`;
              
              const interpretation = await aiService.generateResponse(
                 feedbackPrompt,

@@ -215,7 +215,13 @@ ${bibleInstruction}`;
         }
       };
 
-      let result = await executeRequest();
+      let result;
+      try {
+        result = await executeRequest();
+      } catch (e) {
+        logger.error("JackAI", `Request failed: ${e.message}`);
+        return { type: 'response', text: "Strategic link severed. API disruption detected.", model: modelName };
+      }
 
       let fullText = "";
       let thoughtText = "";
@@ -224,39 +230,44 @@ ${bibleInstruction}`;
 
       if (onToken) onToken(null, "", { type: 'thinking' });
 
-      for await (const chunk of result.stream) {
-        // 1. Capture Thought Blocks
-        if (chunk.thought) {
-          thoughtText += chunk.thought;
-          if (onToken) onToken(null, "", { type: 'thinking', thought: chunk.thought });
-        }
-
-        // 2. Scan for Function Calls (All candidates and parts)
-        const parts = chunk.candidates?.[0]?.content?.parts || [];
-        const functionCallPart = parts.find(p => p.functionCall);
-        if (functionCallPart) {
-          const call = functionCallPart.functionCall;
-          toolCall = {
-            type: 'tool',
-            tool: call.name,
-            args: call.args
-          };
-        }
-
-        // 3. Capture Text Output
-        try {
-          const text = chunk.text();
-          if (text && text.length > 0) {
-            if (!hasStartedText) {
-              hasStartedText = true;
-              if (onToken) onToken(null, "", { type: 'text' });
-            }
-            fullText += text;
-            if (onToken) onToken(text, fullText, { type: 'text' });
+      try {
+        for await (const chunk of result.stream) {
+          // 1. Capture Thought Blocks (Gemini 2.0+)
+          if (chunk.thought) {
+            thoughtText += chunk.thought;
+            if (onToken) onToken(null, "", { type: 'thinking', thought: chunk.thought });
           }
-        } catch (e) {
-          // chunk.text() might throw if chunk contains only function calls or thoughts
+
+          // 2. Scan for Function Calls
+          const parts = chunk.candidates?.[0]?.content?.parts || [];
+          const functionCallPart = parts.find(p => p.functionCall);
+          if (functionCallPart) {
+            const call = functionCallPart.functionCall;
+            toolCall = {
+              type: 'tool',
+              tool: call.name,
+              args: call.args
+            };
+          }
+
+          // 3. Capture Text Output
+          try {
+            const text = chunk.text();
+            if (text && text.length > 0) {
+              if (!hasStartedText) {
+                hasStartedText = true;
+                if (onToken) onToken(null, "", { type: 'text' });
+              }
+              fullText += text;
+              if (onToken) onToken(text, fullText, { type: 'text' });
+            }
+          } catch (e) {
+            // chunk.text() throws if no text is present in this chunk
+          }
         }
+      } catch (err) {
+        logger.error("JackAI", `Stream error: ${err.message}`);
+        // If we already have some text or a tool call, we can still proceed
       }
 
       // 4. Intelligence Fallback: Use thought if text is empty
@@ -264,26 +275,32 @@ ${bibleInstruction}`;
         fullText = `[THOUGHT_PROCESS] ${thoughtText}`;
       }
 
-      let processedText = this._postProcess(fullText);
-      // If post-processing killed the entire message, revert to raw text if it exists
-      if (fullText && !processedText) processedText = fullText;
-
-      // Analyze message for potential memory storage asynchronously
-      if (prompt && guild && guild.id && userId !== "unknown") {
-        memoryEngine.analyzeMessage(prompt, userId, guild.id);
+      // 5. Safety Check: If still empty, check if it was blocked
+      if (!fullText && !toolCall) {
+        try {
+          const response = await result.response;
+          const feedback = response.promptFeedback;
+          if (feedback?.blockReason) {
+            logger.warn("JackAI", `Response blocked: ${feedback.blockReason}`);
+            fullText = `[SYSTEM_NOTIFICATION] My response was restricted by security protocols (Reason: ${feedback.blockReason}). Please rephrase your request.`;
+          }
+        } catch (e) {}
       }
+
+      let processedText = this._postProcess(fullText);
+      if (fullText && !processedText) processedText = fullText;
 
       if (toolCall) {
         return {
           ...toolCall,
-          text: processedText || "Strategic protocol initiated. Directing assets now.",
+          text: processedText || "Strategic protocol initiated. Synchronizing assets.",
           model: modelName
         };
       }
 
       return {
         type: 'response',
-        text: processedText || fullText || "Strategic analysis finalized. Link stable.",
+        text: processedText || fullText || "Strategic inquiry inconclusive. Awaiting further data.",
         model: modelName
       };
 
