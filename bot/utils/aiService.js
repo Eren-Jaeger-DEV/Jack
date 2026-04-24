@@ -295,6 +295,16 @@ ${bibleInstruction}`;
               }
             },
             {
+              name: "propose_code_change",
+              description: "SYSTEM OPERATOR: Draft a code change to a codebase file. This will NOT apply the change immediately. It saves a patch file. After calling this, inform the Supreme Manager of the Proposal ID and ask if they want to apply it.",
+              parameters: { type: "OBJECT", properties: { file_path: { type: "STRING" }, replacement_content: { type: "STRING" }, rationale: { type: "STRING" } }, required: ["file_path", "replacement_content", "rationale"] }
+            },
+            {
+              name: "apply_code_change",
+              description: "SYSTEM OPERATOR: Apply a previously drafted code change using its Proposal ID. ONLY call this if the Supreme Manager explicitly tells you to deploy/apply a patch in the conversation.",
+              parameters: { type: "OBJECT", properties: { proposal_id: { type: "STRING" } }, required: ["proposal_id"] }
+            },
+            {
               name: "restart_system",
               description: "SYSTEM OPERATOR: Execute a hard reboot of the PM2 system process."
             }
@@ -303,7 +313,7 @@ ${bibleInstruction}`;
       ];
 
       const generationConfig = {
-        maxOutputTokens: 1000,
+        maxOutputTokens: 2048,
         temperature: 0.7, 
         topP: 0.95,
       };

@@ -593,6 +593,76 @@ Reason: ${reason}`);
   },
 
   /**
+   * SYSTEM OPERATOR: Draft a code change (Proposal Pattern).
+   */
+  async propose_code_change(args, invoker, guild) {
+    const { file_path, replacement_content, rationale } = args;
+    if (!OWNER_IDS.includes(invoker.id)) {
+        return { success: false, message: "Unauthorized. Only the Supreme Manager can draft code changes." };
+    }
+    
+    try {
+      const crypto = require('crypto');
+      const proposalId = crypto.randomBytes(4).toString('hex');
+      const proposalsDir = path.join(__dirname, "../../../proposals");
+      
+      if (!fs.existsSync(proposalsDir)) fs.mkdirSync(proposalsDir, { recursive: true });
+      
+      const patchPath = path.join(proposalsDir, `${proposalId}_patch.txt`);
+      const metaPath = path.join(proposalsDir, `${proposalId}_meta.json`);
+      
+      fs.writeFileSync(patchPath, replacement_content);
+      fs.writeFileSync(metaPath, JSON.stringify({ file_path, rationale, timestamp: Date.now() }, null, 2));
+      
+      return { 
+        success: true, 
+        message: `Proposal saved successfully with ID: ${proposalId}. Please inform the Supreme Manager and ask if they would like you to apply it.` 
+      };
+    } catch (e) {
+      return { success: false, message: `Failed to draft proposal: ${e.message}` };
+    }
+  },
+
+  /**
+   * SYSTEM OPERATOR: Apply a code change proposal.
+   */
+  async apply_code_change(args, invoker, guild) {
+    const { proposal_id } = args;
+    if (!OWNER_IDS.includes(invoker.id)) {
+        return { success: false, message: "CRITICAL: Deploy denied. Only the Supreme Manager (Owner) can execute this command." };
+    }
+
+    try {
+      const proposalsDir = path.join(__dirname, "../../../proposals");
+      const patchPath = path.join(proposalsDir, `${proposal_id}_patch.txt`);
+      const metaPath = path.join(proposalsDir, `${proposal_id}_meta.json`);
+
+      if (!fs.existsSync(patchPath) || !fs.existsSync(metaPath)) {
+        return { success: false, message: `Proposal ID ${proposal_id} not found.` };
+      }
+
+      const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+      const targetPath = path.resolve(path.join(__dirname, "../../../", meta.file_path));
+      const rootDir = path.resolve(path.join(__dirname, "../../../"));
+
+      if (!targetPath.startsWith(rootDir)) {
+        return { success: false, message: "Security violation: Path traversal detected." };
+      }
+
+      const newContent = fs.readFileSync(patchPath, 'utf8');
+      fs.writeFileSync(targetPath, newContent);
+
+      // Clean up
+      fs.unlinkSync(patchPath);
+      fs.unlinkSync(metaPath);
+
+      return { success: true, message: `Patch applied successfully to ${meta.file_path}. You can now restart the system if required.` };
+    } catch (e) {
+      return { success: false, message: `Failed to apply patch: ${e.message}` };
+    }
+  },
+
+  /**
    * SYSTEM OPERATOR: Restart system via PM2.
    */
   async restart_system(args, invoker, guild) {
