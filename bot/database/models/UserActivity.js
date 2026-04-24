@@ -29,10 +29,8 @@ const UserActivitySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Auto-calculate simple activity score on save
-UserActivitySchema.pre('save', function(next) {
-  // Score = Count / Days since join (normalized)
-  this.activityScore = this.messageCount; 
-  next();
+UserActivitySchema.pre('save', async function() {
+  this.activityScore = this.messageCount || 0;
 });
 
 module.exports = mongoose.model('UserActivity', UserActivitySchema);

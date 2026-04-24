@@ -11,7 +11,8 @@ const API_KEYS = (process.env.GOOGLE_API_KEYS || "").split(',').map(k => k.trim(
 let currentKeyIndex = 0;
 const modelName = 'gemini-3.1-pro-preview';
 const DAILY_LIMIT = 50;
-const UserActivity = require('../database/models/UserActivity');
+const mongoose = require('mongoose');
+const UserActivity = mongoose.model('UserActivity');
 
 /**
  * AI SERVICE (v4.3.0) - MULTI-KEY ROTATION + PERSISTENT LIMITS
