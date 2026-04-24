@@ -27,7 +27,7 @@ module.exports = {
   async execute(args, invoker, guild) {
     const { message } = args;
     try {
-      const logPath = path.join(__dirname, "../../../data/ai_operator_logs.txt");
+      const logPath = path.join(__dirname, "../../data/ai_operator_logs.txt");
       const timestamp = new Date().toISOString();
       const logEntry = `[${timestamp}] ${message}\\n`;
       

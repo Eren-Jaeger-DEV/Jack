@@ -31,7 +31,7 @@ module.exports = {
     }
 
     try {
-      const proposalsDir = path.join(__dirname, "../../../proposals");
+      const proposalsDir = path.join(__dirname, "../../proposals");
       const patchPath = path.join(proposalsDir, `${proposal_id}_patch.txt`);
       const metaPath = path.join(proposalsDir, `${proposal_id}_meta.json`);
 
@@ -40,8 +40,8 @@ module.exports = {
       }
 
       const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-      const targetPath = path.resolve(path.join(__dirname, "../../../", meta.file_path));
-      const rootDir = path.resolve(path.join(__dirname, "../../../"));
+      const targetPath = path.resolve(path.join(__dirname, "../../", meta.file_path));
+      const rootDir = path.resolve(path.join(__dirname, "../../"));
 
       if (!targetPath.startsWith(rootDir)) {
         return { success: false, message: "Security violation: Path traversal detected." };

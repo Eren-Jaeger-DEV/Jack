@@ -33,8 +33,8 @@ module.exports = {
 
     try {
       // Prevent directory traversal attacks
-      const resolvedPath = path.resolve(path.join(__dirname, "../../../", file_path));
-      const rootDir = path.resolve(path.join(__dirname, "../../../"));
+      const resolvedPath = path.resolve(path.join(__dirname, "../../", file_path));
+      const rootDir = path.resolve(path.join(__dirname, "../../"));
       
       if (!resolvedPath.startsWith(rootDir)) {
         return { success: false, message: "Security violation: Attempted path traversal out of workspace." };

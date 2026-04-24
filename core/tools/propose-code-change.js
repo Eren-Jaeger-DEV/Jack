@@ -41,7 +41,7 @@ module.exports = {
     try {
       const crypto = require('crypto');
       const proposalId = crypto.randomBytes(4).toString('hex');
-      const proposalsDir = path.join(__dirname, "../../../proposals");
+      const proposalsDir = path.join(__dirname, "../../proposals");
       
       if (!fs.existsSync(proposalsDir)) fs.mkdirSync(proposalsDir, { recursive: true });
       
