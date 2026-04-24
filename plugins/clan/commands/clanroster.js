@@ -1,5 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { resolveDisplayName } = require("../../../bot/utils/nameResolver");
+const { 
+  SlashCommandBuilder, 
+  ContainerBuilder, 
+  SectionBuilder, 
+  TextDisplayBuilder, 
+  SeparatorBuilder,
+  MessageFlags 
+} = require("discord.js");
 const Player = require("../../../bot/database/models/Player");
 
 module.exports = {
@@ -16,39 +22,63 @@ module.exports = {
     .setDescription("View the full clan player roster"),
 
   async run(ctx) {
-
-    const players = await Player.find({ serialNumber: /^JCM/ })
-      .sort({ serialNumber: 1 });
+    const players = await Player.find({ serialNumber: /^JCM/ }).sort({ serialNumber: 1 });
 
     if (!players.length) {
       return ctx.reply("❌ No clan members registered yet.");
     }
 
-    // Header
+    const container = new ContainerBuilder();
+
+    // 1. Header
+    container.addSectionComponents(
+      new SectionBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent("🛡️ **Official Clan Roster**")
+      )
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    // 2. Roster List
+    const rosterSection = new SectionBuilder();
     let list = "` ID  | IGN             | UID        `\n";
     
     for (let i = 0; i < players.length; i++) {
         const p = players[i];
-        
-        // Truncate/Pad IGN to 15 chars for alignment
         const ign = (p.ign || "N/A").substring(0, 15).padEnd(15, ' ');
         const id = p.serialNumber.padEnd(4, ' ');
         const uid = (p.uid || "N/A").padEnd(10, ' ');
-        
         const discordMention = p.discordId ? `<@${p.discordId}>` : "Unlinked";
         
         list += `\`${id} | ${ign} | ${uid} \` ${discordMention}\n`;
+        
+        // Split into multiple TextDisplay if it gets too long (Discord limit is ~1000 per TextDisplay)
+        if (list.length > 800) {
+            rosterSection.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+            list = "";
+        }
     }
+    
+    if (list) {
+        rosterSection.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+    }
+    container.addSectionComponents(rosterSection);
 
-    const embed = new EmbedBuilder()
-      .setTitle("🛡️ Official Clan Roster")
-      .setDescription(list)
-      .setColor("#00FFCC")
-      .setFooter({ text: `Total Members: ${players.length} / 60` })
-      .setTimestamp();
+    container.addSeparatorComponents(new SeparatorBuilder());
 
-    await ctx.reply({ embeds: [embed] });
+    // 3. Footer
+    container.addSectionComponents(
+      new SectionBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`*Total Members: ${players.length} / 60*`)
+      )
+    );
 
+    await ctx.reply({ 
+      content: "", 
+      embeds: [], 
+      components: [container],
+      flags: MessageFlags.IsComponentsV2
+    });
   }
 
 };
