@@ -248,6 +248,35 @@ ${bibleInstruction}`;
         topP: 0.95,
       };
 
+      // --- GLOBAL TOKEN GUARD (System-Wide Scrubbing) ---
+      // This ensures no massive data (like base64 images) ever reaches the API from any source
+      const scrubPayload = (obj) => {
+        if (typeof obj === 'string') {
+          // If a string looks like base64 or is extremely long, scrub it
+          if (obj.length > 5000 && (obj.includes('base64') || /^[A-Za-z0-9+/=]{1000,}$/.test(obj.substring(0, 2000)))) {
+            return "[DATA_OVERFLOW_SCRUBBED]";
+          }
+          return obj;
+        }
+        if (Array.isArray(obj)) return obj.map(scrubPayload);
+        if (typeof obj === 'object' && obj !== null) {
+          const newObj = {};
+          for (let key in obj) {
+            if (key === 'bytesBase64Encoded' || key === 'image' || key === 'screenshot') {
+              newObj[key] = "[BINARY_DATA_OMITTED]";
+            } else {
+              newObj[key] = scrubPayload(obj[key]);
+            }
+          }
+          return newObj;
+        }
+        return obj;
+      };
+
+      const cleanHistory = scrubPayload(history);
+      const cleanPrompt = scrubPayload(prompt);
+      const cleanExtraContext = scrubPayload(extraContext);
+
       const executeRequest = async (retryCount = 0) => {
         try {
           const genAI = this._getGenAI();
@@ -265,7 +294,7 @@ ${bibleInstruction}`;
           });
 
           const chat = model.startChat({
-            history: history.map(h => ({
+            history: cleanHistory.map(h => ({
               role: h.role === 'assistant' ? 'model' : 'user',
               parts: [{ text: h.content }]
             }))
