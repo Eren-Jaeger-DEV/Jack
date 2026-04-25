@@ -83,7 +83,7 @@ async function ensurePanel(client) {
     // 1. Check for the NEW V2 panel (type 20 is Container)
     const v2Panel = messages.find(m => 
       m.author.id === client.user.id && 
-      m.components?.[0]?.type === 20
+      m.flags.has(MessageFlags.IsComponentsV2)
     );
 
     if (v2Panel) {
