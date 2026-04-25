@@ -156,9 +156,14 @@ module.exports = {
           const result = await toolService[decision.tool]?.(enrichedArgs, syntheticMember, null);
           
           if (result) {
-            // Handle Rich Media (Embeds/Files) from tools in DMs
-            if (result.embeds || result.files) {
-              await dmChannel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
+            // Handle Rich Media (Embeds/Files/Components) from tools in DMs
+            if (result.embeds || result.files || result.components) {
+              const payload = {};
+              if (result.embeds) payload.embeds = result.embeds;
+              if (result.files) payload.files = result.files;
+              if (result.components) payload.components = result.components;
+              if (result.flags) payload.flags = result.flags;
+              await dmChannel.send(payload).catch(() => {});
             }
 
             // --- HARD STOP FOR IMAGES ---
@@ -303,11 +308,20 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
                           // UPDATE HISTORY with the call so the Interpretation Pass has context
               await this._updateHistory(userId, content, `[AI_CALL: ${decision.tool}]`);
 
-             // Handle Rich Media (Embeds/Files) from tools FIRST
-             if (result.embeds || result.files) {
-               if (isInteraction) await context.editReply({ content: "", embeds: result.embeds, files: result.files }).catch(() => {});
-               else if (streamingMessage.isOwnerStub) await context.channel.send({ embeds: result.embeds, files: result.files }).catch(() => {});
-               else await streamingMessage.edit({ content: "✅ **Action completed.**", embeds: result.embeds, files: result.files }).catch(() => {});
+             // Handle Rich Media (Embeds/Files/Components) from tools FIRST
+             if (result.embeds || result.files || result.components) {
+               const payload = { content: "" };
+               if (result.embeds) payload.embeds = result.embeds;
+               if (result.files) payload.files = result.files;
+               if (result.components) payload.components = result.components;
+               if (result.flags) payload.flags = result.flags;
+
+               if (isInteraction) await context.editReply(payload).catch(() => {});
+               else if (streamingMessage.isOwnerStub) await context.channel.send(payload).catch(() => {});
+               else {
+                 payload.content = "✅ **Action completed.**";
+                 await streamingMessage.edit(payload).catch(() => {});
+               }
              }
 
               // --- HARD STOP FOR IMAGES ---
@@ -330,13 +344,13 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
              addLog("AIController", `Interpretation Pass Processed: ${responseText.substring(0, 50)}...`);
              
              if (isInteraction) {
-                // If we already sent an embed, we should send the text as a follow-up or separate message
-                if (result.embeds || result.files) await context.followUp(responseText).catch(() => {});
+                // If we already sent an embed/component, we should send the text as a follow-up or separate message
+                if (result.embeds || result.files || result.components) await context.followUp(responseText).catch(() => {});
                 else await context.editReply(responseText).catch(() => {});
              } else if (streamingMessage.isOwnerStub) {
                 await context.reply(responseText).catch(() => {});
              } else {
-                if (result.embeds || result.files) await context.channel.send(responseText).catch(() => {});
+                if (result.embeds || result.files || result.components) await context.channel.send(responseText).catch(() => {});
                 else await streamingMessage.edit(responseText).catch(() => {});
              }
              

@@ -13,18 +13,22 @@ module.exports = {
   name: 'interactionCreate',
 
   async execute(interaction, client) {
-    if (!interaction.guild) return;
+    // Allow DMs to proceed, but certain interactions may require guild logic later.
 
     /* ---------- PERSONALITY DASHBOARD ---------- */
     
     // Select Menu for Presets
     if (interaction.isStringSelectMenu() && interaction.customId === 'persona_preset_select') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator) && interaction.member.id !== process.env.OWNER_ID) {
+      const isOwner = interaction.user.id === process.env.OWNER_ID;
+      const hasPerm = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
+      
+      if (!hasPerm && !isOwner) {
          return interaction.reply({ content: "❌ No permission.", ephemeral: true });
       }
       
+      const targetGuildId = interaction.guildId || "1341978655437619250";
       const presetName = interaction.values[0];
-      let config = await GuildConfig.findOne({ guildId: interaction.guildId });
+      let config = await GuildConfig.findOne({ guildId: targetGuildId });
       
       const presets = {
         tactical: { tone: "calm", humor: 10, strictness: 60, verbosity: 40, respect_bias: 60 },
@@ -33,11 +37,11 @@ module.exports = {
       };
 
       if (presets[presetName]) {
-        await configManager.updateGuildConfig(interaction.guildId, {
+        await configManager.updateGuildConfig(targetGuildId, {
           "settings.personality": presets[presetName]
         });
         // fetch latest from DB directly
-        config = await GuildConfig.findOne({ guildId: interaction.guildId });
+        config = await GuildConfig.findOne({ guildId: targetGuildId });
       }
       
       return interaction.update(personalityService.buildPersonalityPanel(config));
@@ -45,9 +49,12 @@ module.exports = {
 
     // Button to open Traits Modal
     if (interaction.isButton() && interaction.customId === 'persona_edit_traits') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator) && interaction.member.id !== process.env.OWNER_ID) return interaction.reply({ content: "❌ No permission.", ephemeral: true });
+      const isOwner = interaction.user.id === process.env.OWNER_ID;
+      const hasPerm = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
+      if (!hasPerm && !isOwner) return interaction.reply({ content: "❌ No permission.", ephemeral: true });
       
-      let config = await GuildConfig.findOne({ guildId: interaction.guildId });
+      const targetGuildId = interaction.guildId || "1341978655437619250";
+      let config = await GuildConfig.findOne({ guildId: targetGuildId });
       const p = config.settings.personality || { humor: 10, strictness: 60, verbosity: 40, respect_bias: 60 };
 
       const modal = new ModalBuilder()
@@ -71,9 +78,12 @@ module.exports = {
 
     // Button to open Tone Modal
     if (interaction.isButton() && interaction.customId === 'persona_edit_tone') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator) && interaction.member.id !== process.env.OWNER_ID) return interaction.reply({ content: "❌ No permission.", ephemeral: true });
+      const isOwner = interaction.user.id === process.env.OWNER_ID;
+      const hasPerm = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
+      if (!hasPerm && !isOwner) return interaction.reply({ content: "❌ No permission.", ephemeral: true });
       
-      let config = await GuildConfig.findOne({ guildId: interaction.guildId });
+      const targetGuildId = interaction.guildId || "1341978655437619250";
+      let config = await GuildConfig.findOne({ guildId: targetGuildId });
       const p = config.settings.personality || { tone: "calm" };
 
       const modal = new ModalBuilder()
@@ -89,7 +99,8 @@ module.exports = {
 
     // Modal Submission - Traits
     if (interaction.isModalSubmit() && interaction.customId === 'modal_persona_traits') {
-      let config = await GuildConfig.findOne({ guildId: interaction.guildId });
+      const targetGuildId = interaction.guildId || "1341978655437619250";
+      let config = await GuildConfig.findOne({ guildId: targetGuildId });
       
       const h = parseInt(interaction.fields.getTextInputValue("humor")) || 0;
       const s = parseInt(interaction.fields.getTextInputValue("strictness")) || 0;
@@ -104,17 +115,18 @@ module.exports = {
         respect_bias: Math.min(100, Math.max(0, r))
       };
 
-      await configManager.updateGuildConfig(interaction.guildId, {
+      await configManager.updateGuildConfig(targetGuildId, {
         "settings.personality": newPersonality
       });
-      config = await GuildConfig.findOne({ guildId: interaction.guildId });
+      config = await GuildConfig.findOne({ guildId: targetGuildId });
 
       return interaction.update(personalityService.buildPersonalityPanel(config));
     }
 
     // Modal Submission - Tone
     if (interaction.isModalSubmit() && interaction.customId === 'modal_persona_tone') {
-      let config = await GuildConfig.findOne({ guildId: interaction.guildId });
+      const targetGuildId = interaction.guildId || "1341978655437619250";
+      let config = await GuildConfig.findOne({ guildId: targetGuildId });
       
       const newTone = interaction.fields.getTextInputValue("tone").toLowerCase();
       const newPersonality = {
@@ -122,20 +134,21 @@ module.exports = {
         tone: newTone
       };
 
-      await configManager.updateGuildConfig(interaction.guildId, {
+      await configManager.updateGuildConfig(targetGuildId, {
         "settings.personality": newPersonality
       });
-      config = await GuildConfig.findOne({ guildId: interaction.guildId });
+      config = await GuildConfig.findOne({ guildId: targetGuildId });
 
       return interaction.update(personalityService.buildPersonalityPanel(config));
     }
 
     /* ---------- ANNOUNCEMENT BUTTON (OPEN MODAL) ---------- */
     if (interaction.isButton() && interaction.customId.startsWith("announce_btn_")) {
+      if (!interaction.guild) return; // Requires guild context
       const channelId = interaction.customId.replace("announce_btn_", "");
       
       // Check permissions
-      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      if (!interaction.member?.permissions?.has(PermissionFlagsBits.Administrator)) {
          return interaction.reply({ content: "❌ No permission.", ephemeral: true });
       }
 

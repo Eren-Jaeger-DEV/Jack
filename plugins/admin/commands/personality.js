@@ -9,12 +9,17 @@ module.exports = {
   usage: 'j personality',
 
   async run(ctx) {
-    if (!ctx.member.permissions.has('Administrator') && ctx.member.id !== process.env.OWNER_ID) {
+    const isOwner = ctx.member?.id === process.env.OWNER_ID || ctx.author?.id === process.env.OWNER_ID;
+    const hasPerm = ctx.member?.permissions?.has('Administrator');
+    
+    if (!hasPerm && !isOwner) {
       return ctx.reply('❌ You do not have permission to configure my personality.');
     }
 
-    let config = await GuildConfig.findOne({ guildId: ctx.guild.id });
-    if (!config) config = new GuildConfig({ guildId: ctx.guild.id });
+    const targetGuildId = ctx.guild ? ctx.guild.id : "1341978655437619250";
+
+    let config = await GuildConfig.findOne({ guildId: targetGuildId });
+    if (!config) config = new GuildConfig({ guildId: targetGuildId });
     if (!config.settings.personality) {
       config.settings.personality = { tone: "calm", humor: 10, strictness: 60, verbosity: 40, respect_bias: 60 };
       await config.save();
