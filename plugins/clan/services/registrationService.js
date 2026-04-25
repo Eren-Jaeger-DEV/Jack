@@ -37,11 +37,6 @@ function buildPanel() {
     new TextDisplayBuilder().setContent('🏆 **CLAN REGISTRATION CENTER**')
   );
 
-  container.addMediaGalleryComponents(
-      new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL('https://cdn.discordapp.com/attachments/1353964404378701916/1423456789123456789/jack_clan.png')
-      )
-  );
 
   container.addSeparatorComponents(new SeparatorBuilder());
 
