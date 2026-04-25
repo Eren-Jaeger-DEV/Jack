@@ -164,6 +164,10 @@ module.exports = {
               if (result.components) payload.components = result.components;
               if (result.flags) payload.flags = result.flags;
               await dmChannel.send(payload).catch(() => {});
+              
+              if (result.secondMessageContent) {
+                await dmChannel.send({ content: result.secondMessageContent }).catch(() => {});
+              }
             }
 
             // --- HARD STOP FOR IMAGES ---
@@ -321,6 +325,11 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
                else {
                  payload.content = "✅ **Action completed.**";
                  await streamingMessage.edit(payload).catch(() => {});
+               }
+
+               if (result.secondMessageContent) {
+                 if (isInteraction) await context.followUp({ content: result.secondMessageContent }).catch(() => {});
+                 else await context.channel.send({ content: result.secondMessageContent }).catch(() => {});
                }
              }
 

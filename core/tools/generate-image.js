@@ -84,19 +84,13 @@ module.exports = {
       const imageBuffer = Buffer.from(prediction.bytesBase64Encoded, 'base64');
       const attachment = new AttachmentBuilder(imageBuffer, { name: 'jack-gen.png' });
 
-      const embed = new EmbedBuilder()
-        .setTitle("🎨 Jack's Artistic Vision")
-        .setDescription(`**Prompt:** ${prompt}`)
-        .setImage('attachment://jack-gen.png')
-        .setColor('#FF00FF')
-        .setFooter({ text: `Generated via Imagen 3 | Requested by ${member.user.tag}` })
-        .setTimestamp();
+      const detailsMessage = `🎨 **Jack's Artistic Vision**\n**Prompt:** ${prompt}\n\n*Generated via Imagen 3 | Requested by ${member.user.tag}*`;
 
       return { 
         success: true, 
         message: "Image generated successfully.",
         files: [attachment],
-        embeds: [embed]
+        secondMessageContent: detailsMessage
       };
 
     } catch (error) {
