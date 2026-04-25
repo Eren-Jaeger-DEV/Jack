@@ -1,6 +1,6 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const OverviewConfig = require('../models/OverviewConfig');
-const { buildOverviewEmbed, buildOverviewDropdown } = require('../services/overviewService');
+const { buildOverviewContainer, buildOverviewDropdown } = require('../services/overviewService');
 
 module.exports = {
     name: 'setup-overview',
@@ -25,7 +25,7 @@ module.exports = {
             config = await OverviewConfig.create({ guildId: ctx.guildId, sections: [] });
         }
 
-        const embed = buildOverviewEmbed(ctx.guild);
+        const container = buildOverviewContainer(ctx.guild);
         const row = buildOverviewDropdown(config.sections);
 
         const isFirstTime = !config.overviewMessageId;
@@ -36,8 +36,8 @@ module.exports = {
                 const oldMessage = await channel.messages.fetch(config.overviewMessageId);
                 if (oldMessage) {
                     message = await oldMessage.edit({ 
-                        embeds: [embed], 
-                        components: row ? [row] : [] 
+                        components: row ? [container, row] : [container],
+                        flags: MessageFlags.IsComponentsV2
                     });
                 }
             } catch (err) {
@@ -47,8 +47,8 @@ module.exports = {
 
         if (!message) {
             message = await channel.send({ 
-                embeds: [embed], 
-                components: row ? [row] : [] 
+                components: row ? [container, row] : [container],
+                flags: MessageFlags.IsComponentsV2
             });
             config.overviewMessageId = message.id;
             await config.save();

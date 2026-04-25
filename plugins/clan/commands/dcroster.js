@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { 
+  SlashCommandBuilder, 
+  ContainerBuilder, 
+  TextDisplayBuilder, 
+  SeparatorBuilder, 
+  MessageFlags 
+} = require("discord.js");
 const Player = require("../../../bot/database/models/Player");
 
 module.exports = {
@@ -23,7 +29,16 @@ module.exports = {
       return ctx.reply("❌ No discord members registered yet.");
     }
 
-    // Header
+    const container = new ContainerBuilder();
+
+    // 1. Header
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("🛡️ **Official DC Member Roster**")
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    // 2. Roster List
     let list = "` ID   | IGN             | UID        `\n";
     
     for (let i = 0; i < players.length; i++) {
@@ -37,16 +52,28 @@ module.exports = {
         const discordMention = p.discordId ? `<@${p.discordId}>` : "Unlinked";
         
         list += `\`${id} | ${ign} | ${uid} \` ${discordMention}\n`;
+
+        if (list.length > 800) {
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+            list = "";
+        }
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle("🛡️ Official DC Member Roster")
-      .setDescription(list)
-      .setColor("#FFD700") // Gold color for members
-      .setFooter({ text: `Total Members: ${players.length}` })
-      .setTimestamp();
+    if (list) {
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+    }
 
-    await ctx.reply({ embeds: [embed] });
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    // 3. Footer
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`*Total Members: ${players.length}*`)
+    );
+
+    await ctx.reply({ 
+        components: [container],
+        flags: MessageFlags.IsComponentsV2
+    });
 
   }
 

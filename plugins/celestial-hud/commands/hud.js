@@ -1,4 +1,16 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { 
+  SlashCommandBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  MessageFlags,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder
+} = require('discord.js');
 const hudService = require('../services/hudDataService');
 const logger = require('../../../utils/logger');
 
@@ -21,17 +33,16 @@ module.exports = {
   async run(ctx) {
     const target = ctx.options.getUser('target') || ctx.user;
 
-    // Defer because multi-service aggregation might take a moment
     await ctx.defer();
 
     try {
       const data = await hudService.getMemberHUDData(ctx.guild, target.id);
-      const embed = this.buildHUDEmbed(target, data);
+      const container = this.buildHUDContainer(target, data);
       const row = this.buildHUDButtons(target.id);
 
       await ctx.editReply({
-        embeds: [embed],
-        components: [row]
+        components: [container, row],
+        flags: MessageFlags.IsComponentsV2
       });
     } catch (err) {
       logger.error("HUD", `Failed to generate HUD for ${target.tag}: ${err.message}`);
@@ -40,40 +51,60 @@ module.exports = {
   },
 
   /**
-   * Build the premium HUD embed.
+   * Build the premium HUD container.
    */
-  buildHUDEmbed(user, data) {
+  buildHUDContainer(user, data) {
     const progressBar = this.generateProgressBar(data.leveling.progress);
+    const container = new ContainerBuilder();
 
-    const embed = new EmbedBuilder()
-      .setAuthor({
-        name: `CELESTIAL HUD v1.0`,
-        iconURL: 'https://cdn-icons-png.flaticon.com/512/1067/1067562.png'
-      })
-      .setTitle(`🖥️ Tactical Status: ${user.username.toUpperCase()}`)
-      .setThumbnail(user.displayAvatarURL({ dynamic: true, size: 256 }))
-      .setColor('#00D2FF') // Celestial Blue
-      .addFields(
-        {
-          name: '🧬 NEURAL STANDING',
-          value: `**Level:** ${data.leveling.level}\n**XP Progress:** ${data.leveling.progress}%\n${progressBar}\n\`${data.leveling.xpToNext} XP until next tier\``,
-          inline: false
-        },
-        {
-          name: '⚡ SYNERGY ARCHIVE',
-          value: `**Weekly:** ${data.synergy.weekly.toLocaleString()}\n**Season:** ${data.synergy.season.toLocaleString()}`,
-          inline: true
-        },
-        {
-          name: '🤝 FOSTER PROTOCOL',
-          value: data.foster ? `**Role:** ${data.foster.role}\n**Partner:** <@${data.foster.partnerId}>\n**Shared Pts:** ${data.foster.points}` : "*No active deployment*",
-          inline: true
-        }
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`🖥️ **Tactical Status: ${user.username.toUpperCase()}**`)
+    );
+
+    container.addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setURL(user.displayAvatarURL({ size: 256 }))
+        )
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `🧬 **NEURAL STANDING**\n` +
+        `**Level:** ${data.leveling.level}\n` +
+        `**XP Progress:** ${data.leveling.progress}%\n` +
+        `${progressBar}\n` +
+        `\`${data.leveling.xpToNext} XP until next tier\``
       )
-      .setFooter({ text: `Neural Identity Active | Strategic Asset ID: ${user.id}` })
-      .setTimestamp();
+    );
 
-    return embed;
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `⚡ **SYNERGY ARCHIVE**\n` +
+        `**Weekly:** ${data.synergy.weekly.toLocaleString()}\n` +
+        `**Season:** ${data.synergy.season.toLocaleString()}`
+      )
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `🤝 **FOSTER PROTOCOL**\n` +
+        (data.foster ? `**Role:** ${data.foster.role}\n**Partner:** <@${data.foster.partnerId}>\n**Shared Pts:** ${data.foster.points}` : "*No active deployment*")
+      )
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`*Neural Identity Active | Strategic Asset ID: ${user.id}*`)
+    );
+
+    return container;
   },
 
   /**
@@ -90,7 +121,7 @@ module.exports = {
         .setCustomId(`hud_profile_link`)
         .setLabel('Deep Audit')
         .setStyle(ButtonStyle.Secondary)
-        .setDisabled(true) // Placeholder for future full profile integration
+        .setDisabled(true)
     );
   },
 

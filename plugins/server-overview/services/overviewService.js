@@ -1,33 +1,52 @@
-const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { 
+  ActionRowBuilder, 
+  StringSelectMenuBuilder,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MessageFlags
+} = require('discord.js');
 
 /**
- * Builds the overview display embed.
+ * Builds the overview display container.
  */
-function buildOverviewEmbed(guild, section = null) {
-    const embed = new EmbedBuilder()
-        .setTitle("Server Overview")
-        .setColor("#f70808")
-        .setTimestamp();
+function buildOverviewContainer(guild, section = null) {
+    const container = new ContainerBuilder();
 
     if (!section) {
-        embed.setDescription(
-            `# Welcome to ${guild?.name || 'our Server'}\n\n` +
-            `We’re glad to have you here. This server represents the official community of **JackPirates**, built to connect members, streamline communication, and enhance coordination.\n\n` +
-            `To get started, please use the **Server Overview Panel** available in this channel.\n\n` +
-            `**How to Navigate:**\n\n` +
-            `* Select a category from the dropdown menu in the panel\n` +
-            `* Each category provides relevant channels, clan activities, information, and guidelines\n` +
-            `* Follow the instructions within each section to access the appropriate areas\n\n` +
-            `This system is designed to keep everything organized and easy to navigate. Please make sure to review the sections carefully before participating.\n\n` +
-            `Thank you for being part of the community.`
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(`# Welcome to ${guild?.name || 'our Server'}`)
+        );
+
+        container.addSeparatorComponents(new SeparatorBuilder());
+
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+                `We’re glad to have you here. This server represents the community of **Jack**, built to connect members and streamline coordination.\n\n` +
+                `**How to Navigate:**\n` +
+                `* Select a category from the dropdown menu below.\n` +
+                `* Each category provides relevant channels and guidelines.\n` +
+                `* Follow instructions within each section to access areas.\n\n` +
+                `*This system is designed to keep everything organized and easy to navigate.*`
+            )
         );
     } else {
-        embed.setTitle(section.name);
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(`## ${section.name}`)
+        );
+
+        container.addSeparatorComponents(new SeparatorBuilder());
+
+        const sectionContent = new SectionBuilder();
         const content = section.items.map(i => `**${i.title}**\n${i.description}`).join('\n\n');
-        embed.setDescription(content || "_No items in this section._");
+        
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(content || "_No items in this section._")
+        );
     }
 
-    return embed;
+    return container;
 }
 
 /**
@@ -49,6 +68,6 @@ function buildOverviewDropdown(sections) {
 }
 
 module.exports = {
-    buildOverviewEmbed,
+    buildOverviewContainer,
     buildOverviewDropdown
 };

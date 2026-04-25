@@ -1,4 +1,15 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags } = require('discord.js');
+const { 
+  SlashCommandBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ComponentType, 
+  MessageFlags,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder
+} = require('discord.js');
 const Player = require('../../../bot/database/models/Player');
 
 module.exports = {
@@ -24,22 +35,18 @@ module.exports = {
         return ctx.reply("❌ Target role (Clan Member) not configured.");
       }
 
-      // Fetch members safely
       await ctx.guild.members.fetch();
       const role = ctx.guild.roles.cache.get(targetRoleId);
-
       
       if (!role) {
         return ctx.reply("❌ Target role not found on this server.");
       }
 
       const roleMembers = role.members;
-      
       if (!roleMembers || roleMembers.size === 0) {
         return ctx.reply("❌ No members found with the target role.");
       }
 
-      // Fetch DB players once
       const allPlayers = await Player.find({}).select('discordId').lean();
       const registeredIds = new Set(allPlayers.map(p => p.discordId));
 
@@ -47,25 +54,18 @@ module.exports = {
       const notRegistered = [];
 
       for (const [id, member] of roleMembers) {
-        if (registeredIds.has(id)) {
-          registered.push(member);
-        } else {
-          notRegistered.push(member);
-        }
+        if (registeredIds.has(id)) registered.push(member);
+        else notRegistered.push(member);
       }
 
       const totalMembers = roleMembers.size;
       const registeredCount = registered.length;
       const notRegisteredCount = notRegistered.length;
-      const completionPercentage = totalMembers > 0 
-        ? ((registeredCount / totalMembers) * 100).toFixed(1)
-        : "0.0";
+      const completionPercentage = totalMembers > 0 ? ((registeredCount / totalMembers) * 100).toFixed(1) : "0.0";
 
       const chunkArray = (arr, size) => {
         const chunks = [];
-        for (let i = 0; i < arr.length; i += size) {
-          chunks.push(arr.slice(i, i + size));
-        }
+        for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
         return chunks;
       };
 
@@ -73,50 +73,47 @@ module.exports = {
       const regChunks = chunkArray(registered, MAX_PER_PAGE);
       const unregChunks = chunkArray(notRegistered, MAX_PER_PAGE);
 
+      const statsBlock = `**Total Members:** ${totalMembers}\n**Registered:** ${registeredCount} | **Unregistered:** ${notRegisteredCount}\n**Completion:** ${completionPercentage}%`;
+
       const pages = [];
-      const statsBlock = `**Total:** ${totalMembers}\n**Registered:** ${registeredCount}\n**Unregistered:** ${notRegisteredCount}\n**Completion:** ${completionPercentage}%`;
 
       // ── BUILD UNREGISTERED PAGES ──
       if (unregChunks.length === 0) {
-        pages.push(
-          new EmbedBuilder()
-            .setTitle("📋 Audit: Unregistered Members")
-            .setColor("Red")
-            .setDescription("All members are registered! 🎉")
-            .addFields({ name: "📊 Statistics", value: statsBlock })
-        );
+        const c = new ContainerBuilder();
+        c.addTextDisplayComponents(new TextDisplayBuilder().setContent("📋 **Audit: Unregistered Members**"));
+        c.addSeparatorComponents(new SeparatorBuilder());
+        c.addTextDisplayComponents(new TextDisplayBuilder().setContent("All members are registered! 🎉\n\n" + statsBlock));
+        pages.push(c);
       } else {
         unregChunks.forEach((chunk, idx) => {
+          const c = new ContainerBuilder();
           const list = chunk.map(m => `<@${m.id}>`).join('\n') || "None";
-          pages.push(
-            new EmbedBuilder()
-              .setTitle(`📋 Audit: Unregistered Members ${unregChunks.length > 1 ? `(Page ${idx + 1}/${unregChunks.length})` : ''}`)
-              .setColor("Red")
-              .setDescription(list)
-              .addFields({ name: "📊 Statistics", value: statsBlock })
-          );
+          c.addTextDisplayComponents(new TextDisplayBuilder().setContent(`📋 **Audit: Unregistered Members** ${unregChunks.length > 1 ? `(Page ${idx + 1}/${unregChunks.length})` : ''}`));
+          c.addSeparatorComponents(new SeparatorBuilder());
+          c.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+          c.addSeparatorComponents(new SeparatorBuilder());
+          c.addTextDisplayComponents(new TextDisplayBuilder().setContent(statsBlock));
+          pages.push(c);
         });
       }
 
       // ── BUILD REGISTERED PAGES ──
       if (regChunks.length === 0) {
-        pages.push(
-          new EmbedBuilder()
-            .setTitle("📋 Audit: Registered Members")
-            .setColor("Green")
-            .setDescription("No members are currently registered.")
-            .addFields({ name: "📊 Statistics", value: statsBlock })
-        );
+        const c = new ContainerBuilder();
+        c.addTextDisplayComponents(new TextDisplayBuilder().setContent("📋 **Audit: Registered Members**"));
+        c.addSeparatorComponents(new SeparatorBuilder());
+        c.addTextDisplayComponents(new TextDisplayBuilder().setContent("No members are currently registered.\n\n" + statsBlock));
+        pages.push(c);
       } else {
         regChunks.forEach((chunk, idx) => {
+          const c = new ContainerBuilder();
           const list = chunk.map(m => `<@${m.id}>`).join('\n') || "None";
-          pages.push(
-             new EmbedBuilder()
-              .setTitle(`📋 Audit: Registered Members ${regChunks.length > 1 ? `(Page ${idx + 1}/${regChunks.length})` : ''}`)
-              .setColor("Green")
-              .setDescription(list)
-              .addFields({ name: "📊 Statistics", value: statsBlock })
-          );
+          c.addTextDisplayComponents(new TextDisplayBuilder().setContent(`📋 **Audit: Registered Members** ${regChunks.length > 1 ? `(Page ${idx + 1}/${regChunks.length})` : ''}`));
+          c.addSeparatorComponents(new SeparatorBuilder());
+          c.addTextDisplayComponents(new TextDisplayBuilder().setContent(list));
+          c.addSeparatorComponents(new SeparatorBuilder());
+          c.addTextDisplayComponents(new TextDisplayBuilder().setContent(statsBlock));
+          pages.push(c);
         });
       }
 
@@ -138,16 +135,15 @@ module.exports = {
       };
 
       const message = await ctx.reply({
-        embeds: [pages[currentPage]],
-        components: pages.length > 1 ? [getRow()] : [],
-        fetchReply: true
+        components: [pages[currentPage], ...(pages.length > 1 ? [getRow()] : [])],
+        flags: MessageFlags.IsComponentsV2
       });
 
       if (!message || pages.length <= 1) return;
 
       const collector = message.createMessageComponentCollector({
         componentType: ComponentType.Button,
-        time: 300_000 // 5 mins
+        time: 300_000
       });
 
       collector.on('collect', async (i) => {
@@ -155,15 +151,11 @@ module.exports = {
           return i.reply({ content: '❌ You cannot use these buttons.', flags: [MessageFlags.Ephemeral] });
         }
 
-        if (i.customId === 'audit_prev' && currentPage > 0) {
-          currentPage--;
-        } else if (i.customId === 'audit_next' && currentPage < pages.length - 1) {
-          currentPage++;
-        }
+        if (i.customId === 'audit_prev' && currentPage > 0) currentPage--;
+        else if (i.customId === 'audit_next' && currentPage < pages.length - 1) currentPage++;
 
         await i.update({
-          embeds: [pages[currentPage]],
-          components: [getRow()]
+          components: [pages[currentPage], getRow()]
         });
       });
 
@@ -173,7 +165,10 @@ module.exports = {
             new ButtonBuilder().setCustomId('d1').setLabel('◀ Previous').setStyle(ButtonStyle.Secondary).setDisabled(true),
             new ButtonBuilder().setCustomId('d2').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(true)
           );
-          await message.edit({ components: [disabledRow] }).catch(() => {});
+          await message.edit({ 
+            components: [pages[currentPage], disabledRow],
+            flags: MessageFlags.IsComponentsV2 
+          }).catch(() => {});
         } catch {}
       });
 

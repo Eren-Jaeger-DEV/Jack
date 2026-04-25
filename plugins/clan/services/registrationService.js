@@ -6,12 +6,17 @@
  */
 
 const { 
-  EmbedBuilder, 
   ActionRowBuilder, 
   ButtonBuilder, 
   ButtonStyle, 
   StringSelectMenuBuilder,
-  MessageFlags
+  MessageFlags,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder
 } = require('discord.js');
 const logger = require('../../../utils/logger');
 
@@ -23,22 +28,33 @@ const DB_CHANNEL_ID = '1479697157840830524';
 const activeSessions = new Map();
 
 /**
- * Build the main registration panel embed and buttons.
+ * Build the main registration panel container and buttons.
  */
 function buildPanel() {
-  const embed = new EmbedBuilder()
-    .setTitle('🏆 CLAN REGISTRATION CENTER')
-    .setDescription(
+  const container = new ContainerBuilder();
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🏆 **CLAN REGISTRATION CENTER**')
+  );
+
+  container.addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL('https://cdn.discordapp.com/attachments/1353964404378701916/1423456789123456789/jack_clan.png')
+      )
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
       'Welcome to the official Clan Registration Panel. Please use the buttons below to manage your profile.\n\n' +
       '✅ **Register:** New members click here to join the roster.\n' +
       '📝 **Edit:** Update your existing IGN, UID, or Level.\n' +
       '❌ **Delete:** Remove your profile from the database.\n\n' +
-      '> **Note:** Registration requires a screenshot of your **BGMI Basic Info** stats card.'
+      '> **Note:** Registration requires a screenshot of your **BGMI Basic Info** stats card.\n\n' +
+      '*Jack Management Systems*'
     )
-    .setColor('#00FFCC')
-    .setThumbnail('https://cdn.discordapp.com/attachments/1353964404378701916/1423456789123456789/jack_clan.png') // Placeholder
-    .setFooter({ text: 'Jack Management Systems' })
-    .setTimestamp();
+  );
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -58,7 +74,10 @@ function buildPanel() {
       .setEmoji('🗑️')
   );
 
-  return { embeds: [embed], components: [row] };
+  return { 
+    components: [container, row], 
+    flags: MessageFlags.IsComponentsV2 
+  };
 }
 
 /**
@@ -84,7 +103,11 @@ function buildRoleSelection() {
     ]);
 
   const row = new ActionRowBuilder().addComponents(select);
-  return { content: 'Please select how you want to register:', components: [row], flags: [MessageFlags.Ephemeral] };
+  return { 
+    content: 'Please select how you want to register:', 
+    components: [row], 
+    flags: MessageFlags.Ephemeral 
+  };
 }
 
 /**
@@ -151,7 +174,11 @@ function buildAdminRegisterOptions() {
       .setEmoji('👥')
   );
 
-  return { content: '🛡️ **Admin Registration Hub**\nWho are you registering today?', components: [row], flags: [MessageFlags.Ephemeral] };
+  return { 
+    content: '🛡️ **Admin Registration Hub**\nWho are you registering today?', 
+    components: [row], 
+    flags: MessageFlags.Ephemeral 
+  };
 }
 
 /**
@@ -171,7 +198,11 @@ function buildAdminEditOptions() {
       .setEmoji('🔍')
   );
 
-  return { content: '📝 **Admin Edit Hub**\nWhose profile needs an update?', components: [row], flags: [MessageFlags.Ephemeral] };
+  return { 
+    content: '📝 **Admin Edit Hub**\nWhose profile needs an update?', 
+    components: [row], 
+    flags: MessageFlags.Ephemeral 
+  };
 }
 
 /**
@@ -191,7 +222,11 @@ function buildAdminDeleteOptions() {
       .setEmoji('🚫')
   );
 
-  return { content: '🗑️ **Admin Delete Hub**\nSelect the target for profile removal:', components: [row], flags: [MessageFlags.Ephemeral] };
+  return { 
+    content: '🗑️ **Admin Delete Hub**\nSelect the target for profile removal:', 
+    components: [row], 
+    flags: MessageFlags.Ephemeral 
+  };
 }
 
 /**
@@ -204,7 +239,11 @@ function buildUserSelector(customId) {
     .setPlaceholder('Select the target member...');
 
   const row = new ActionRowBuilder().addComponents(select);
-  return { content: '👥 **Target Selection**\nPlease select the member from the list below:', components: [row], flags: [MessageFlags.Ephemeral] };
+  return { 
+    content: '👥 **Target Selection**\nPlease select the member from the list below:', 
+    components: [row], 
+    flags: MessageFlags.Ephemeral 
+  };
 }
 
 module.exports = {

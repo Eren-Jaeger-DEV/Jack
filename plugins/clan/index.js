@@ -52,14 +52,31 @@ module.exports = {
       if (!channel) return logger.warn('Registration', `Panel channel ${regService.PANEL_CHANNEL_ID} not found.`);
 
       const messages = await channel.messages.fetch({ limit: 50 });
-      const existing = messages.find(m => m.author.id === client.user.id && m.embeds?.[0]?.title === '🏆 CLAN REGISTRATION CENTER');
+      
+      // 1. Check for the NEW V2 panel (type 20 is Container)
+      const v2Panel = messages.find(m => 
+        m.author.id === client.user.id && 
+        m.components?.[0]?.type === 20
+      );
 
-      if (existing) {
-        logger.info('Registration', 'Panel already exists.');
-      } else {
-        await channel.send(regService.buildPanel());
-        logger.info('Registration', 'Panel deployed successfully.');
+      if (v2Panel) {
+        logger.info('Registration', 'V2 Panel already exists.');
+        return;
       }
+
+      // 2. Check for an OLD legacy panel and delete it to make room
+      const oldPanel = messages.find(m => 
+        m.author.id === client.user.id && 
+        (m.embeds?.[0]?.title?.includes('REGISTRATION') || m.components?.[0]?.components?.[0]?.customId === 'clan_reg_start')
+      );
+
+      if (oldPanel) {
+        logger.info('Registration', 'Old panel detected, purging for upgrade...');
+        await oldPanel.delete().catch(() => {});
+      }
+
+      await channel.send(regService.buildPanel());
+      logger.info('Registration', 'Panel deployed successfully.');
     } catch (err) {
       logger.error('Registration', `ensurePanel error: ${err.message}`);
     }

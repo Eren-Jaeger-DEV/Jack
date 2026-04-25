@@ -1,4 +1,15 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
+const { 
+  SlashCommandBuilder, 
+  PermissionFlagsBits, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ComponentType,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MessageFlags
+} = require("discord.js");
 const Player = require("../../../bot/database/models/Player");
 
 module.exports = {
@@ -29,7 +40,7 @@ module.exports = {
     const igns = players.map(p => p.ign).filter(Boolean);
 
     // Pagination setup
-    const PAGE_SIZE = 50; // 50 IGNs per page to fit within Discord's embed limits
+    const PAGE_SIZE = 50; 
     const pages = [];
     
     for (let i = 0; i < igns.length; i += PAGE_SIZE) {
@@ -38,17 +49,31 @@ module.exports = {
 
     let currentPage = 0;
 
-    const generateEmbed = (pageIndex) => {
+    const generateContainer = (pageIndex) => {
       const currentList = pages[pageIndex];
       const startNum = (pageIndex * PAGE_SIZE) + 1;
       
       const formattedList = currentList.map((ign, idx) => `**${startNum + idx}.** ${ign}`).join('\n');
 
-      return new EmbedBuilder()
-        .setTitle(`📋 All Database IGNs (${igns.length} Total)`)
-        .setColor("Blue")
-        .setDescription(formattedList)
-        .setFooter({ text: `Page ${pageIndex + 1} of ${pages.length}` });
+      const container = new ContainerBuilder();
+      
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`📋 **All Database IGNs (${igns.length} Total)**`)
+      );
+
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(formattedList)
+      );
+
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`*Page ${pageIndex + 1} of ${pages.length}*`)
+      );
+
+      return container;
     };
 
     const getRow = (pageIndex) => {
@@ -74,8 +99,8 @@ module.exports = {
     };
 
     const message = await ctx.reply({
-      embeds: [generateEmbed(currentPage)],
-      components: pages.length > 1 ? [getRow(currentPage)] : [],
+      components: [generateContainer(currentPage), ...(pages.length > 1 ? [getRow(currentPage)] : [])],
+      flags: MessageFlags.IsComponentsV2,
       fetchReply: true
     });
 
@@ -98,13 +123,20 @@ module.exports = {
       }
 
       await i.update({
-        embeds: [generateEmbed(currentPage)],
-        components: [getRow(currentPage)]
+        components: [generateContainer(currentPage), getRow(currentPage)],
+        flags: MessageFlags.IsComponentsV2
       });
     });
 
     collector.on('end', () => {
-      message.edit({ components: [] }).catch(() => {});
+      if (pages.length > 1) {
+        const disabledRow = getRow(currentPage);
+        disabledRow.components.forEach(c => c.setDisabled(true));
+        message.edit({ 
+          components: [generateContainer(currentPage), disabledRow],
+          flags: MessageFlags.IsComponentsV2
+        }).catch(() => {});
+      }
     });
   }
 };

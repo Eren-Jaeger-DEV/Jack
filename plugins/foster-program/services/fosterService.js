@@ -1,12 +1,19 @@
-/**
- * fosterService.js — Core business logic for Foster Program v2
- * 30-Day Plan: 2 Terms (15d each), 3 Cycles per Term (5d each).
- * Features: Targeted Registration, unique reshuffles, 50/50 points.
- */
-
 const FosterProgram = require('../models/FosterProgram');
 const Player = require('../../../bot/database/models/Player');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, ThreadAutoArchiveDuration } = require('discord.js');
+const { 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  AttachmentBuilder, 
+  ThreadAutoArchiveDuration,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  MessageFlags
+} = require('discord.js');
 const configManager = require('../../../bot/utils/configManager');
 const { generatePairingImage, generateDualLeaderboardImage } = require('../utils/fosterCanvas');
 const aiService = require('../../../bot/utils/aiService');
@@ -42,9 +49,16 @@ async function getActiveProgram(guildId) {
 }
 
 async function sendStartConfirmation(message) {
-  const embed = new EmbedBuilder()
-    .setTitle('🛡️ Foster Program v2 | Final Confirmation')
-    .setDescription(
+  const container = new ContainerBuilder();
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🛡️ **Foster Program v2 | Final Confirmation**')
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
       'An administrator has triggered the Foster Program start.\n\n' +
       '**Program Details:**\n' +
       '• **Duration:** 30 Days (2 Terms of 15 Days)\n' +
@@ -52,15 +66,23 @@ async function sendStartConfirmation(message) {
       '• **Verification:** Start/End of every cycle requires stat card screenshots.\n\n' +
       '**Confirm start to initiate Registration Phase?**'
     )
-    .setColor('#FFD700')
-    .setFooter({ text: 'This action will clear any previous active program data.' });
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('*This action will clear any previous active program data.*')
+  );
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('foster_start_confirm').setLabel('Yes, Start Program').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId('foster_start_cancel').setLabel('Cancel').setStyle(ButtonStyle.Danger)
   );
 
-  await message.reply({ embeds: [embed], components: [row] });
+  await message.reply({ 
+    components: [container, row],
+    flags: MessageFlags.IsComponentsV2
+  });
 }
 
 async function initiateRegistration(guild, client) {
@@ -210,16 +232,26 @@ async function finalizeProgram(guild, client, program) {
   const top3M = mentors.slice(0, 3).map((m, i) => `${i+1}. **${m.ign}** (${m.points} pts)`).join('\n');
   const top3P = partners.slice(0, 3).map((m, i) => `${i+1}. **${m.ign}** (${m.points} pts)`).join('\n');
 
-  const embed = new EmbedBuilder()
-    .setTitle('🏁 Foster Program v2 | Final Results')
-    .setDescription('The 30-day program has concluded! Congratulations to our top rankers.')
-    .addFields(
-      { name: '🏆 Top Mentors', value: top3M || 'TBD', inline: true },
-      { name: '🏆 Top Newbies/Veterans', value: top3P || 'TBD', inline: true }
-    )
-    .setColor('#FFD700').setTimestamp();
+  const container = new ContainerBuilder();
 
-  await channel.send({ embeds: [embed] });
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🏁 **Foster Program v2 | Final Results**')
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      'The 30-day program has concluded! Congratulations to our top rankers.\n\n' +
+      '🏆 **Top Mentors**\n' + (top3M || 'None') + '\n\n' +
+      '🏆 **Top Newbies/Veterans**\n' + (top3P || 'None')
+    )
+  );
+
+  await channel.send({ 
+    components: [container],
+    flags: MessageFlags.IsComponentsV2
+  });
   
   // Cleanup roles
   for (const pair of program.pairs) {
@@ -249,14 +281,35 @@ async function postOrientation(client, program, guild) {
 
   const buffer = await generatePairingImage(pairingData, { term: program.term, cycle: program.cycle });
   const attachment = new AttachmentBuilder(buffer, { name: 'foster-pairings.png' });
-  await channel.send({ files: [attachment] });
+  
+  const container = new ContainerBuilder();
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🏆 **Foster Program | Cycle Declared**')
+  );
 
-  const embed = new EmbedBuilder()
-    .setTitle('🏆 Foster Program | Cycle Declared')
-    .setDescription(`Pairs for T${program.term} C${program.cycle} are declared! Submit initial stat cards.`)
-    .setColor('#FFD700').setTimestamp();
+  container.addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL('attachment://foster-pairings.png')
+      )
+  );
 
-  const msg = await channel.send({ content: `<@&${ROLES.ADEPT}> <@&${ROLES.NEOPHYTE}>`, embeds: [embed] });
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`Pairs for T${program.term} C${program.cycle} are declared! Submit initial stat cards.`)
+  );
+
+  // Move mentions to the container
+  container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`<@&${ROLES.ADEPT}> <@&${ROLES.NEOPHYTE}>`)
+  );
+
+  const msg = await channel.send({ 
+    components: [container],
+    files: [attachment],
+    flags: MessageFlags.IsComponentsV2
+  });
+
   const thread = await msg.startThread({ name: `✅ Verification (T${program.term} C${program.cycle})`, autoArchiveDuration: ThreadAutoArchiveDuration.OneDay });
   program.submissionThreadId = thread.id;
   await thread.send('**Submit your "All Data" stat card screenshot here!**\nJack will automatically extract your points. Ensure the dropdown is set to **"SEASON 28"**.');
@@ -309,8 +362,7 @@ async function submitSynergyCard(userId, value, type, selection, screenshotUrl, 
   const isMentor = pair.mentorId === userId;
   const partnerId = isMentor ? pair.partnerId : pair.mentorId;
 
-  // SEASON ENFORCEMENT: Check if the screenshot matches the required category
-  const currentSeason = "SEASON 28"; // This should ideally come from config
+  const currentSeason = "SEASON 28";
   if (selection === "ALL") {
     return { success: false, error: `Invalid category! "ALL" data is not accepted as it includes multiple seasons. Please set the dropdown to **${currentSeason}**.` };
   }
@@ -318,15 +370,13 @@ async function submitSynergyCard(userId, value, type, selection, screenshotUrl, 
   if (selection !== currentSeason) {
     return { success: false, error: `Invalid category! Your screenshot shows **${selection}**, but the program requires **${currentSeason}**.` };
   }
-
-  // Check for partner's pending submission of the SAME type
+  
   const eidx = program.pendingSubmissions.findIndex(s => s.pairIndex === pix && s.userId === partnerId && s.type === type);
   
   if (eidx >= 0) {
     const partnerSub = program.pendingSubmissions[eidx];
     
     if (type === 'initial') {
-      // Save both initial baselines
       if (isMentor) {
         program.pairs[pix].mentorInitial = value;
         program.pairs[pix].partnerInitial = partnerSub.value;
@@ -338,7 +388,6 @@ async function submitSynergyCard(userId, value, type, selection, screenshotUrl, 
       await program.save();
       return { success: true, matched: true, type, value, partnerValue: partnerSub.value };
     } else {
-      // Final Submission: Calculate pooled growth
       const mentorInitial = program.pairs[pix].mentorInitial || 0;
       const partnerInitial = program.pairs[pix].partnerInitial || 0;
       
@@ -351,21 +400,18 @@ async function submitSynergyCard(userId, value, type, selection, screenshotUrl, 
         mentorFinal = partnerSub.value;
       }
 
-      // Growth calculation: (Final - Initial)
       const mentorGrowth = Math.max(0, mentorFinal - mentorInitial);
       const partnerGrowth = Math.max(0, partnerFinal - partnerInitial);
       
       const totalGrowth = mentorGrowth + partnerGrowth;
       const split = totalGrowth / 2;
 
-      // Record points in global maps
       program.mentorPoints.set(pair.mentorId, (program.mentorPoints.get(pair.mentorId) || 0) + split);
       program.partnerPoints.set(pair.partnerId, (program.partnerPoints.get(pair.partnerId) || 0) + split);
       
-      // Save final values to pair record
       program.pairs[pix].mentorFinal = mentorFinal;
       program.pairs[pix].partnerFinal = partnerFinal;
-      program.pairs[pix].points += totalGrowth; // Total growth for this cycle
+      program.pairs[pix].points += totalGrowth;
       
       program.pendingSubmissions.splice(eidx, 1);
       program.submittedThisCycle.push(userId, partnerId);
@@ -375,7 +421,6 @@ async function submitSynergyCard(userId, value, type, selection, screenshotUrl, 
     }
   }
 
-  // No partner sub found, add current sub to pending
   program.pendingSubmissions.push({ pairIndex: pix, userId, value, type, screenshotUrl, timestamp: getIST() });
   await program.save();
   return { success: true, matched: false, type, waitingFor: partnerId };
@@ -390,7 +435,6 @@ async function refreshLeaderboard(client, program) {
 
     const mentors = []; const partners = [];
     for (const pair of program.pairs) {
-      // Mentor
       const mm = await guild.members.fetch(pair.mentorId).catch(() => null);
       const mp = await Player.findOne({ discordId: pair.mentorId });
       const mPts = program.mentorPoints.get(pair.mentorId) || 0;
@@ -400,7 +444,6 @@ async function refreshLeaderboard(client, program) {
         avatarURL: mm?.user.displayAvatarURL({ extension: 'png' }) || '' 
       });
 
-      // Partner
       const pm = await guild.members.fetch(pair.partnerId).catch(() => null);
       const pp = await Player.findOne({ discordId: pair.partnerId });
       const pPts = program.partnerPoints.get(pair.partnerId) || 0;
@@ -411,14 +454,25 @@ async function refreshLeaderboard(client, program) {
       });
     }
 
-    // Sort by points descending
     mentors.sort((a, b) => b.points - a.points);
     partners.sort((a, b) => b.points - a.points);
 
     const buffer = await generateDualLeaderboardImage({ mentors, newbies: partners }, { term: program.term, cycle: program.cycle });
-    const embed = new EmbedBuilder().setTitle('🏆 Foster Rankings').setImage('attachment://foster-lb.png').setColor('#2F3136');
     const attachment = new AttachmentBuilder(buffer, { name: 'foster-lb.png' });
-    const payload = { embeds: [embed], files: [attachment] };
+    
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent('🏆 **Foster Rankings**'));
+    container.addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setURL('attachment://foster-lb.png')
+        )
+    );
+
+    const payload = { 
+        components: [container],
+        files: [attachment],
+        flags: MessageFlags.IsComponentsV2
+    };
 
     let msg = null;
 
@@ -432,6 +486,11 @@ async function refreshLeaderboard(client, program) {
     if (!msg) {
       msg = await channel.send(payload);
       program.leaderboardMessageId = msg.id;
+      await program.save();
+    }
+
+  } catch (err) {}
+}oardMessageId = msg.id;
       await program.save();
     }
 

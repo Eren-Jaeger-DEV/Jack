@@ -7,12 +7,17 @@
 'use strict';
 
 const { 
-  EmbedBuilder, 
   ActionRowBuilder, 
   ButtonBuilder, 
   ButtonStyle, 
   StringSelectMenuBuilder,
-  MessageFlags
+  MessageFlags,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder
 } = require('discord.js');
 const battleService = require('../services/battleService');
 const sessionService = require('../services/sessionService');
@@ -22,20 +27,34 @@ const logger = require('../../../utils/logger');
 
 const MOD_CHANNEL_ID = '1479492977305981220';
 
+/**
+ * Build the V2 Automation Panel.
+ */
 function buildPanel() {
-  const embed = new EmbedBuilder()
-    .setTitle('🏆 CLAN BATTLE AUTOMATION')
-    .setDescription(
+  const container = new ContainerBuilder();
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🏆 **CLAN BATTLE AUTOMATION**')
+  );
+
+  container.addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL('https://cdn.discordapp.com/attachments/1353964404378701916/1423456789123456789/jack_battle_automation.png')
+      )
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
       '**Automate battle points entry using screenshots.**\n\n' +
       '1. Click **"Collect Screenshots"** to start.\n' +
       '2. Upload screenshots of the **"Contribution Point Rankings"** list.\n' +
       '3. Click **"Process & Finalize"** to run AI extraction.\n\n' +
-      '> **Note:** Jack will update both Today\'s points and Total points.'
+      '> **Note:** Jack will update both Today\'s points and Total points.\n\n' +
+      '*Clan Management Operations*'
     )
-    .setColor(0x00AE86)
-    .setThumbnail('https://cdn.discordapp.com/attachments/1353964404378701916/1423456789123456789/jack_battle_automation.png')
-    .setFooter({ text: 'Clan Management Operations' })
-    .setTimestamp();
+  );
 
   const startBtn = new ButtonBuilder()
     .setCustomId('battle_start_upload')
@@ -55,7 +74,11 @@ function buildPanel() {
     .setStyle(ButtonStyle.Danger);
 
   const row = new ActionRowBuilder().addComponents(startBtn, processBtn, cancelBtn);
-  return { embeds: [embed], components: [row] };
+
+  return { 
+    components: [container, row],
+    flags: MessageFlags.IsComponentsV2
+  };
 }
 
 async function ensurePanel(client) {
@@ -64,14 +87,31 @@ async function ensurePanel(client) {
     if (!channel) return logger.warn("ClanBattle", `Mod channel ${MOD_CHANNEL_ID} not found.`);
 
     const messages = await channel.messages.fetch({ limit: 50 });
-    const existing = messages.find(m => m.author.id === client.user.id && m.embeds?.[0]?.title === '🏆 CLAN BATTLE AUTOMATION');
+    
+    // 1. Check for the NEW V2 panel (type 20 is Container)
+    const v2Panel = messages.find(m => 
+      m.author.id === client.user.id && 
+      m.components?.[0]?.type === 20
+    );
 
-    if (existing) {
-      logger.info("ClanBattle", "Automation panel found.");
-    } else {
-      await channel.send(buildPanel());
-      logger.info("ClanBattle", "Automation panel created.");
+    if (v2Panel) {
+      logger.info("ClanBattle", "V2 Automation panel found.");
+      return;
     }
+
+    // 2. Check for an OLD legacy panel and delete it to make room
+    const oldPanel = messages.find(m => 
+      m.author.id === client.user.id && 
+      (m.embeds?.[0]?.title?.includes('CLAN BATTLE') || m.components?.[0]?.components?.[0]?.customId === 'battle_start_upload')
+    );
+
+    if (oldPanel) {
+      logger.info("ClanBattle", "Old panel detected, purging for upgrade...");
+      await oldPanel.delete().catch(() => {});
+    }
+
+    await channel.send(buildPanel());
+    logger.info("ClanBattle", "Automation panel created.");
   } catch (err) {
     logger.error("ClanBattle", `ensurePanel error: ${err.message}`);
   }
@@ -153,7 +193,9 @@ async function handleInteraction(interaction) {
   // Handle manual resolution buttons
   if (customId.startsWith('battle_ignore_btn_')) {
     const index = customId.split('_')[3];
-    return interaction.update({ content: `✅ Ignored battle entry index **${index}**.`, components: [], embeds: [] });
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`✅ Ignored battle entry index **${index}**.`));
+    return interaction.update({ content: "", components: [container], flags: MessageFlags.IsComponentsV2, embeds: [] });
   }
 
   if (customId.startsWith('battle_link_btn_')) {
@@ -183,9 +225,13 @@ async function handleInteraction(interaction) {
 
     session.updatedPlayerIds.push(targetUserId);
 
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`✅ Linked \`${name}\` to **${player.ign || targetUserId}**. Points updated!`));
+
     await interaction.update({ 
-      content: `✅ Linked \`${name}\` to **${player.ign || targetUserId}**. Points updated!`, 
-      components: [], 
+      content: "", 
+      components: [container], 
+      flags: MessageFlags.IsComponentsV2,
       embeds: [] 
     });
 
@@ -198,6 +244,15 @@ async function handleInteraction(interaction) {
 async function sendManualResolutionPrompt(channel, unmatchedEntry, index) {
   const { name, today, total } = unmatchedEntry;
   
+  const container = new ContainerBuilder();
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `🔍 **Manual Resolution Required (Clan Battle)**\n` +
+      `Could not find a match for \`${name}\`.\n` +
+      `**Values:** Today: ${today}, Total: ${total}`
+    )
+  );
+
   const ignoreBtn = new ButtonBuilder()
     .setCustomId(`battle_ignore_btn_${index}`)
     .setLabel('Ignore')
@@ -205,14 +260,15 @@ async function sendManualResolutionPrompt(channel, unmatchedEntry, index) {
 
   const linkBtn = new ButtonBuilder()
     .setCustomId(`battle_link_btn_${index}`)
-    .setLabel(`Link "${name}" to a player`)
+    .setLabel(`Link "${name}"`)
     .setStyle(ButtonStyle.Success);
 
   const row = new ActionRowBuilder().addComponents(ignoreBtn, linkBtn);
 
   await channel.send({
-    content: `🔍 **Manual Resolution Required (Clan Battle)**\nCould not find a match for \`${name}\`.\n**Values:** Today: ${today}, Total: ${total}`,
-    components: [row]
+    content: "",
+    components: [container, row],
+    flags: MessageFlags.IsComponentsV2
   });
 }
 
@@ -243,9 +299,13 @@ async function showPlayerSelectMenu(interaction, index, session) {
 
   const row = new ActionRowBuilder().addComponents(select);
 
+  const container = new ContainerBuilder();
+  container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`Select target player for **${name}**:`));
+
   await interaction.update({
-    content: `Select target player for **${name}**:`,
-    components: [row],
+    content: "",
+    components: [container, row],
+    flags: MessageFlags.IsComponentsV2,
     embeds: []
   });
 }

@@ -8,10 +8,15 @@
 'use strict';
 
 const {
-  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  MessageFlags
 } = require('discord.js');
 
 const configManager = require('../../../bot/utils/configManager');
@@ -21,28 +26,35 @@ const { addLog } = require('../../../utils/logger');
 let panelMessageId = null;
 
 /**
- * Build the panel embed and button row.
- * @returns {{ embeds: EmbedBuilder[], components: ActionRowBuilder[] }}
+ * Build the panel container and button row.
+ * @returns {import('discord.js').BaseMessageOptions}
  */
 function buildPanel() {
-  const embed = new EmbedBuilder()
-    .setTitle('🏆 CARD EXCHANGE HUB')
-    .setDescription(
+  const container = new ContainerBuilder();
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🏆 **CARD EXCHANGE HUB**')
+  );
+
+  container.addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL('https://cdn-icons-png.flaticon.com/512/8146/8146767.png')
+      )
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
       'Welcome to the **Card Exchange Marketplace**!\n' +
       'Trade your collectible cards with other members efficiently.\n\n' +
       '📬 **Create Post**\n' +
       'List your own cards and specify what you are looking for.\n\n' +
       '🔍 **Search**\n' +
       'Quickly find a specific card or category in the market.\n\n' +
-      '---'
+      '*CARD EXCHANGE SYSTEM*'
     )
-    .setColor(0xF1C40F) // Gold
-    .setThumbnail('https://cdn-icons-png.flaticon.com/512/8146/8146767.png') // Trading icon
-    .setFooter({ text: 'CARD EXCHANGE SYSTEM', iconURL: 'https://cdn-icons-png.flaticon.com/512/2583/2583344.png' })
-    .setTimestamp();
-
-
-
+  );
 
   const btnPost = new ButtonBuilder()
     .setCustomId('cex_post')
@@ -58,7 +70,12 @@ function buildPanel() {
 
   const row = new ActionRowBuilder().addComponents(btnPost, btnSearch);
 
-  return { embeds: [embed], components: [row] };
+  return { 
+    content: "",
+    embeds: [],
+    components: [container, row],
+    flags: MessageFlags.IsComponentsV2
+  };
 }
 
 /**
@@ -94,7 +111,7 @@ async function ensurePanel(client) {
     const messages = await channel.messages.fetch({ limit: 50 });
     const existing = messages.find(
       m => m.author.id === client.user.id &&
-        m.embeds?.[0]?.title === '🏆 CARD EXCHANGE HUB'
+        m.components?.[0]?.components?.[0]?.customId === 'cex_post' // Detect by custom ID instead of title
     );
 
     if (existing) {

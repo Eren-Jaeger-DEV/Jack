@@ -1,5 +1,5 @@
-const { PermissionFlagsBits, SlashCommandBuilder } = require('discord.js');
-const { buildSetupEmbed, buildSetupRows } = require('../services/setupService');
+const { PermissionFlagsBits, SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { buildSetupContainer, buildSetupRows } = require('../services/setupService');
 
 module.exports = {
   name: 'setup',
@@ -9,12 +9,12 @@ module.exports = {
   permissions: [PermissionFlagsBits.Administrator],
 
   async run(ctx) {
-    const embed = await buildSetupEmbed(ctx.guild);
+    const container = await buildSetupContainer(ctx.guild);
     const rows = buildSetupRows();
 
     await ctx.reply({ 
-      embeds: [embed], 
-      components: rows,
+      components: [container, ...rows],
+      flags: MessageFlags.IsComponentsV2,
       ephemeral: false 
     });
   }

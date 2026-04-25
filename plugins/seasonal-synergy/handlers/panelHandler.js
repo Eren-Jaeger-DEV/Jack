@@ -68,8 +68,6 @@ function buildPanel() {
 
   const row = new ActionRowBuilder().addComponents(startBtn, processBtn, cancelBtn);
   return { 
-    content: "", 
-    embeds: [], 
     components: [container, row], 
     flags: MessageFlags.IsComponentsV2 
   };
@@ -81,15 +79,31 @@ async function ensurePanel(client) {
     if (!channel) return logger.warn("SynergyPanel", `Mod channel ${MOD_CHANNEL_ID} not found.`);
 
     const messages = await channel.messages.fetch({ limit: 50 });
-    // Check for V2 panel (looking for specific component structure or just checking the author)
-    const existing = messages.find(m => m.author.id === client.user.id && (m.components?.[0]?.type === 20 || m.embeds?.[0]?.title === '⚡ SYNERGY AUTOMATION PANEL'));
+    
+    // 1. Check for the NEW V2 panel (type 20 is Container)
+    const v2Panel = messages.find(m => 
+      m.author.id === client.user.id && 
+      m.components?.[0]?.type === 20
+    );
 
-    if (existing) {
-      logger.info("SynergyPanel", "Automation panel found.");
-    } else {
-      await channel.send(buildPanel());
-      logger.info("SynergyPanel", "Automation panel created.");
+    if (v2Panel) {
+      logger.info("SynergyPanel", "V2 Automation panel found.");
+      return;
     }
+
+    // 2. Check for an OLD legacy panel and delete it to make room
+    const oldPanel = messages.find(m => 
+      m.author.id === client.user.id && 
+      (m.embeds?.[0]?.title?.includes('SYNERGY') || m.components?.[0]?.components?.[0]?.customId === 'synergy_start_upload')
+    );
+
+    if (oldPanel) {
+      logger.info("SynergyPanel", "Old panel detected, purging for upgrade...");
+      await oldPanel.delete().catch(() => {});
+    }
+
+    await channel.send(buildPanel());
+    logger.info("SynergyPanel", "Automation panel created.");
   } catch (err) {
     logger.error("SynergyPanel", `ensurePanel error: ${err.message}`);
   }
@@ -164,10 +178,11 @@ async function handleInteraction(interaction) {
     }
   }
 
-  // Handle manual resolution buttons
   if (customId.startsWith('synergy_ignore_btn_')) {
     const index = customId.split('_')[3];
-    return interaction.update({ content: `✅ Ignored entry index **${index}**.`, components: [], embeds: [] });
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`✅ Ignored entry index **${index}**.`));
+    return interaction.update({ content: "", components: [container], flags: MessageFlags.IsComponentsV2, embeds: [] });
   }
 
   if (customId.startsWith('synergy_link_btn_')) {
@@ -196,11 +211,13 @@ async function handleInteraction(interaction) {
     player.lastWeeklySubmission = new Date().toISOString().split('T')[0];
     await player.save();
 
-    session.updatedPlayerIds.push(targetUserId);
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`✅ Linked \`${name}\` to **${player.ign || targetUserId}**.`));
 
     await interaction.update({ 
-      content: `✅ Linked \`${name}\` to **${player.ign || targetUserId}**.`, 
-      components: [], 
+      content: "", 
+      components: [container], 
+      flags: MessageFlags.IsComponentsV2,
       embeds: [] 
     });
 
@@ -225,7 +242,6 @@ async function sendManualResolutionPrompt(channel, unmatchedEntry, index) {
   );
 
   await channel.send({
-    content: "",
     components: [container, row],
     flags: MessageFlags.IsComponentsV2
   });
@@ -256,9 +272,13 @@ async function showPlayerSelectMenu(interaction, index, session) {
     .setPlaceholder(`Select database player for "${name}"...`)
     .addOptions(options);
 
+  const container = new ContainerBuilder();
+  container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`Select the target player for **${name}**:`));
+
   await interaction.update({
-    content: `Select the target player for **${name}**:`,
-    components: [new ActionRowBuilder().addComponents(select)],
+    content: "",
+    components: [container, new ActionRowBuilder().addComponents(select)],
+    flags: MessageFlags.IsComponentsV2,
     embeds: []
   });
 }

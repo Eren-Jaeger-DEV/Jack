@@ -1,5 +1,4 @@
 const { 
-  EmbedBuilder, 
   PermissionFlagsBits, 
   ActionRowBuilder, 
   ModalBuilder, 
@@ -8,6 +7,7 @@ const {
 } = require("discord.js");
 const GuildConfig = require("../../../bot/database/models/GuildConfig");
 const configManager = require("../../../bot/utils/configManager");
+const personalityService = require("../services/personalityService");
 
 module.exports = {
   name: 'interactionCreate',
@@ -36,21 +36,11 @@ module.exports = {
         await configManager.updateGuildConfig(interaction.guildId, {
           "settings.personality": presets[presetName]
         });
-        // fetch latest from DB directly to get fully updated object for embed
+        // fetch latest from DB directly
         config = await GuildConfig.findOne({ guildId: interaction.guildId });
       }
       
-      const p = config.settings.personality;
-      const embed = EmbedBuilder.from(interaction.message.embeds[0])
-        .setFields(
-          { name: '🎭 Tone', value: `\`${p.tone}\``, inline: true },
-          { name: '😂 Humor', value: `\`${p.humor}%\``, inline: true },
-          { name: '⚡ Strictness', value: `\`${p.strictness}%\``, inline: true },
-          { name: '🗣️ Verbosity', value: `\`${p.verbosity}%\``, inline: true },
-          { name: '🤝 Respect Bias', value: `\`${p.respect_bias}%\``, inline: true }
-        );
-      
-      return interaction.update({ content: `✅ Preset applied.`, embeds: [embed] });
+      return interaction.update(personalityService.buildPersonalityPanel(config));
     }
 
     // Button to open Traits Modal
@@ -119,17 +109,7 @@ module.exports = {
       });
       config = await GuildConfig.findOne({ guildId: interaction.guildId });
 
-      const p = config.settings.personality;
-      const embed = EmbedBuilder.from(interaction.message.embeds[0])
-        .setFields(
-          { name: '🎭 Tone', value: `\`${p.tone}\``, inline: true },
-          { name: '😂 Humor', value: `\`${p.humor}%\``, inline: true },
-          { name: '⚡ Strictness', value: `\`${p.strictness}%\``, inline: true },
-          { name: '🗣️ Verbosity', value: `\`${p.verbosity}%\``, inline: true },
-          { name: '🤝 Respect Bias', value: `\`${p.respect_bias}%\``, inline: true }
-        );
-      
-      return interaction.update({ content: `✅ Traits updated successfully.`, embeds: [embed] });
+      return interaction.update(personalityService.buildPersonalityPanel(config));
     }
 
     // Modal Submission - Tone
@@ -147,17 +127,7 @@ module.exports = {
       });
       config = await GuildConfig.findOne({ guildId: interaction.guildId });
 
-      const p = config.settings.personality;
-      const embed = EmbedBuilder.from(interaction.message.embeds[0])
-        .setFields(
-          { name: '🎭 Tone', value: `\`${p.tone}\``, inline: true },
-          { name: '😂 Humor', value: `\`${p.humor}%\``, inline: true },
-          { name: '⚡ Strictness', value: `\`${p.strictness}%\``, inline: true },
-          { name: '🗣️ Verbosity', value: `\`${p.verbosity}%\``, inline: true },
-          { name: '🤝 Respect Bias', value: `\`${p.respect_bias}%\``, inline: true }
-        );
-      
-      return interaction.update({ content: `✅ Tone updated successfully.`, embeds: [embed] });
+      return interaction.update(personalityService.buildPersonalityPanel(config));
     }
 
     /* ---------- ANNOUNCEMENT BUTTON (OPEN MODAL) ---------- */

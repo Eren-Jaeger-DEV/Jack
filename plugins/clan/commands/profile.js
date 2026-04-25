@@ -127,8 +127,6 @@ module.exports = {
     );
 
     const message = await ctx.reply({
-      content: "",
-      embeds: [],
       components: [await buildProfileContainer(), profileRow],
       flags: MessageFlags.IsComponentsV2,
       fetchReply: true
@@ -161,7 +159,11 @@ module.exports = {
         const disabledRow = new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId('profile_expired').setLabel('Session Expired').setStyle(ButtonStyle.Secondary).setDisabled(true)
         );
-        await message.edit({ components: [disabledRow] }).catch(() => {});
+        // We must include the flag and ideally keep a container or it might error
+        await message.edit({ 
+          components: [disabledRow], 
+          flags: MessageFlags.IsComponentsV2 
+        }).catch(() => {});
       } catch {}
     });
   }

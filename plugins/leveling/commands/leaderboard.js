@@ -1,4 +1,16 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { 
+  SlashCommandBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ContainerBuilder, 
+  SectionBuilder, 
+  TextDisplayBuilder, 
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  MessageFlags 
+} = require("discord.js");
 const Level = require("../../../bot/database/models/Level");
 const xpForLevel = require("../utils/xpForLevel");
 
@@ -23,7 +35,6 @@ module.exports = {
     let subCommand = "global";
     let page = pageOverride;
 
-    // Determine subcommand
     if (ctx.isInteraction && ctx.options?.getSubcommand(false)) {
       subCommand = ctx.options.getSubcommand(false);
     } else if (!ctx.isInteraction && ctx.args?.length > 0) {
@@ -34,11 +45,9 @@ module.exports = {
     const isWeekly = subCommand === "weekly";
     const sortField = isWeekly ? "weeklyXp" : "xp";
 
-    // Fetch total users for pagination metadata
     const totalUsers = await Level.countDocuments({ guildId: ctx.guild.id });
     const totalPages = Math.ceil(totalUsers / 10);
 
-    // Fetch current page's users
     const topUsers = await Level.find({ guildId: ctx.guild.id })
       .sort({ [sortField]: -1 })
       .skip(page * 10)
@@ -48,6 +57,24 @@ module.exports = {
       return ctx.reply({ content: "No one has earned XP yet!", ephemeral: true });
     }
 
+    const container = new ContainerBuilder();
+
+    // 1. Header
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`🏆 **${ctx.guild.name} Leaderboard** (${subCommand.toUpperCase()})`)
+    );
+
+    if (ctx.guild.iconURL()) {
+        container.addMediaGalleryComponents(
+            new MediaGalleryBuilder().addItems(
+                new MediaGalleryItemBuilder().setURL(ctx.guild.iconURL({ size: 512 }))
+            )
+        );
+    }
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    // 2. Rankings
     const medals = ["🥇", "🥈", "🥉"];
     let description = "";
 
@@ -57,20 +84,19 @@ module.exports = {
       const xpValue = isWeekly ? user.weeklyXp : user.xp;
       const nextLevelXP = xpForLevel(user.level + 1);
       
-      // Amari-style formatting
       description += `${position} 🔸 <@${user.userId}>\n`;
-      description += `ㅤLevel: \`${user.level}\` \n`;
-      description += `ㅤExp: \`${xpValue.toLocaleString()} / ${nextLevelXP.toLocaleString()}\` \n\n`;
+      description += `ㅤLevel: \`${user.level}\` | Exp: \`${xpValue.toLocaleString()} / ${nextLevelXP.toLocaleString()}\` \n\n`;
     });
 
-    const embed = new EmbedBuilder()
-      .setAuthor({ name: "Leaderboard", iconURL: ctx.client.user.displayAvatarURL() })
-      .setTitle(`${ctx.guild.name} Server`)
-      .setColor("#FFD700")
-      .setThumbnail(ctx.guild.iconURL({ dynamic: true, size: 512 }))
-      .setDescription(description.trim());
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(description.trim()));
 
-    // Build pagination buttons
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    // 3. Footer
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`*Page ${page + 1} of ${totalPages} | Total Users: ${totalUsers}*`)
+    );
+
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`leveling_lb_prev_${page}_${subCommand}`)
@@ -84,14 +110,19 @@ module.exports = {
         .setDisabled(page >= totalPages - 1)
     );
 
-    const components = totalPages > 1 ? [row] : [];
+    const components = [container];
+    if (totalPages > 1) components.push(row);
 
-    // If it's a real interaction update (from a button), update the message.
-    // Otherwise, it's a fresh command run (Slash or Message).
     if (ctx.isInteraction && ctx.deferred) {
-      return await ctx.editReply({ embeds: [embed], components });
+      return await ctx.editReply({ 
+          components,
+          flags: MessageFlags.IsComponentsV2
+      });
     } else {
-      return ctx.reply({ embeds: [embed], components });
+      return ctx.reply({ 
+          components,
+          flags: MessageFlags.IsComponentsV2
+      });
     }
   }
 };

@@ -1,54 +1,90 @@
-const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ChannelType, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+const { 
+  ActionRowBuilder, 
+  ChannelSelectMenuBuilder, 
+  RoleSelectMenuBuilder, 
+  ChannelType, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  StringSelectMenuBuilder,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  MessageFlags
+} = require('discord.js');
 const GuildConfig = require('../../../bot/database/models/GuildConfig');
 
 /**
- * Builds the Infrastructure Health Report.
+ * Builds the Infrastructure Health Report with Components v2.
  */
-/**
- * Builds the Infrastructure Health Report with a Premium Design.
- */
-async function buildSetupEmbed(guild) {
+async function buildSetupContainer(guild) {
   const config = await GuildConfig.findOne({ guildId: guild.id });
   const settings = config?.settings || {};
   const greeting = config?.greetingData || {};
 
   const getStatus = (val) => (val && val !== 'null' && val !== 'undefined') ? '`🟢 Connected` ' : '`🔴 Disconnected`';
 
-  const embed = new EmbedBuilder()
-    .setTitle('🛰️ Neural Bridge — Advanced System Setup')
-    .setColor('#2F3136')
-    .setDescription('Configure the biological and synthetic links between Discord and Jack\'s core systems.')
-    .addFields(
-      { 
-        name: '🛡️ Identity & Security', 
-        value: `**Classification:** ${getStatus(settings.classificationChannelId)}\n**Clan Role:** ${getStatus(settings.clanMemberRoleId)}\n**Owner Role:** ${getStatus(settings.ownerRoleId)}\n**Manager Role:** ${getStatus(settings.managerRoleId)}`, 
-        inline: false 
-      },
-      { 
-        name: '💬 Social Matrix', 
-        value: `**Welcome:** ${getStatus(greeting.welcomeChannelId)}\n**Goodbye:** ${getStatus(greeting.goodbyeChannelId)}\n**General:** ${getStatus(settings.generalChannelId)}`, 
-        inline: true 
-      },
-      { 
-        name: '📡 Infrastructure Logs', 
-        value: `**Global:** ${getStatus(settings.logChannelId)}\n**Voice:** ${getStatus(settings.voiceLogChannelId)}\n**Message:** ${getStatus(settings.messageLogChannelId)}\n**Server:** ${getStatus(settings.serverLogChannelId)}`, 
-        inline: true 
-      },
-      { 
-        name: '🎙️ Voice Systems', 
-        value: `**Join to Create:** ${getStatus(settings.tempvcCreateChannelId)}\n**VC Category:** ${getStatus(settings.tempvcCategoryId)}\n**VC Panel:** ${getStatus(settings.tempvcPanelChannelId)}`, 
-        inline: true 
-      },
-      { 
-        name: '📊 Specialized Logging', 
-        value: `**Invite:** ${getStatus(settings.inviteLogChannelId)}\n**Member:** ${getStatus(settings.memberLogChannelId)}\n**Join-Leave:** ${getStatus(settings.joinLeaveLogChannelId)}\n**Tickets:** ${getStatus(settings.ticketsLogChannelId)}\n**Pop-Log:** ${getStatus(settings.popLogChannelId)}`, 
-        inline: false 
-      }
-    )
-    .setImage('https://cdn.discordapp.com/attachments/1353964404378701916/1410195184943452170/neural_bridge_header.png')
-    .setFooter({ text: 'Neural Links are updated instantly upon selection.', iconURL: guild.iconURL() });
+  const container = new ContainerBuilder();
 
-  return embed;
+  // 1. Header & Image
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🛰️ **Neural Bridge — Advanced System Setup**')
+  );
+  
+  container.addMediaGalleryComponents(
+    new MediaGalleryBuilder().addItems(
+      new MediaGalleryItemBuilder().setURL('https://cdn.discordapp.com/attachments/1353964404378701916/1410195184943452170/neural_bridge_header.png')
+    )
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  // 2. Identity & Security
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `🛡️ **Identity & Security**\n` +
+      `**Classification:** ${getStatus(settings.classificationChannelId)}\n` +
+      `**Clan Role:** ${getStatus(settings.clanMemberRoleId)}\n` +
+      `**Owner Role:** ${getStatus(settings.ownerRoleId)}\n` +
+      `**Manager Role:** ${getStatus(settings.managerRoleId)}`
+    )
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  // 3. Social & Voice
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `💬 **Social Matrix & Voice**\n` +
+      `**Welcome:** ${getStatus(greeting.welcomeChannelId)} | **Goodbye:** ${getStatus(greeting.goodbyeChannelId)}\n` +
+      `**VC Create:** ${getStatus(settings.tempvcCreateChannelId)} | **VC Category:** ${getStatus(settings.tempvcCategoryId)}`
+    )
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  // 4. Infrastructure Logs
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `📡 **Infrastructure Logs**\n` +
+      `**Global:** ${getStatus(settings.logChannelId)} | **Voice:** ${getStatus(settings.voiceLogChannelId)}\n` +
+      `**Message:** ${getStatus(settings.messageLogChannelId)} | **Server:** ${getStatus(settings.serverLogChannelId)}\n` +
+      `**Invite:** ${getStatus(settings.inviteLogChannelId)} | **Member:** ${getStatus(settings.memberLogChannelId)}`
+    )
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  // 5. specialized Status
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `⚙️ *Neural Links are updated instantly upon selection below.*`
+    )
+  );
+
+  return container;
 }
 
 /**
@@ -85,6 +121,6 @@ function buildSetupRows() {
 }
 
 module.exports = {
-  buildSetupEmbed,
+  buildSetupContainer,
   buildSetupRows
 };

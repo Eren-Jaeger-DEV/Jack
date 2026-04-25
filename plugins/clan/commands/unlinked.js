@@ -1,4 +1,15 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
+const { 
+  SlashCommandBuilder, 
+  PermissionFlagsBits, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  ComponentType,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MessageFlags
+} = require("discord.js");
 const Player = require("../../../bot/database/models/Player");
 
 module.exports = {
@@ -35,26 +46,39 @@ module.exports = {
 
     let currentPage = 0;
 
-    const generateEmbed = (pageIndex) => {
+    const generateContainer = (pageIndex) => {
       const currentList = pages[pageIndex];
-      const embed = new EmbedBuilder()
-        .setTitle(`📋 Unlinked Profiles (${unlinkedProfiles.length} Total)`)
-        .setColor("Orange")
-        .setDescription("These profiles were manually created and have no linked Discord user. Use `/profiletransfer` to link them.")
-        .setFooter({ text: `Page ${pageIndex + 1} of ${pages.length}` });
+      const container = new ContainerBuilder();
+      
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`📋 **Unlinked Profiles (${unlinkedProfiles.length} Total)**`)
+      );
 
-      const fields = currentList.map((p, idx) => {
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent("These profiles were manually created and have no linked Discord user. Use `/profiletransfer` to link them.")
+      );
+
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      const listItems = currentList.map((p, idx) => {
         const index = (pageIndex * PAGE_SIZE) + idx + 1;
         const dateStr = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Unknown';
-        return {
-          name: `${index}. ${p.ign || 'Unknown IGN'}`,
-          value: `**UID:** ${p.uid || 'N/A'}\n**Level:** ${p.accountLevel || 'N/A'} | **Created:** ${dateStr}`,
-          inline: false
-        };
+        return `**${index}. ${p.ign || 'Unknown IGN'}**\n**UID:** ${p.uid || 'N/A'}\n**Level:** ${p.accountLevel || 'N/A'} | **Created:** ${dateStr}`;
       });
 
-      embed.addFields(fields);
-      return embed;
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(listItems.join('\n\n'))
+      );
+
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`*Page ${pageIndex + 1} of ${pages.length}*`)
+      );
+
+      return container;
     };
 
     const getRow = (pageIndex) => {
@@ -80,8 +104,8 @@ module.exports = {
     };
 
     const message = await ctx.reply({
-      embeds: [generateEmbed(currentPage)],
-      components: pages.length > 1 ? [getRow(currentPage)] : [],
+      components: [generateContainer(currentPage), ...(pages.length > 1 ? [getRow(currentPage)] : [])],
+      flags: MessageFlags.IsComponentsV2,
       fetchReply: true
     });
 
@@ -107,13 +131,20 @@ module.exports = {
       }
 
       await i.editReply({
-        embeds: [generateEmbed(currentPage)],
-        components: [getRow(currentPage)]
+        components: [generateContainer(currentPage), getRow(currentPage)],
+        flags: MessageFlags.IsComponentsV2
       });
     });
 
     collector.on('end', () => {
-      message.edit({ components: [] }).catch(() => {});
+      if (pages.length > 1) {
+        const disabledRow = getRow(currentPage);
+        disabledRow.components.forEach(c => c.setDisabled(true));
+        message.edit({ 
+          components: [generateContainer(currentPage), disabledRow],
+          flags: MessageFlags.IsComponentsV2
+        }).catch(() => {});
+      }
     });
   }
 };

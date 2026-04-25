@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require("discord.js");
+const { 
+  SlashCommandBuilder, 
+  PermissionFlagsBits, 
+  ContainerBuilder, 
+  TextDisplayBuilder, 
+  SeparatorBuilder, 
+  MessageFlags 
+} = require("discord.js");
 const configManager = require("../../../bot/utils/configManager");
 
 module.exports = {
@@ -55,13 +62,27 @@ module.exports = {
     if (subcommand === "review") {
       const config = await configManager.getGuildConfig(ctx.guildId);
       const prefix = config?.prefix || "j";
-      const embed = new EmbedBuilder()
-        .setTitle("🤖 Prefix Configuration")
-        .setDescription(`Current server prefix: \`${prefix}\`\nMaster prefix: \`j\` (always active)`)
-        .setColor("Blue")
-        .setFooter({ text: "Use /prefix set to change the prefix" });
       
-      return ctx.reply({ embeds: [embed] });
+      const container = new ContainerBuilder();
+
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent("🤖 **Prefix Configuration**")
+      );
+
+      container.addSeparatorComponents(new SeparatorBuilder());
+
+      container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          `Current server prefix: \`${prefix}\`\n` +
+          `Master prefix: \`j\` (always active)\n\n` +
+          `*Use /prefix set to change the prefix*`
+        )
+      );
+      
+      return ctx.reply({ 
+        components: [container],
+        flags: MessageFlags.IsComponentsV2
+      });
     }
   }
 };

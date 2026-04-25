@@ -8,10 +8,13 @@
 'use strict';
 
 const {
-  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MessageFlags
 } = require('discord.js');
 
 const configManager = require('../../../bot/utils/configManager');
@@ -21,17 +24,22 @@ const logger = require('../../../utils/logger');
 let panelMessageId = null;
 
 function buildPanel() {
-  const embed = new EmbedBuilder()
-    .setTitle('🗃️ Card Database — Control Panel')
-    .setDescription(
+  const container = new ContainerBuilder();
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent('🗃️ **Card Database — Control Panel**')
+  );
+
+  container.addSeparatorComponents(new SeparatorBuilder());
+
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
       '**Manage all card categories and cards from Discord.**\n\n' +
       '📁 **Add Category** — Create a new card category (thread)\n' +
       '🔄 **Sync Database** — Fetch all threads and rebuild the card cache\n\n' +
-      '> Only administrators can use these controls.'
+      '> *Only administrators can use these controls.*'
     )
-    .setColor(0x5865F2)
-    .setFooter({ text: 'Card Database CMS' })
-    .setTimestamp();
+  );
 
   const addCatBtn = new ButtonBuilder()
     .setCustomId('cdb_add_cat')
@@ -46,7 +54,11 @@ function buildPanel() {
     .setEmoji('🔄');
 
   const row = new ActionRowBuilder().addComponents(addCatBtn, syncBtn);
-  return { embeds: [embed], components: [row] };
+
+  return { 
+    components: [container, row],
+    flags: MessageFlags.IsComponentsV2
+  };
 }
 
 async function sendPanel(channel) {
@@ -71,19 +83,32 @@ async function ensurePanel(client) {
     if (!channel) return logger.warn("CardDB", "Database channel not found for panel check.");
 
     const messages = await channel.messages.fetch({ limit: 50 });
-    const existing = messages.find(
-      m =>
-        m.author.id === client.user.id &&
-        m.embeds?.[0]?.title === '🗃️ Card Database — Control Panel'
+    
+    // 1. Check for the NEW V2 panel (type 20 is Container)
+    const v2Panel = messages.find(m => 
+      m.author.id === client.user.id && 
+      m.components?.[0]?.type === 20
     );
 
-    if (existing) {
-      panelMessageId = existing.id;
-      logger.info("CardDB", "Main control panel found.");
-    } else {
-      await sendPanel(channel);
-      logger.info("CardDB", "Main control panel created.");
+    if (v2Panel) {
+      panelMessageId = v2Panel.id;
+      logger.info("CardDB", "V2 Main control panel found.");
+      return;
     }
+
+    // 2. Check for an OLD legacy panel and delete it to make room
+    const oldPanel = messages.find(m => 
+      m.author.id === client.user.id && 
+      (m.embeds?.[0]?.title?.includes('Card Database') || m.components?.[0]?.components?.[0]?.customId === 'cdb_add_cat')
+    );
+
+    if (oldPanel) {
+      logger.info("CardDB", "Old panel detected, purging for upgrade...");
+      await oldPanel.delete().catch(() => {});
+    }
+
+    await sendPanel(channel);
+    logger.info("CardDB", "Main control panel created.");
   } catch (err) {
     logger.error("CardDB", `ensurePanel error: ${err.message}`);
   }

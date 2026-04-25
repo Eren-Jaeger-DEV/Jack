@@ -1,4 +1,16 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
+const { 
+    ActionRowBuilder, 
+    ButtonBuilder, 
+    ButtonStyle, 
+    ChannelType, 
+    ModalBuilder, 
+    TextInputBuilder, 
+    TextInputStyle, 
+    MessageFlags,
+    ContainerBuilder,
+    TextDisplayBuilder,
+    SeparatorBuilder
+} = require('discord.js');
 const { addLog } = require('../../utils/logger');
 const configManager = require('../../bot/utils/configManager');
 const path = require('path');
@@ -28,31 +40,51 @@ async function initControlPanel(client) {
     const channel = await client.channels.fetch(panelChannelId).catch(() => null);
     if (!channel) return;
 
-
-
     // Check if message already exists
     const messages = await channel.messages.fetch({ limit: 10 });
-    const existingPanel = messages.find(m => 
-      m.author.id === client.user.id && 
-      m.embeds?.[0]?.title?.includes('Personal Voice Channel')
-    );
     
-    if (existingPanel) {
-      addLog("TempVC", "Control panel ready");
+    // 1. Check for the NEW V2 panel (type 20 is Container)
+    const v2Panel = messages.find(m => 
+      m.author.id === client.user.id && 
+      m.components?.[0]?.type === 20
+    );
+
+    if (v2Panel) {
+      addLog("TempVC", "V2 Control panel ready");
       return;
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle('🎙️ Personal Voice Channel Control Panel')
-      .setDescription('Use the buttons below to manage your personal voice channel.\n\n' +
+    // 2. Check for an OLD legacy panel and delete it to make room
+    const oldPanel = messages.find(m => 
+      m.author.id === client.user.id && 
+      (m.embeds?.[0]?.title?.includes('Personal Voice Channel') || m.components?.[0]?.components?.[0]?.customId === 'tempvc_lock')
+    );
+
+    if (oldPanel) {
+      addLog("TempVC", "Old panel detected, purging for upgrade...");
+      await oldPanel.delete().catch(() => {});
+    }
+
+    const container = new ContainerBuilder();
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('🎙️ **Personal Voice Channel Control Panel**')
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        'Use the buttons below to manage your personal voice channel.\n\n' +
         '🔒 **Lock** / 🔓 **Unlock**: Restrict or allow others from connecting.\n' +
         '👁️ **Hide** / 👻 **Show**: Hide or show your channel from others.\n' +
         '✏️ **Rename**: Toggle a "(Private)" tag on your channel name.\n' +
         '👥 **Limit**: Toggle user limit between 5 and Unlimited.\n' +
         '👢 **Kick**: Kick a random non-owner member from your VC.\n' +
         '👑 **Transfer**: Transfer ownership to a random member in your VC.\n\n' +
-        '*Must be the VC owner to use these controls!*')
-      .setColor('#2F3136');
+        '*Must be the VC owner to use these controls!*'
+      )
+    );
 
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('tempvc_lock').setLabel('Lock').setEmoji('🔒').setStyle(ButtonStyle.Secondary),
@@ -68,7 +100,10 @@ async function initControlPanel(client) {
       new ButtonBuilder().setCustomId('tempvc_transfer').setLabel('Transfer').setEmoji('👑').setStyle(ButtonStyle.Success)
     );
 
-    await channel.send({ embeds: [embed], components: [row1, row2] });
+    await channel.send({ 
+        components: [container, row1, row2],
+        flags: MessageFlags.IsComponentsV2
+    });
     addLog("TempVC", "Control panel initialized");
   } catch (err) {
     console.error('[TempVC] Error initializing control panel:', err);

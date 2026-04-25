@@ -94,10 +94,14 @@ module.exports = {
         const action = interaction.customId.split('_')[2]; // 'confirm' or 'cancel'
 
         if (action === 'cancel') {
-          return interaction.update({ content: '❌ **Foster V2 start cancelled.**', embeds: [], components: [] });
+          const container = new ContainerBuilder();
+          container.addTextDisplayComponents(new TextDisplayBuilder().setContent('❌ **Foster V2 start cancelled.**'));
+          return interaction.update({ content: "", components: [container], flags: MessageFlags.IsComponentsV2, embeds: [] });
         }
 
-        await interaction.update({ content: '⚡ **Jack: Initiating Foster Program v2 — Registration Phase Start...**', embeds: [], components: [] });
+        const container = new ContainerBuilder();
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent('⚡ **Jack: Initiating Foster Program v2 — Registration Phase Start...**'));
+        await interaction.update({ content: "", components: [container], flags: MessageFlags.IsComponentsV2, embeds: [] });
         
         const result = await fosterService.initiateRegistration(interaction.guild, client);
         if (!result.success) {

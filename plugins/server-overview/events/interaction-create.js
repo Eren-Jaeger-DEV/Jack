@@ -1,7 +1,7 @@
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const OverviewConfig = require('../models/OverviewConfig');
-const { buildOverviewEmbed, buildOverviewDropdown } = require('../services/overviewService');
-const { buildControlPanelEmbed } = require('../services/controlPanelService');
+const { buildOverviewContainer, buildOverviewDropdown } = require('../services/overviewService');
+const { buildControlPanelContainer } = require('../services/controlPanelService');
 const logger = require('../../../utils/logger');
 
 module.exports = {
@@ -34,13 +34,19 @@ module.exports = {
             const section = config.sections.find(s => s.name === sectionName);
             
             // Send the ephemeral details to the user
-            const embed = buildOverviewEmbed(interaction.guild, section);
-            await interaction.reply({ embeds: [embed], flags: [MessageFlags.Ephemeral] });
+            const container = buildOverviewContainer(interaction.guild, section);
+            await interaction.reply({ 
+                components: [container], 
+                flags: [MessageFlags.Ephemeral, MessageFlags.IsComponentsV2] 
+            });
 
             // Reset the main panel dropdown by editing the original message
-            const mainEmbed = buildOverviewEmbed(interaction.guild);
+            const mainContainer = buildOverviewContainer(interaction.guild);
             const row = buildOverviewDropdown(config.sections);
-            await interaction.message.edit({ embeds: [mainEmbed], components: row ? [row] : [] });
+            await interaction.message.edit({ 
+                components: row ? [mainContainer, row] : [mainContainer],
+                flags: MessageFlags.IsComponentsV2
+            });
             return;
         }
 
@@ -272,16 +278,22 @@ async function syncAll(interaction, config) {
             if (channel) {
                 const message = await channel.messages.fetch(config.overviewMessageId).catch(() => null);
                 if (message) {
-                    const embed = buildOverviewEmbed(message.guild);
+                    const container = buildOverviewContainer(message.guild);
                     const row = buildOverviewDropdown(config.sections);
-                    await message.edit({ embeds: [embed], components: row ? [row] : [] });
+                    await message.edit({ 
+                        components: row ? [container, row] : [container],
+                        flags: MessageFlags.IsComponentsV2
+                    });
                 }
             }
         }
 
         // Sync Control Panel
-        const embed = buildControlPanelEmbed(config);
-        await interaction.editReply({ embeds: [embed] });
+        const container = buildControlPanelContainer(config);
+        await interaction.editReply({ 
+            components: [container, ...interaction.message.components.slice(1)], // Keep buttons
+            flags: MessageFlags.IsComponentsV2
+        });
 
     } catch (err) {
         logger.error("ServerOverview", "Sync Failed", { error: err.message });

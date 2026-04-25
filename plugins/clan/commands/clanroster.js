@@ -68,8 +68,6 @@ module.exports = {
     );
 
     await ctx.reply({ 
-      content: "", 
-      embeds: [], 
       components: [container],
       flags: MessageFlags.IsComponentsV2
     });

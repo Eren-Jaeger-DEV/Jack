@@ -131,8 +131,6 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
     if (currentPage >= maxPages && maxPages > 0) currentPage = maxPages - 1;
     
     const payload = { 
-      content: "", 
-      embeds: [], 
       components: generateV2Components(),
       flags: MessageFlags.IsComponentsV2 
     };
@@ -232,7 +230,13 @@ async function spawnBrowserUI(interactionOrCtx, documents, type = "Emoji") {
   });
 
   collector.on('end', () => {
-    msg.edit({ components: [] }).catch(()=>{});
+    const components = generateV2Components();
+    components.forEach(row => {
+        if (row.components && typeof row.components.forEach === 'function') {
+            row.components.forEach(c => { if (typeof c.setDisabled === 'function') c.setDisabled(true); });
+        }
+    });
+    msg.edit({ components, flags: MessageFlags.IsComponentsV2 }).catch(()=>{});
   });
 }
 

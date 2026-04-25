@@ -1,18 +1,36 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MessageFlags
+} = require('discord.js');
 const OverviewConfig = require('../models/OverviewConfig');
 
 /**
- * Builds the control panel embed.
+ * Builds the control panel container.
  */
-function buildControlPanelEmbed(config) {
-    const embed = new EmbedBuilder()
-        .setTitle("🛠️ Overview Control Panel")
-        .setDescription("Manage the server overview content from here.")
-        .setColor("#FEE75C")
-        .addFields({ name: "📊 Sections", value: config.sections.map(s => `• ${s.name} (${s.items.length} items)`).join('\n') || "None" })
-        .setTimestamp();
+function buildControlPanelContainer(config) {
+    const container = new ContainerBuilder();
 
-    return embed;
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("🛠️ **Overview Control Panel**")
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        "Manage the server overview content from here.\n\n" +
+        "**📊 Sections:**\n" +
+        (config.sections.map(s => `• ${s.name} (${s.items.length} items)`).join('\n') || "None")
+      )
+    );
+
+    return container;
 }
 
 /**
@@ -42,7 +60,7 @@ async function updateConfig(guildId, data) {
 }
 
 module.exports = {
-    buildControlPanelEmbed,
+    buildControlPanelContainer,
     buildControlPanelButtons,
     updateConfig
 };

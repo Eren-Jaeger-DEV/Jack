@@ -1,14 +1,4 @@
-/**
- * messageCreate.js — Clan Battle Event Handler
- *
- * Detects two triggers in the battle channel:
- *  1. "clan battle started" — Start a new battle
- *  2. "clan battle ends"    — End the active battle, announce winners
- *
- * Also handles leaderboard pagination button interactions.
- */
-
-const { PermissionFlagsBits } = require('discord.js');
+const { PermissionFlagsBits, MessageFlags } = require('discord.js');
 const battleService = require('../services/battleService');
 const profileService = require('../../clan/services/profileService');
 const configManager = require('../../../bot/utils/configManager');
@@ -127,11 +117,15 @@ module.exports = {
         }
 
         // Build final results
-        const { results, top6 } = await battleService.buildFinalResults(guild, finalBattle);
+        const { container, top6 } = await battleService.buildFinalResults(guild, finalBattle);
 
         // Send results
-        await message.channel.send(results);
-        await message.channel.send('🎉 **Winners, create a ticket to claim your rewards.**');
+        await message.channel.send({ 
+            content: "",
+            embeds: [],
+            components: [container],
+            flags: MessageFlags.IsComponentsV2
+        });
 
         // Role assignment: remove WINNER_ROLE from all, then assign to top 6
         const winnerRole = clanBattleWinnerRoleId ? message.guild.roles.cache.get(clanBattleWinnerRoleId) : null;

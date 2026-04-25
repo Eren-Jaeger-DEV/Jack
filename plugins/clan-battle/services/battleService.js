@@ -1,14 +1,19 @@
-/**
- * battleService.js — Core business logic for the Clan Battle system
- *
- * ALL database operations and leaderboard rendering go through here.
- * Commands and events call these functions — they never touch the DB directly.
- */
-
 const Battle = require('../models/Battle');
 const Player = require('../../../bot/database/models/Player');
 const { generateContributionImage } = require('../utils/contributionCanvas');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  AttachmentBuilder,
+  ContainerBuilder,
+  SectionBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  MessageFlags
+} = require('discord.js');
 const configManager = require('../../../bot/utils/configManager');
 const { resolveDisplayName } = require('../../../bot/utils/nameResolver');
 const logger = require('../../../utils/logger');
@@ -223,7 +228,6 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
       return null;
     }
 
-    // 1. Prepare data (10 per page)
     const sorted = [...battle.players].sort((a, b) => b.totalPoints - a.totalPoints);
     const totalPages = Math.max(1, Math.ceil(sorted.length / 10));
     const safePage = Math.max(0, Math.min(page, totalPages - 1));
@@ -242,48 +246,50 @@ async function refreshLeaderboard(client, battle, page = 0, interaction = null) 
       };
     }));
 
-    // 2. Generate Canvas Image
     const buffer = await generateContributionImage(canvasPlayers, safePage);
     const attachment = new AttachmentBuilder(buffer, { name: 'contribution-leaderboard.png' });
 
-    // 3. Components
-    const components = totalPages > 1 ? [buildButtons(safePage, totalPages)] : [];
+    const container = new ContainerBuilder();
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`⚔️ **${guild.name} | Clan Battle Leaderboard**`)
+    );
 
-    // 4. Update or Send
+    container.addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setURL('attachment://contribution-leaderboard.png')
+        )
+    );
+
+    container.addSeparatorComponents(new SeparatorBuilder());
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(`*Page ${safePage + 1} of ${totalPages} | Last Updated: ${new Date().toLocaleTimeString()}*`)
+    );
+
+    const components = [container];
+    if (totalPages > 1) components.push(buildButtons(safePage, totalPages));
+
+    const payload = {
+        files: [attachment],
+        components,
+        flags: MessageFlags.IsComponentsV2
+    };
+
     let msg;
     if (interaction && (interaction.isButton() || interaction.isStringSelectMenu())) {
-      // Use editReply() because deferUpdate() was called to prevent timeouts
-      msg = await interaction.editReply({
-        content: '',
-        embeds: [],
-        files: [attachment],
-        components
-      }).catch(err => {
+      msg = await interaction.editReply(payload).catch(err => {
         logger.error("ClanBattle", `Leaderboard editReply error: ${err.message}`);
-        throw err; // Re-throw to be caught by the outer try-catch
+        throw err;
       });
     } else {
-      // Standard refresh: Try to edit existing message
       if (battle.leaderboardMessageId) {
         const oldMsg = await channel.messages.fetch(battle.leaderboardMessageId).catch(() => null);
         if (oldMsg) {
-          msg = await oldMsg.edit({
-            content: '',
-            embeds: [],
-            files: [attachment],
-            components
-          }).catch(() => null);
+          msg = await oldMsg.edit(payload).catch(() => null);
         }
       }
 
-      // If no existing message was found (or edit failed), send a new one
       if (!msg) {
-        msg = await channel.send({
-          files: [attachment],
-          components
-        });
-
-        // Save new message ID
+        msg = await channel.send(payload);
         battle.leaderboardMessageId = msg.id;
         await battle.save();
       }
@@ -317,7 +323,7 @@ async function deleteOldLeaderboardMessage(client, battle) {
 }
 
 /**
- * Build the final results embed for top 6 winners.
+ * Build the final results container for top 6 winners.
  */
 async function buildFinalResults(guild, battle) {
   const sorted = [...battle.players].sort((a, b) => b.totalPoints - a.totalPoints);
@@ -336,7 +342,15 @@ async function buildFinalResults(guild, battle) {
   }
 
   results += '```';
-  return { results, top6 };
+
+  const container = new ContainerBuilder();
+  container.addTextDisplayComponents(new TextDisplayBuilder().setContent("🏆 **Clan Battle Concluded**"));
+  container.addSeparatorComponents(new SeparatorBuilder());
+  container.addTextDisplayComponents(new TextDisplayBuilder().setContent(results));
+  container.addSeparatorComponents(new SeparatorBuilder());
+  container.addTextDisplayComponents(new TextDisplayBuilder().setContent("🎉 **Winners, create a ticket to claim your rewards.**"));
+
+  return { container, top6 };
 }
 
 /* ═══════════════════════════════════════════

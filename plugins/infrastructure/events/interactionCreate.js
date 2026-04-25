@@ -1,6 +1,6 @@
 const { ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ActionRowBuilder, ChannelType, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const GuildConfig = require('../../../bot/database/models/GuildConfig');
-const { buildSetupEmbed } = require('../services/setupService');
+const { buildSetupContainer, buildSetupRows } = require('../services/setupService');
 const logger = require('../../../utils/logger');
 
 module.exports = {
@@ -47,11 +47,11 @@ module.exports = {
 
       await updateSetting(interaction.guildId, targetKey, channelId);
 
-      const embed = await buildSetupEmbed(interaction.guild);
+      const container = await buildSetupContainer(interaction.guild);
+      const rows = buildSetupRows();
       await interaction.editReply({ 
-        content: `✅ Successfully linked **${targetKey}** to <#${channelId}>.`, 
-        components: [], 
-        embeds: [embed] 
+        components: [container, ...rows],
+        flags: MessageFlags.IsComponentsV2
       });
     }
 
@@ -63,11 +63,11 @@ module.exports = {
 
       await updateSetting(interaction.guildId, targetKey, roleId);
 
-      const embed = await buildSetupEmbed(interaction.guild);
+      const container = await buildSetupContainer(interaction.guild);
+      const rows = buildSetupRows();
       await interaction.editReply({ 
-        content: `✅ Successfully linked **${targetKey}** to role <@&${roleId}>.`, 
-        components: [], 
-        embeds: [embed] 
+        components: [container, ...rows],
+        flags: MessageFlags.IsComponentsV2
       });
     }
   }
