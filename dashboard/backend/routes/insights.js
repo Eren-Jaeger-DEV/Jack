@@ -41,4 +41,28 @@ router.get("/insights", requireRole("admin"), async (req, res) => {
   }
 });
 
+/**
+ * GET /classification
+ * Returns the distribution of strategic roles (Adept, Neophyte, Veteran).
+ */
+router.get("/classification", requireRole("admin"), async (req, res) => {
+  try {
+    const roles = {
+      ADEPT: '1484354630140821705',
+      NEOPHYTE: '1484348917079478454',
+      VETERAN: '1486183048247509123'
+    };
+
+    const [adepts, neophytes, veterans] = await Promise.all([
+      Player.countDocuments({ roles: roles.ADEPT }),
+      Player.countDocuments({ roles: roles.NEOPHYTE }),
+      Player.countDocuments({ roles: roles.VETERAN })
+    ]);
+
+    res.json({ adepts, neophytes, veterans });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch classification data." });
+  }
+});
+
 module.exports = router;

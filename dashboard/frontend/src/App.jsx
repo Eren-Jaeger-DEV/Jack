@@ -21,6 +21,7 @@ import AIBrainControl from './pages/AIBrainControl'
 import WelcomeSettings from './pages/WelcomeSettings'
 import ModerationSettings from './pages/ModerationSettings'
 import Recordings from './pages/Recordings'
+import MemberClassification from './pages/MemberClassification'
 import Sidebar from './components/Sidebar'
 import ServerLayout from './layouts/ServerLayout'
 import './index.css'
@@ -81,6 +82,7 @@ function App() {
               <Route path="ai" element={<AIBrainControl />} />
               <Route path="players" element={<Players user={user} />} />
               <Route path="triggers" element={<Triggers />} />
+              <Route path="classification" element={<MemberClassification />} />
               <Route path="recordings" element={<Recordings />} />
               <Route path="settings/general" element={<GeneralSettings />} />
               <Route path="settings/roles" element={<RoleMapping />} />

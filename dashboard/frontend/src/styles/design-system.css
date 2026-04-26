@@ -1,0 +1,83 @@
+/* 
+ * JACK DASHBOARD 2.0 - DESIGN SYSTEM (ELITE EDITION)
+ * Cyber-Premium Aesthetic Tokens
+ */
+
+:root {
+  /* 🎨 Primary Palette */
+  --bg-deep: #0B0E11;
+  --bg-card: rgba(26, 29, 33, 0.7);
+  --bg-sidebar: #111418;
+  
+  /* ✨ Accent Colors */
+  --accent-blurple: #5865F2;
+  --accent-gold: #FFD700;
+  --accent-emerald: #43B581;
+  --accent-crimson: #F04747;
+  
+  /* 🌫️ Glassmorphism */
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  --glass-blur: blur(12px);
+  
+  /* 🖋️ Typography */
+  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-primary: #FFFFFF;
+  --text-secondary: #949BA4;
+  --text-muted: #4E5058;
+  
+  /* ⚡ Transitions & Animation */
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s ease-in-out;
+}
+
+/* 🧊 Global Glass Component Pattern */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 12px;
+  transition: var(--transition-smooth);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* 🔘 Premium Button Pattern */
+.btn-premium {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--accent-blurple);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #4752C4;
+  filter: brightness(1.1);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--text-muted);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border-color: var(--text-secondary);
+}
