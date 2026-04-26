@@ -188,7 +188,7 @@ const AdminLogs = ({ user }) => {
                     <div style={{ flex: 1 }}>
                       <div style={{ marginBottom: '4px' }}>
                         <span style={{ color: 'var(--accent-gold)' }}>@{log.adminUsername}</span>
-                        <span style={{ margin: '0 8px', opacity: 0.3 }}>-></span>
+                        <span style={{ margin: '0 8px', opacity: 0.3 }}>{'-&gt;'}</span>
                         <span style={{ color: 'var(--text-primary)' }}>@{log.targetUsername}</span>
                       </div>
                       <div style={{ opacity: 0.7, fontSize: '0.8rem' }}>
