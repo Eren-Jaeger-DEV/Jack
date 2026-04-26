@@ -8,6 +8,17 @@
 
 ---
 
+## 0. DOCUMENTATION PHILOSOPHY
+
+Jack's documentation is split into two specialized layers:
+
+1.  **The Blueprint (THIS FILE)**: The technical source of truth for the *engine*. If you are changing how the bot works, read/update this.
+2.  **The Vault (`/Jack_Vault`)**: The operational knowledge base for *features*. If you are explaining how to use a plugin or managing the clan, update the Vault.
+
+> **RULE:** Never let the code and documentation drift. Use `npm run docs` to keep command lists synced.
+
+---
+
 ## 1. DIRECTORY MAP
 
 ```
@@ -104,6 +115,20 @@ Jack/                               ← Project root
 ---
 
 ## 3. DATABASE MODELS — Full Field Reference
+
+### System Entity Relationship
+
+```mermaid
+erDiagram
+    GuildConfig ||--o{ Player : "manages"
+    Player ||--o{ UserActivity : "tracks"
+    Player ||--o{ Level : "has"
+    Player ||--o{ UserMemory : "possesses"
+    Player ||--o{ MemberDiary : "annotated by"
+    UserActivity ||--o{ ConversationHistory : "links"
+    GuildConfig ||--o{ Trigger : "configures"
+    GuildConfig ||--o{ ReactionRolePanel : "contains"
+```
 
 All models live in `bot/database/models/`. Import with `require('../../../bot/database/models/ModelName')`.
 
@@ -312,6 +337,41 @@ enabled    Boolean
 
 ## 4. CORE SERVICES API
 
+### AI Processing Pipeline
+
+```mermaid
+sequenceDiagram
+    participant U as User / Discord
+    participant C as aiController
+    participant S as aiService (Gemini)
+    participant V as aiValidator
+    participant T as toolService
+    participant D as Database / Discord API
+
+    U->>C: Message / Interaction
+    C->>C: shouldProcess() checks
+    C->>S: generateResponse(prompt, history)
+    S-->>C: Decision (Text or Tool)
+    
+    alt Decision is Tool
+        C->>V: validateAction(tool, args)
+        V-->>C: Validated?
+        alt Valid
+            C->>T: execute(tool, args)
+            T->>D: Real Action (Ban, Set, etc.)
+            D-->>T: Result
+            T-->>C: Tool Success/Fail
+            C->>S: Interpretation Pass (Result Feedback)
+            S-->>C: Humanized Response
+            C->>U: Final Message + Rich Media
+        else Denied
+            C->>U: "Access Denied" Error
+        end
+    else Decision is Text
+        C->>U: Response Text
+    end
+```
+
 ### `bot/utils/configManager.js`
 ```js
 const configManager = require('./configManager');
@@ -438,6 +498,18 @@ perms.isModerator(member)          // Boolean
 ---
 
 ## 5. PLUGIN ANATOMY
+
+### Plugin Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Discovered: pluginLoader scans /plugins
+    Discovered --> Loaded: load(client)
+    Loaded --> Enabled: enable(guild)
+    Enabled --> Disabled: disable(guild)
+    Disabled --> Enabled: enable(guild)
+    Loaded --> [*]: unload(client)
+```
 
 ### Standard Plugin Structure
 ```

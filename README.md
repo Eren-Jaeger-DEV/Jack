@@ -2,6 +2,8 @@
 
 A powerful, modular Discord bot built with discord.js v14 featuring advanced strategic management, community engagement, and server infrastructure tools.
 
+📚 **[READ THE FULL ENCYCLOPEDIA](JACK_ENCYCLOPEDIA.md)** | ⚔️ **[COMMAND REFERENCE](COMMANDS.md)**
+
 ## Features
 
 ### 🤝 Foster Program
