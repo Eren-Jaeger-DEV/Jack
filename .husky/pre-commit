@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 echo "🛡️ Jack Guard: Synchronizing A-to-Z Encyclopedia..."
 npm run docs
 git add COMMANDS.md commands_list.txt
