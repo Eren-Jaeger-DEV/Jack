@@ -14,6 +14,7 @@ const DAILY_LIMIT = 50;
 const mongoose = require('mongoose');
 const UserActivity = mongoose.model('UserActivity');
 const EmojiBank = require('../database/models/EmojiBank');
+const AIIntentLog = require('../database/models/AIIntentLog');
 
 /**
  * AI SERVICE (v4.3.0) - MULTI-KEY ROTATION + PERSISTENT LIMITS
@@ -93,6 +94,18 @@ module.exports = {
       const finalPersonality = personalityEngine.buildFinalPersonality(base, runtime, modifiers);
       
       const mode = personalityEngine.getBehaviorMode(prompt, "chat", null);
+
+      // --- LOG INTENT TO DATABASE ---
+      if (guild?.id) {
+        AIIntentLog.create({
+          guildId: guild.id,
+          userId: invoker?.id || "unknown",
+          username: invoker?.tag || "Unknown",
+          prompt: prompt.substring(0, 500),
+          intent: mode,
+          model: modelName
+        }).catch(err => logger.error("JackAI", `Intent Logging Fail: ${err.message}`));
+      }
 
       const memory = await memoryEngine.getRelevantMemory(userId, guild?.id, prompt);
       let memoryBlock = "";

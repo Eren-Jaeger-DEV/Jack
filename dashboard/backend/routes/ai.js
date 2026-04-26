@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const configManager = require('../../../bot/utils/configManager');
 const UserMemory = require('../../../bot/database/models/UserMemory');
+const AIIntentLog = require('../../../bot/database/models/AIIntentLog');
 const { requireRole } = require('../middleware/auth');
 require('dotenv').config();
 
@@ -71,6 +72,22 @@ router.get('/memory/:guildId', requireRole('admin'), async (req, res) => {
     res.json(memories);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch semantic memories' });
+  }
+});
+
+/**
+ * GET /intents/:guildId
+ * Retrieves the latest AI intent classifications for the dashboard feed.
+ */
+router.get('/intents/:guildId', requireRole('admin'), async (req, res) => {
+  try {
+    const intents = await AIIntentLog.find({ guildId: req.params.guildId })
+      .sort({ timestamp: -1 })
+      .limit(20)
+      .lean();
+    res.json(intents);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch intent logs' });
   }
 });
 

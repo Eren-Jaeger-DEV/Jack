@@ -108,129 +108,131 @@ const AdminLogs = ({ user }) => {
     );
   };
 
-  return (
-    <div className="page-container fade-in" style={{maxWidth: '1200px'}}>
-      <h1 className="page-title" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-        <Activity size={28} /> Activity Logs
-      </h1>
-      <p className="page-subtitle">Track admin modifications across the dashboard.</p>
+  const getTagColor = (action) => {
+    if (action.includes('DELETE')) return 'var(--accent-crimson)';
+    if (action.includes('UPDATE')) return 'var(--accent-blurple)';
+    if (action.includes('UNDO')) return 'var(--accent-emerald)';
+    return 'var(--text-secondary)';
+  };
 
-      <div className="panel-container" style={{marginBottom: '2rem'}}>
-        <div className="panel-content" style={{padding: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end'}}>
-          <div style={{flex: '1', minWidth: '200px'}}>
-            <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Action Type</label>
+  return (
+    <div className="main-content fade-in" style={{ maxWidth: '1200px' }}>
+      <div className="overview-header">
+        <h1 className="section-title">📜 SYSTEM AUDIT | Operation Logs</h1>
+        <p style={{ color: 'var(--text-secondary)' }}>Centralized audit trail of all administrative override and synchronization events.</p>
+      </div>
+
+      <div className="glass-card" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ flex: '1', minWidth: '200px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>STRATEGIC TAG</label>
             <select 
               value={actionFilter} 
               onChange={(e) => setActionFilter(e.target.value)}
-              style={{width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white'}}
+              className="form-input"
+              style={{ background: 'rgba(0,0,0,0.2)' }}
             >
-              <option value="">All Actions</option>
-              <option value="PLAYER_UPDATE">Player Update</option>
-              <option value="PLAYER_DELETE">Player Delete</option>
+              <option value="">ALL_SYSTEM_EVENTS</option>
+              <option value="PLAYER_UPDATE">PLAYER_SYNCHRONIZATION</option>
+              <option value="PLAYER_DELETE">DATA_PURGE_EVENTS</option>
             </select>
           </div>
-          <div style={{flex: '1', minWidth: '200px'}}>
-            <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Admin Discord ID</label>
+          <div style={{ flex: '1', minWidth: '200px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>ADMIN_IDENTIFIER</label>
             <input 
               type="text" 
-              placeholder="Filter by admin ID..." 
+              placeholder="Search by ID..." 
               value={adminFilter}
               onChange={(e) => setAdminFilter(e.target.value)}
-              style={{width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white'}}
+              className="form-input"
+              style={{ background: 'rgba(0,0,0,0.2)' }}
             />
           </div>
           <button 
-            className="btn" 
+            className="btn-premium btn-ghost" 
             onClick={() => {setActionFilter(''); setAdminFilter('');}}
-            style={{padding: '10px 20px', background: 'rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px'}}
           >
-            Reset Filters
+            RESET_FILTERS
           </button>
         </div>
       </div>
 
-      <div className="panel-container">
-        <div className="panel-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-          <h2 className="section-title" style={{margin: 0}}>Audit Trail ({total})</h2>
+      <div className="glass-card panel-container" style={{ background: '#050505', border: '1px solid #1a1a1a' }}>
+        <div className="panel-header" style={{ borderBottom: '1px solid #1a1a1a', background: '#0a0a0a', display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>[root@jack-system logs]# tail -f /var/log/audit.log</span>
+          <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{total} ENTRIES LOADED</span>
         </div>
         
-        <div className="panel-content">
+        <div className="panel-content" style={{ padding: '0' }}>
           {error ? (
-            <div className="error-message" style={{color: 'var(--danger)', padding: '1.5rem', textAlign: 'center'}}>{error}</div>
+            <div style={{ color: 'var(--accent-crimson)', padding: '2rem', textAlign: 'center', fontFamily: 'monospace' }}>!! CRITICAL_ERROR: {error} !!</div>
           ) : (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Admin</th>
-                    <th>Action</th>
-                    <th>Target</th>
-                    <th>Changes</th>
-                    <th>Timestamp</th>
-                    <th style={{textAlign: 'right'}}>Tools</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading && logs.length === 0 ? (
-                    <tr><td colSpan="6" style={{textAlign: 'center', padding: '2rem'}}>Loading logs...</td></tr>
-                  ) : logs.length === 0 ? (
-                    <tr><td colSpan="6" style={{textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)'}}>No logs recorded yet.</td></tr>
-                  ) : (
-                    logs.map((log) => (
-                      <tr key={log._id}>
-                        <td>{renderUser(log.adminId, log.adminUsername, log.adminAvatar)}</td>
-                        <td>
-                          <span className={`status-badge ${log.action === 'PLAYER_DELETE' ? 'danger' : 'warning'}`}>
-                            {log.action}
-                          </span>
-                        </td>
-                        <td>{renderUser(log.targetId, log.targetUsername, log.targetAvatar)}</td>
-                        <td>{formatChanges(log.changes, log.action)}</td>
-                        <td style={{color: 'var(--text-secondary)', fontSize: '0.85rem'}}>
-                          {new Date(log.timestamp).toLocaleString()}
-                        </td>
-                        <td style={{textAlign: 'right'}}>
-                          {user?.roleLevel >= 2 && (log.action === 'PLAYER_UPDATE' || log.action === 'PLAYER_DELETE') && (
-                            <button 
-                              className="icon-btn" 
-                              onClick={() => handleUndo(log._id)}
-                              title={log.action === 'PLAYER_DELETE' ? "Restore Player" : "Undo Action"}
-                              style={{background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '8px', borderRadius: '6px', display: 'inline-flex', transition: 'all 0.2s'}}
-                              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                            >
-                              <RotateCcw size={18} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="terminal-log-view" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+              {loading && logs.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5 }}>INITIALIZING_READ_SEQUENCE...</div>
+              ) : logs.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.3 }}>NO_LOG_DATA_IN_CURRENT_BUFFER</div>
+              ) : (
+                logs.map((log) => (
+                  <div key={log._id} style={{ 
+                    padding: '12px 20px', 
+                    borderBottom: '1px solid #111',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '15px',
+                    transition: 'background 0.2s'
+                  }} className="terminal-entry">
+                    <span style={{ color: 'var(--text-muted)', minWidth: '80px' }}>{new Date(log.timestamp).toLocaleTimeString([], {hour12: false})}</span>
+                    <span style={{ color: getTagColor(log.action), fontWeight: 700, minWidth: '120px' }}>[{log.action}]</span>
+                    
+                    <div style={{ flex: 1 }}>
+                      <div style={{ marginBottom: '4px' }}>
+                        <span style={{ color: 'var(--accent-gold)' }}>@{log.adminUsername}</span>
+                        <span style={{ margin: '0 8px', opacity: 0.3 }}>-></span>
+                        <span style={{ color: 'var(--text-primary)' }}>@{log.targetUsername}</span>
+                      </div>
+                      <div style={{ opacity: 0.7, fontSize: '0.8rem' }}>
+                        {formatChanges(log.changes, log.action)}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                       {user?.roleLevel >= 2 && (log.action === 'PLAYER_UPDATE' || log.action === 'PLAYER_DELETE') && (
+                          <button 
+                            className="btn-premium btn-ghost"
+                            onClick={() => handleUndo(log._id)}
+                            style={{ padding: '4px 8px', fontSize: '0.65rem', borderColor: '#222' }}
+                          >
+                            UNDO
+                          </button>
+                       )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
           
           {/* Pagination */}
           {totalPages > 0 && (
-            <div className="pagination" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderTop: '1px solid var(--border-color)'}}>
-              <span style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>Showing Page {page} of {totalPages}</span>
-              <div style={{display: 'flex', gap: '0.5rem'}}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', background: '#080808', borderTop: '1px solid #1a1a1a' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontFamily: 'monospace' }}>PAGE_{page}_OF_{totalPages}</span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 
-                  className="btn" 
+                  className="btn-premium btn-ghost" 
                   disabled={page === 1} 
                   onClick={() => setPage(p => Math.max(1, p - 1))}
-                  style={{padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', color: 'white'}}
+                  style={{ padding: '4px 12px', fontSize: '0.7rem' }}
                 >
-                  <ChevronLeft size={18} /> Prev
+                  PREV
                 </button>
                 <button 
-                  className="btn" 
+                  className="btn-premium btn-ghost" 
                   disabled={page === totalPages} 
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  style={{padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', color: 'white'}}
+                  style={{ padding: '4px 12px', fontSize: '0.7rem' }}
                 >
-                  Next <ChevronRight size={18} />
+                  NEXT
                 </button>
               </div>
             </div>

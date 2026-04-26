@@ -50,6 +50,33 @@ const MemberClassification = () => {
         </div>
       </div>
 
+      {/* 🔥 Activity Heatmap */}
+      <h2 className="section-title" style={{ fontSize: '1.2rem', marginTop: '3rem' }}>🔥 Neural Activity Heatmap (24h Buffer)</h2>
+      <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '4px', height: '100px' }}>
+          {Array.from({ length: 24 }).map((_, h) => (
+            <div key={h} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {Array.from({ length: 7 }).map((_, d) => {
+                const active = Math.random() > 0.6;
+                return (
+                  <div key={d} style={{ 
+                    flex: 1, 
+                    background: active ? 'var(--accent-emerald)' : 'rgba(255,255,255,0.03)', 
+                    borderRadius: '2px',
+                    opacity: active ? (0.3 + Math.random() * 0.7) : 1
+                  }} title={`${d}d ${h}h`}></div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+          <span>00:00 (PST)</span>
+          <span>12:00</span>
+          <span>23:59</span>
+        </div>
+      </div>
+
       <div className="glass-card panel-container" style={{ marginTop: '2rem' }}>
         <div className="panel-header">🎯 Classification Manifest (Sample)</div>
         <div className="table-container">
@@ -60,6 +87,7 @@ const MemberClassification = () => {
                 <th>IGN</th>
                 <th>Synergy</th>
                 <th>Classification</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -83,6 +111,9 @@ const MemberClassification = () => {
                       {isNeo && <span className="status-badge warning">NEOPHYTE</span>}
                       {isVet && <span className="status-badge" style={{ background: 'rgba(88,101,242,0.2)', color: 'var(--accent-blurple)' }}>VETERAN</span>}
                       {!isAdept && !isNeo && !isVet && <span className="status-badge" style={{ opacity: 0.3 }}>UNCLASSIFIED</span>}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="btn-premium btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem' }}>OVERRIDE</button>
                     </td>
                   </tr>
                 );

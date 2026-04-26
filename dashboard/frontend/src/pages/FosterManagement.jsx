@@ -25,8 +25,13 @@ const FosterManagement = () => {
   const handleAction = async (action) => {
     setActionLoading(true);
     try {
-      // Mocking action routes - in a real app, these would hit the backend
-      // await api.post(`/foster/${action}/${guildId}`);
+      if (action === 'start' || action === 'terminate') {
+        if (!window.confirm(`Are you sure you want to ${action.toUpperCase()} the program? This is a high-level strategic command.`)) {
+          setActionLoading(false);
+          return;
+        }
+      }
+      // Mocking action routes
       alert(`⚡ Strategic Command Issued: ${action.toUpperCase()}`);
     } catch (err) {
       alert('❌ Command Failure');
@@ -43,10 +48,14 @@ const FosterManagement = () => {
       <div className="glass-card" style={{ padding: '4rem', textAlign: 'center' }}>
         <h2 style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>SYSTEM STATUS: IDLE</h2>
         <p style={{ maxWidth: '500px', margin: '0 auto 2rem', color: 'var(--text-muted)' }}>
-          No active 30-day program detected. Initiation must be authorized via Discord Secure Terminal.
+          No active 30-day program detected. Initiation must be authorized via Discord Secure Terminal or executive override.
         </p>
-        <button className="btn-premium btn-primary" style={{ margin: '0 auto' }}>
-          INITIATE PROGRAM (VIA DISCORD)
+        <button 
+          className="btn-premium btn-primary" 
+          style={{ margin: '0 auto' }}
+          onClick={() => handleAction('start')}
+        >
+          INITIATE PROGRAM (OVERRIDE)
         </button>
       </div>
     </div>
@@ -74,6 +83,14 @@ const FosterManagement = () => {
           >
             ⚡ SYNC POINTS
           </button>
+          <button 
+            className="btn-premium btn-ghost" 
+            style={{ color: 'var(--accent-crimson)', borderColor: 'rgba(240, 71, 71, 0.3)' }}
+            onClick={() => handleAction('terminate')}
+            disabled={actionLoading}
+          >
+            🛑 TERMINATE
+          </button>
         </div>
       </div>
 
@@ -92,7 +109,20 @@ const FosterManagement = () => {
         </div>
       </div>
 
-      <h2 className="section-title" style={{ fontSize: '1.2rem', marginTop: '3rem' }}>👥 Neural Pairings (Active Cycle)</h2>
+      {/* 🧊 Visual Pairing Map */}
+      <h2 className="section-title" style={{ fontSize: '1.2rem', marginTop: '3rem' }}>🛰️ Neural Pairing Map</h2>
+      <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px' }}>
+        {data.pairs.map((pair, idx) => (
+          <div key={idx} style={{ position: 'relative', textAlign: 'center', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+             <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-gold)' }}>{pair.mentorIgn}</div>
+             <div style={{ height: '20px', width: '2px', background: 'var(--accent-blurple)', margin: '5px auto', opacity: 0.5 }}></div>
+             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{pair.partnerIgn}</div>
+             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', opacity: 0.1, fontSize: '1.5rem', pointerEvents: 'none' }}>🔗</div>
+          </div>
+        ))}
+      </div>
+
+      <h2 className="section-title" style={{ fontSize: '1.2rem' }}>👥 Personnel Details (Active Cycle)</h2>
       <div className="plugins-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}>
         {data.pairs.map((pair, idx) => (
           <div key={idx} className="glass-card" style={{ padding: '1.5rem' }}>

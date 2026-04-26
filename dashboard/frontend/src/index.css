@@ -163,3 +163,31 @@ input[type="range"] {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* 🖱️ Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a1d21;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blurple);
+}
+
+/* 💻 Terminal Effects */
+.terminal-entry:hover {
+  background: #080808 !important;
+}
+
+.terminal-feed::-webkit-scrollbar {
+  width: 4px;
+}

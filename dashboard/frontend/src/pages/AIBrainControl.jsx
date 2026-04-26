@@ -13,20 +13,23 @@ const AIBrainControl = () => {
     respect_bias: 50
   });
   const [memories, setMemories] = useState([]);
+  const [intents, setIntents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statusRes, personalityRes, memoryRes] = await Promise.all([
+        const [statusRes, personalityRes, memoryRes, intentRes] = await Promise.all([
           api.get('/ai/status'),
           api.get(`/ai/personality/${guildId}`),
-          api.get(`/ai/memory/${guildId}`)
+          api.get(`/ai/memory/${guildId}`),
+          api.get(`/ai/intents/${guildId}`)
         ]);
         setStatus(statusRes.data);
         setPersonality(personalityRes.data);
         setMemories(memoryRes.data);
+        setIntents(intentRes.data);
       } catch (err) {
         console.error('Strategic Link Failure:', err);
       } finally {
@@ -34,6 +37,16 @@ const AIBrainControl = () => {
       }
     };
     fetchData();
+
+    // Polling for intents every 10s to simulate "live" feed
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get(`/ai/intents/${guildId}`);
+        setIntents(res.data);
+      } catch (e) {}
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [guildId]);
 
   const handleSliderChange = (key, value) => {
@@ -52,6 +65,16 @@ const AIBrainControl = () => {
     }
   };
 
+  const getIntentColor = (intent) => {
+    switch(intent) {
+      case 'moderate': return 'var(--accent-crimson)';
+      case 'execute': return 'var(--accent-gold)';
+      case 'analyze': return 'var(--accent-emerald)';
+      case 'assist': return 'var(--accent-blurple)';
+      default: return 'var(--text-secondary)';
+    }
+  };
+
   if (loading) return <div className="loading-screen">Calibrating Neural Link...</div>;
 
   return (
@@ -62,45 +85,44 @@ const AIBrainControl = () => {
       </div>
 
       <div className="personality-deck">
-        {/* Left Column: Sliders */}
-        <div className="glass-card" style={{ padding: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            🎭 Persona Matrix
-          </h3>
-          
-          {[
-            { id: 'humor', label: 'Humor Level', icon: '😄' },
-            { id: 'strictness', label: 'Strategic Strictness', icon: '⚖️' },
-            { id: 'verbosity', label: 'Response Verbosity', icon: '💬' },
-            { id: 'respect_bias', label: 'Respect Bias', icon: '🫡' }
-          ].map(slider => (
-            <div key={slider.id} className="slider-container">
-              <div className="slider-label">
-                <span>{slider.icon} {slider.label}</span>
-                <span style={{ color: 'var(--accent-blurple)', fontWeight: 700 }}>{personality[slider.id]}%</span>
-              </div>
-              <input 
-                type="range" 
-                min="0" 
-                max="100" 
-                value={personality[slider.id]} 
-                onChange={(e) => handleSliderChange(slider.id, e.target.value)}
-              />
-            </div>
-          ))}
-
-          <button 
-            className="btn-premium btn-primary" 
-            style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}
-            onClick={savePersonality}
-            disabled={saving}
-          >
-            {saving ? 'Synchronizing...' : '⚡ UPDATE NEURAL MATRIX'}
-          </button>
-        </div>
-
-        {/* Right Column: Memory & Status */}
+        {/* Left Column: Sliders & Status */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="glass-card" style={{ padding: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              🎭 Persona Matrix
+            </h3>
+            
+            {[
+              { id: 'humor', label: 'Humor Level', icon: '😄' },
+              { id: 'strictness', label: 'Strategic Strictness', icon: '⚖️' },
+              { id: 'verbosity', label: 'Response Verbosity', icon: '💬' },
+              { id: 'respect_bias', label: 'Respect Bias', icon: '🫡' }
+            ].map(slider => (
+              <div key={slider.id} className="slider-container">
+                <div className="slider-label">
+                  <span>{slider.icon} {slider.label}</span>
+                  <span style={{ color: 'var(--accent-blurple)', fontWeight: 700 }}>{personality[slider.id]}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={personality[slider.id]} 
+                  onChange={(e) => handleSliderChange(slider.id, e.target.value)}
+                />
+              </div>
+            ))}
+
+            <button 
+              className="btn-premium btn-primary" 
+              style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}
+              onClick={savePersonality}
+              disabled={saving}
+            >
+              {saving ? 'Synchronizing...' : '⚡ UPDATE NEURAL MATRIX'}
+            </button>
+          </div>
+
           <div className="glass-card" style={{ padding: '1.5rem' }}>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>📡 Engine Status</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -116,6 +138,34 @@ const AIBrainControl = () => {
                 <span style={{ color: 'var(--text-secondary)' }}>System Health</span>
                 <span style={{ color: 'var(--accent-gold)' }}>{status.status}</span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Intent Log & Memory */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="glass-card" style={{ padding: '1.5rem', maxHeight: '400px', overflowY: 'auto' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', display: 'flex', justifyContent: 'space-between' }}>
+              📡 INTENT LOG
+              <span className="status-badge" style={{ fontSize: '0.6rem', background: 'rgba(67, 181, 129, 0.1)', color: 'var(--accent-emerald)' }}>LIVE FEED</span>
+            </h3>
+            <div className="terminal-feed" style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+              {intents.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)' }}>Waiting for system events...</p>
+              ) : (
+                intents.map(log => (
+                  <div key={log._id} style={{ borderLeft: `2px solid ${getIntentColor(log.intent)}`, paddingLeft: '10px', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', gap: '8px', opacity: 0.8 }}>
+                      <span style={{ color: 'var(--text-muted)' }}>[{new Date(log.timestamp).toLocaleTimeString([], {hour12: false})}]</span>
+                      <span style={{ color: getIntentColor(log.intent), fontWeight: 700 }}>{log.intent.toUpperCase()}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>@{log.username}</span>
+                    </div>
+                    <div style={{ color: 'var(--text-primary)', opacity: 0.9, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {log.prompt}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
