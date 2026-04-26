@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Database/Trigger.md",
+                "file": "CommandExecutor.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Trigger"
+              "title": "CommandExecutor"
             }
           }
         ]
@@ -185,6 +185,8 @@
   },
   "active": "fe4b0ec0800a76a5",
   "lastOpenFiles": [
+    "Admin.md",
+    "Database/Trigger.md",
     "Database/UserActivity.md",
     "Commands/Games-Clan-Reference.md",
     "Commands/00 - Commands Index.md",
@@ -195,7 +197,6 @@
     "Commands/Utility_Commands.md",
     "Commands/Moderation_Commands.md",
     "Database/Afk.md",
-    "Admin.md",
     "CommandExecutor.md",
     "Untitled.base",
     "Plugins/TempVC.md",
@@ -213,7 +214,6 @@
     "Untitled 1.canvas",
     "Core/Plugin-Loader.md",
     "Core/Startup-Sequence.md",
-    "Core/00 - Core Architecture.md",
     "Database"
   ]
 }

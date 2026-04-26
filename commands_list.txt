@@ -1,97 +1,100 @@
-/achievement - [admin] Manage player achievements
-/adminguide - [admin] Setup dashboards and persistent system panels
-/announce - [admin] Create a beautiful announcement
-/disable - [admin] Disable a command category
-/enable - [admin] Enable a command category
-/personality - [admin] No description provided.
+/achievement - [admin] Manually edit a player
+/adminguide - [admin] Setup the permanent admin guide dashboard
+/announce - [admin] Create a beautiful announcement in any channel
+/disable - [admin] Disable a command category in a channel or server-wide
+/enable - [admin] Enable a command category in a channel or server-wide
+/personality - [admin] Interactive dashboard to configure Jack\
 /setai - [admin] Sets the smart AI channel for the server
 /setfoster - [admin] Set the Foster Program channel
 /setlog - [admin] Set the moderation log channel
 /regstatus - [audit] Audit clan member registration status
-/card - [card-database] Card database management
+/card - [card-database] Card database management commands
 /hud - [celestial-hud] Access your Celestial HUD (Live Status)
 /clanroster - [clan] View the full clan player roster
 /dcroster - [clan] View the full discord member player roster
-/deleteplayer - [clan] Delete a player's clan profile
+/deleteplayer - [clan] Delete a player
 /editprofile - [clan] Edit your BGMI player profile
-/ign - [clan] View a player's in-game name
-/ignall - [clan] View all player IGNs (Admin Only)
+/ign - [clan] View a player
+/ignall - [clan] View a list of all player IGNs in the database (Admin Only)
 /profile - [clan] Show BGMI player profile
 /profilecreate - [clan] Create an unlinked BGMI player profile (Admin Only)
-/profiletransfer - [clan] Link an unlinked profile to a Discord user
-/register - [clan] Register a BGMI player profile
-/uid - [clan] View a player's BGMI UID
+/profiletransfer - [clan] Link an unlinked profile to a Discord user (Admin Only)
+/register - [clan] Register your BGMI player profile
+/uid - [clan] View a player
 /unlinked - [clan] View all unlinked player profiles (Admin Only)
 /bp - [clan-battle] Submit your daily battle contribution points
-/editbp - [clan-battle] Edit a player's today battle points
-/edittotalbp - [clan-battle] Edit a player's total battle points
-/emoji - [emoji] Search the global vault CDN and summon an emoji into chat
-/emojiadd - [emoji] Upload a global vault emoji to your server roster
-/emojibank - [emoji] View all emojis saved in the Global Vault.
-/emojibrowse - [emoji] Open the visual interactive emoji browser.
+/editbp - [clan-battle] Edit a player
+/edittotalbp - [clan-battle] Edit a player
+/emoji - [emoji] Summon an emoji from the global CDN directly into chat.
+/emojiadd - [emoji] Summon a specific emoji from the Global Vault to your server.
+/emojibank - [emoji] View the Global Emoji Bank list.
+/emojibrowse - [emoji] Browse the visual interface of the Global Emoji Vault.
 /emojicleanup - [emoji] Scans for server emojis unused in the CDN for 30+ days.
-/emojiremove - [emoji] Remove an emoji from the global vault
-/emojislots - [emoji] Check the current server emoji and sticker slot usage against Nitro constraints.
+/emojiremove - [emoji] Remove an emoji from the global vault.
+/emojislots - [emoji] Check the current server emoji and sticker slot usage.
 /emojitemp - [emoji] Temporarily install a global emoji for 10 minutes to save slots.
-/action - [fun] No description provided.
-/tictactoe - [games] No description provided.
-/tttlb - [games] No description provided.
-/setupgreeting - [greeting] Configure welcome and goodbye settings
-/setup - [infrastructure] No description provided.
+/fs-pairremove - [foster-program] Remove a pair from the active Foster Program
+/fs-replace - [foster-program] Replace a mentor or newbie in an active Foster Program pair
+/fs-start - [foster-program] Start the Foster Program v2 (Staff Only)
+/action - [fun] Perform a fun action (hug, slap, kiss, etc.)
+/tictactoe - [games] Challenge another user to a game of TicTacToe
+/tttlb - [games] View the TicTacToe leaderboard
+/setupgreeting - [greeting] Configure channels for welcome and goodbye messages.
+/setup - [infrastructure] Open the Neural Bridge dashboard to configure channels and roles.
 /leaderboard - [leveling] View the server XP leaderboard
-/rank - [leveling] View your current level and XP
-/rankbackground - [leveling] Manage your rank background
-/cancelpop - [market] Cancel an active POP market listing
+/rank - [leveling] Show your or another user
+/rankbackground - [leveling] Set your custom rank card background
+/cancelpop - [market] Cancel your active POP market listing
 /popmarket - [market] Force refresh the POP marketplace panel
-/sell - [market] Sell POP on the market
+/sell - [market] List your POP for sale on the marketplace
 /addrole - [moderation] Add a role to a user
 /ban - [moderation] Ban a member from the server
 /clear - [moderation] Delete multiple messages from a channel
-/clearall - [moderation] Delete ALL messages in the channel (Nuke)
+/clearall - [moderation] Delete all messages in the channel (Nuke)
 /clearwarns - [moderation] Clear all warnings from a user
 /kick - [moderation] Kick a member from the server
 /lock - [moderation] Lock the current channel
-/mute - [moderation] Timeout a member
-/nickname - [moderation] Change a user nickname
+/mute - [moderation] Timeout a member for a specified duration
+/nickname - [moderation] Change a user
 /removerole - [moderation] Remove a role from a user
 /unban - [moderation] Unban a user from the server
 /unlock - [moderation] Unlock the current channel
 /unmute - [moderation] Remove timeout from a member
 /unwarn - [moderation] Remove a warning from a user
-/warn - [moderation] Warn a user
+/warn - [moderation] Warn a user with a reason
 /warnings - [moderation] View warnings for a user
-/packadd - [packs] Moves an emoji into a specific Emoji Pack
-/packcreate - [packs] Initializes an empty Emoji Pack
-/packimport - [packs] Uploads an entire pack's contents to the current server.
-/packremove - [packs] Unlinks an emoji from its pack
-/prefix - [prefix] Manage the bot's custom prefix
+/packadd - [packs] Add an existing global emoji to an Emoji Pack
+/packcreate - [packs] Create an empty Emoji Pack in the Global Vault
+/packimport - [packs] Download a full Global Emoji Pack into your server automatically.
+/packremove - [packs] Remove an emoji from its Emoji Pack
+/prefix - [prefix] Manage the bot
 /record - [recorder] Manage voice recordings
-/rradd - [roles] Add a role button to a reaction role panel
+/rradd - [roles] Add a Role option to a Reaction Role Panel
 /rrcreate - [roles] Create a new Reaction Role Custom Panel
-/rrdelete - [roles] Delete a Reaction Role Panel and its message
-/rrremove - [roles] Remove a role button from a reaction role panel
-/sayit - [say] Resends a replied-to message through the bot and deletes the original.
+/rrdelete - [roles] Delete an active Reaction Role Panel permanently
+/rrremove - [roles] Remove a Role option from a Reaction Role Panel
+/sayit - [say] No description provided.
 /se - [seasonal-synergy] Set season energy for a user (Admin)
-/synergy-setup - [seasonal-synergy] Deploy the Synergy Automation Panel
-/we - [seasonal-synergy] Submit weekly energy points
-/setup-control-panel - [server-overview] Initializes the admin control panel in the designated channel.
-/setup-overview - [server-overview] Initializes the server overview in the designated channel.
-/sticker - [sticker] Search the global vault CDN and summon a sticker
-/stickeradd - [sticker] Upload a global vault sticker to your server roster
-/stickerbank - [sticker] View all stickers saved in the Global Vault.
-/stickerbrowse - [sticker] Open the visual interactive sticker browser.
-/stickerremove - [sticker] Remove a sticker from the global vault
-/createteam - [teamup] No description provided.
-/deleteteam - [teamup] No description provided.
-/leaveteam - [teamup] No description provided.
-/ticketpanel - [tickets] Create advanced ticket panel with dropdown options
-/afk - [utility] No description provided.
-/avatar - [utility] No description provided.
+/synergy-setup - [seasonal-synergy] Deploy the Synergy Automation Panel to the moderation channel
+/we - [seasonal-synergy] Submit your weekly energy points
+/setup-control-panel - [server-overview] No description provided.
+/setup-overview - [server-overview] No description provided.
+/sticker - [sticker] Summon a sticker from the global CDN directly into chat (Bypasses server slots).
+/stickeradd - [sticker] Summon a specific sticker from the Global Vault to your server.
+/stickerbank - [sticker] View the Global Sticker Bank list.
+/stickerbrowse - [sticker] Browse the visual interface of the Global Sticker Vault.
+/stickerremove - [sticker] Remove a sticker from the global vault.
+/createteam - [teamup] Create a new team for gaming or esports.
+/deleteteam - [teamup] Disband and delete your current team.
+/leaveteam - [teamup] Leave your current team.
+/ticketpanel - [tickets] Create the advanced ticket panel with category selection
+/afk - [utility] Set yourself as AFK
+/avatar - [utility] Show a user
 /help - [utility] View the interactive help menu with all available commands.
-/memberlist - [utility] List all members with their roles
+/memberlist - [utility] List all server members with their roles
 /ping - [utility] Check bot latency
-/poll - [utility] Create a poll
-/prefixtest - [utility] No description provided.
-/serverinfo - [utility] No description provided.
-/steal - [utility] No description provided.
-/userinfo - [utility] No description provided.
+/poll - [utility] Create a Yes/No poll
+/prefixtest - [utility] Test prefix system
+/serverinfo - [utility] Show information about the server
+/steal - [utility] Steal an emoji or sticker by replying to a message and store it globally.
+/userinfo - [utility] Get information about a user
