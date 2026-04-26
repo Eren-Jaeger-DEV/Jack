@@ -28,9 +28,20 @@ const COOLDOWN_MS = 3000;
  * AI CONTROLLER (v2.2.0) - Adaptive Decision Edition + DM Support
  * Implements intent classification, validation, and feedback loop.
  * Owner-only DM channel supported via processDM().
+ * 
+ * @module core/aiController
  */
 module.exports = {
   
+  /**
+   * Determines if a message should be processed by the AI system.
+   * Checks for summoning keywords (e.g., "Jack"), bot mentions, or replies to the bot.
+   * Enforces strict channel locks and rate limits.
+   * 
+   * @param {import('discord.js').Message} message - The Discord message object to evaluate.
+   * @param {import('discord.js').Client} client - The Discord client instance.
+   * @returns {Promise<boolean>} True if the message satisfies all processing criteria.
+   */
   async shouldProcess(message, client) {
     if (message.author.bot || !message.guild) return false;
 
@@ -98,6 +109,10 @@ module.exports = {
    * DM PIPELINE — Owner-Only Private Channel
    * Runs full AI with memory + history. Tools that need guild return a graceful message.
    * No summoning keyword required — every DM from the owner is processed.
+   * 
+   * @param {import('discord.js').Message} message - The Discord message object.
+   * @param {import('discord.js').Client} client - The Discord client instance.
+   * @returns {Promise<void>}
    */
   async processDM(message, client) {
     const userId = message.author.id;
@@ -221,6 +236,15 @@ ${(result && (result.error || result.status === 'error' || (typeof result === 's
     }
   },
 
+  /**
+   * Main AI Processing Loop for Guild Messages and Slash Commands.
+   * Handles context preparation, AI generation, tool execution, and interpretation passes.
+   * 
+   * @param {object} context - Either a Discord Message or Interaction object.
+   * @param {import('discord.js').Client} client - The Discord client instance.
+   * @param {string} [overrideContent=null] - Optional text to process instead of context content.
+   * @returns {Promise<boolean>} True if the process completed successfully.
+   */
   async process(context, client, overrideContent = null) {
     const isInteraction = !!context.isCommand;
     const channelId = context.channelId || context.channel.id;

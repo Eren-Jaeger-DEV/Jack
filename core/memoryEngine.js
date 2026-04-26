@@ -1,6 +1,8 @@
 /**
  * MEMORY ENGINE (v2.0)
  * Additive persistent memory system for Jack.
+ * 
+ * @module core/memoryEngine
  */
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -31,6 +33,15 @@ function isLowValueMessage(msg) {
   );
 }
 
+/**
+ * Analyzes an incoming message to determine if it should be archived as a long-term memory.
+ * Uses a lightweight Flash model to classify intent and importance.
+ * 
+ * @param {string} message - The raw message content.
+ * @param {string} userId - The Discord ID of the message author.
+ * @param {string} guildId - The Discord ID of the guild.
+ * @returns {Promise<void>}
+ */
 async function analyzeMessage(message, userId, guildId) {
   if (!message || message.trim().length < 5) return;
   if (isLowValueMessage(message)) return;
@@ -107,6 +118,19 @@ Rules:
   }
 }
 
+/**
+ * Stores a new memory object in the database.
+ * Handles deduplication, eviction of low-value memories, and vector embedding generation.
+ * 
+ * @param {object} memoryObject - The memory data to store.
+ * @param {string} memoryObject.userId - The user ID.
+ * @param {string} memoryObject.guildId - The guild ID.
+ * @param {string} memoryObject.type - The memory type (event, behavior, preference).
+ * @param {string} memoryObject.content - The text content to remember.
+ * @param {string[]} [memoryObject.tags] - Optional tags for indexing.
+ * @param {number} [memoryObject.importance] - Importance score (0 to 1).
+ * @returns {Promise<void>}
+ */
 async function storeMemory(memoryObject) {
   try {
     let content = memoryObject.content.trim().substring(0, 300);
@@ -259,6 +283,15 @@ function arbitrateMemory(memories, contextTags) {
   return filtered.slice(0, 5);
 }
 
+/**
+ * Retrieves the most relevant memories for a given user and context.
+ * Performs a hybrid search: Semantic Vector Search + Keyword Tag Matching.
+ * 
+ * @param {string} userId - The Discord ID of the user.
+ * @param {string} guildId - The Discord ID of the guild.
+ * @param {string} userMessage - The current message to use as search context.
+ * @returns {Promise<string[]>} An array of relevant memory content strings.
+ */
 async function getRelevantMemory(userId, guildId, userMessage) {
   try {
     const semanticResults = await getSemanticMemory(userId, guildId, userMessage);

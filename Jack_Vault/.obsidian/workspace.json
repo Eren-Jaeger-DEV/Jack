@@ -185,6 +185,7 @@
   },
   "active": "fe4b0ec0800a76a5",
   "lastOpenFiles": [
+    "Core/System-Edge-Cases.md",
     "Admin.md",
     "Database/Trigger.md",
     "Database/UserActivity.md",
@@ -213,7 +214,6 @@
     "Core/Command-Executor.md",
     "Untitled 1.canvas",
     "Core/Plugin-Loader.md",
-    "Core/Startup-Sequence.md",
     "Database"
   ]
 }

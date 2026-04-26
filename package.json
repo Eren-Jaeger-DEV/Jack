@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node main.js",
     "test": "node --test",
-    "docs": "node scripts/update-docs.js"
+    "docs": "node scripts/update-docs.js",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -30,5 +31,8 @@
     "opusscript": "^0.0.8",
     "prism-media": "^1.3.5",
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
